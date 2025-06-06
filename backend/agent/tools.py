@@ -2,6 +2,10 @@ from langchain.tools import Tool
 import requests
 import json
 from config import CLIMATIQ_API_KEY
+from agent.utils.parser_service import parse_agent_input
+
+## TODO: add structured, agent-friendly error handling wrapper (safe_tool)
+
 
 def calculate_emissions(input):
     # This function should call the Climatiq API to calculate emissions based on the input data.
@@ -13,6 +17,41 @@ def calculate_emissions(input):
         "input": input,
         "source": "Climatiq"
     }    
+
+    # return {
+    #     "co2e": 100.0,
+    #     "distance": input["distance"],
+    #     "transport_mode": input["transport_mode"],
+    #     "weight": input["weight"],
+    #     # "weight_unit": input.get("weight_unit", "kg"),
+    #     "input": input,
+    #     "source": "Climatiq"
+    # }    
+
+
+    # def calculate_emissions(input):
+    # print(f"[TOOL] Parsed input: {input}")
+
+    # headers = {"Authorization": f"Bearer {CLIMATIQ_API_KEY}"}
+
+    # response = requests.post(
+    #     "https://api.climatiq.io/estimate",
+    #     headers=headers,
+    #     json={
+    #         "emission_factor": {
+    #             "activity_id": "freight_flight_route_type_domestic_aircraft_type_narrowbody",
+    #             "source": "GREET",
+    #             "region": "US"
+    #         },
+    #         "parameters": {
+    #             "weight": float(input["weight"]),
+    #             "distance": float(input["distance"]),
+    #             "weight_unit": "kg",
+    #             "distance_unit": "km"
+    #         }
+    #     }
+    # )
+
 
     # try: 
     #     headers = {"Authorization": f"Bearer {CLIMATIQ_API_KEY}"}
@@ -38,7 +77,8 @@ def calculate_emissions(input):
 
 emissions_tool = Tool(
     name = "EmissionsCalculator",
-    func = lambda input: calculate_emissions(json.loads(input)),
+    func = lambda input: calculate_emissions(parse_agent_input(input)),
+    # func = lambda input: calculate_emissions(json.loads(input)),
     description = "Calculate CO2 for shipments. Input should include distance, transport_mode, weight."
 )
 

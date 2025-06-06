@@ -1,30 +1,12 @@
 import os
 from dotenv import load_dotenv
-from pydantic import Field, SecretStr
-from typing import Optional
+# from pydantic import Field, SecretStr
+# from typing import Optional
 
 from langchain_openai import ChatOpenAI
 from langchain_community.llms import Ollama
-from langchain_core.utils import secret_from_env
+from agent.utils.openrouter_llm import ChatOpenRouter
 from config import LLM_PROVIDER, OPENAI_API_KEY, OPENROUTER_API_KEY, OPENROUTER_MODEL
-
-
-class ChatOpenRouter(ChatOpenAI):
-    openai_api_key: Optional[SecretStr] = Field(
-        alias="api_key", default_factory=secret_from_env("OPENROUTER_API_KEY", default=None)
-    )
-
-    @property
-    def lc_secrets(self) -> dict[str, str]:
-        return {"openai_api_key": "OPENROUTER_API_KEY"}
-
-    def __init__(self, openai_api_key: Optional[str] = None, **kwargs):
-        openai_api_key = openai_api_key or os.environ.get("OPENROUTER_API_KEY")
-        super().__init__(
-            base_url="https://openrouter.ai/api/v1",
-            openai_api_key=openai_api_key,
-            **kwargs
-        )
 
 def load_llm():
     # print(ChatOpenRouter)
@@ -70,3 +52,23 @@ def load_llm():
 
     # Extend for other providers (or local models) as needed
     raise ValueError(f"Unsupported provider: {LLM_PROVIDER}")
+
+
+
+
+# class ChatOpenRouter(ChatOpenAI):
+#     openai_api_key: Optional[SecretStr] = Field(
+#         alias="api_key", default_factory=secret_from_env("OPENROUTER_API_KEY", default=None)
+#     )
+
+#     @property
+#     def lc_secrets(self) -> dict[str, str]:
+#         return {"openai_api_key": "OPENROUTER_API_KEY"}
+
+#     def __init__(self, openai_api_key: Optional[str] = None, **kwargs):
+#         openai_api_key = openai_api_key or os.environ.get("OPENROUTER_API_KEY")
+#         super().__init__(
+#             base_url="https://openrouter.ai/api/v1",
+#             openai_api_key=openai_api_key,
+#             **kwargs
+#         )

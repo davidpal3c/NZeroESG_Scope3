@@ -17,7 +17,7 @@ async def build_agent():
         llm, 
         agent="chat-conversational-react-description", 
         memory=memory,
-        verbose=True                     # to see step-by-step reasoning
+        verbose=True                                                    # to see step-by-step reasoning
     )
 
 
