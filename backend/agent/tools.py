@@ -5,33 +5,40 @@ from config import CLIMATIQ_API_KEY
 
 def calculate_emissions(input):
     # This function should call the Climatiq API to calculate emissions based on the input data.
-    headers = {"Authorization": f"Bearer {CLIMATIQ_API_KEY}"}
-    response = requests.post(
-        "https://api.climatiq.io/estimate",
-        headers=headers,
-        json=input
-    )
+    
+    return {
+        "co2e": 100.0,
+        "distance": "1902.0 km",
+        "transport_mode": "air",
+        "input": input,
+        "source": "Climatiq"
+    }    
 
-    # For now, let's use a dummy response
-    # Simulating a response from the Climatiq API
-    response = {
-        "co2e": 100.0,  # CO2 equivalent in kg
-        "source": "ClimatiQ API",
-        "input": input
-    }
+    # try: 
+    #     headers = {"Authorization": f"Bearer {CLIMATIQ_API_KEY}"}
+    #     response = requests.post(
+    #         "https://api.climatiq.io/estimate",
+    #         headers=headers,
+    #         json=input
+    #     )
+        
+    #     print(f"[TOOL] API status: {response.status_code}")
+    #     print(f"[TOOL] API response: {response.text}")
 
-    # Return the response in the expected format
-    # return {
-    #     "co2e": response["co2e"],
-    #     "source": response["source"],
-    #     "input": response["input"]
-    # }
-    return response.json()
+    #     return response.json()
+    
+    # except Exception as e:
+    #     print(f"[TOOL] Error calling Climatiq API: {str(e)}")
+    #     return {
+    #         "error": str(e),
+    #         "message": "Failed to calculate emissions. Please check data."
+    #     }
+
 
 
 emissions_tool = Tool(
     name = "EmissionsCalculator",
-    func = lambda input: json.dumps(calculate_emissions(json.loads(input))),
+    func = lambda input: calculate_emissions(json.loads(input)),
     description = "Calculate CO2 for shipments. Input should include distance, transport_mode, weight."
 )
 

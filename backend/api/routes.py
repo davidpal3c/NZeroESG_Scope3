@@ -9,7 +9,7 @@ async def chat(request: Request):
     data = await request.json()
     user_message = data.get("message")
 
-    print(f">>> Received user message: {user_message}")
+    print(f"\n>>> Received user message: \n{user_message}\n")
 
     if not user_message:
         return {"message": "Was there something you wanted to ask?"}
@@ -17,9 +17,8 @@ async def chat(request: Request):
     agent = await build_agent()
     response = await agent.ainvoke(input=user_message)
     # response = await agent.arun(input=user_message)
+    print(f"[DEBUG] Agent Response: {response}")
 
-    print(f"[ChatAgent Reply] {response}")
-    
     return {"reply": response}
 
 

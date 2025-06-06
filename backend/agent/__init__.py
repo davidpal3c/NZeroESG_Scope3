@@ -10,12 +10,14 @@ async def build_agent():
     tools = [emissions_tool, supplier_tool, compare_tool]
     llm = load_llm()
 
+    print(f"...BUILDING AGENT...\n")
+
     return initialize_agent(
         tools, 
         llm, 
         agent="chat-conversational-react-description", 
         memory=memory,
-        # verbose=True                     # to see step-by-step reasoning
+        verbose=True                     # to see step-by-step reasoning
     )
 
 
