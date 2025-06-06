@@ -1,6 +1,6 @@
 import pytest
 from agent.tools import emissions_tool, supplier_tool, compare_tool
-from agent.utils import safe_tool
+from agent.utils.exception_wrapper import safe_tool
 import json
 
 # Wrap tools with safe_tool for structured error handling during testing
@@ -25,6 +25,7 @@ def test_emissions_tool_missing_field():
         "transport_mode": "air"
     })  # missing distance
     result = safe_emissions_tool(raw_input)
+    print(f"Result: {result}")
     assert "ERROR" in result or "error" in result.lower()
 
 

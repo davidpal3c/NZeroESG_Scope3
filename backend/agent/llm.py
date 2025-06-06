@@ -38,17 +38,9 @@ def load_llm():
             max_tokens=500,
             temperature=0.3, 
         )
-    
-        # return ChatOpenAI(
-        #     model_name=model,
-        #     openai_api_key=api_key,
-        #     openai_api_base="https://openrouter.ai/v1",
-        #     max_tokens=500,
-        #     temperature=0.3, 
-        # )
 
     elif LLM_PROVIDER == "ollama":
-        return Ollama(model=OLLAMA_MODEL)
+        return f"Ollama model: {OLLAMA_MODEL} via {LLM_PROVIDER}\n"
 
     # Extend for other providers (or local models) as needed
     raise ValueError(f"Unsupported provider: {LLM_PROVIDER}")

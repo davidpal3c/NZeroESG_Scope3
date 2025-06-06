@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from pydantic import Field, SecretStr
 from langchain_openai import ChatOpenAI
 from langchain_core.utils.utils import secret_from_env
+from config import OPENROUTER_API_KEY
 
 load_dotenv()
 
@@ -23,7 +24,7 @@ class ChatOpenRouter(ChatOpenAI):
         return {"openai_api_key": "OPENROUTER_API_KEY"}
 
     def __init__(self, openai_api_key: Optional[str] = None, **kwargs):
-        openai_api_key = openai_api_key or os.getenv("OPENROUTER_API_KEY")
+        openai_api_key = openai_api_key or OPENROUTER_API_KEY
         super().__init__(
             base_url="https://openrouter.ai/api/v1",
             openai_api_key=openai_api_key,

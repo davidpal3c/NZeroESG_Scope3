@@ -7,16 +7,65 @@ from agent.utils.parser_service import parse_agent_input
 ## TODO: add structured, agent-friendly error handling wrapper (safe_tool)
 
 
+TRANSPORT_ACTIVITY_IDS = {
+    "air": "freight_flight_route_type_international_aircraft_type_widebody",
+    "sea": "freight_ship_ocean",
+    "rail": "freight_train",
+    "road": "freight_truck"
+}
+
 def calculate_emissions(input):
     # This function should call the Climatiq API to calculate emissions based on the input data.
+    try: 
+        mode = input.get("transport_mode", "").lower()
+        activity_id = TRANSPORT_ACTIVITY_IDS.get(mode, None)
+
+        if not activity_id:
+            return {
+                "error": f"Invalid transport mode: {mode}",
+                "message": f"Transport mode '{mode}' is not supported. Supported modes: {', '.join(TRANSPORT_ACTIVITY_IDS.keys())}."
+            }
+
+        print(f"[TOOL] Calculating emissions for mode: {mode}, activity_id: {activity_id}")
+
+        headers = {"Authorization": f"Bearer {CLIMATIQ_API_KEY}"}
+        response = requests.post(
+            "https://api.climatiq.io/data/v1/estimate",
+            headers = headers,
+            # json = input,
+            json={
+                "emission_factor": {
+                    "activity_id": activity_id,
+                    "data_version": "^21"
+                },
+                "parameters": {
+                    "weight": float(input["weight"]),
+                    "distance": float(input["distance"]),
+                    "weight_unit": "kg",
+                    "distance_unit": "km"
+                }
+            }
+        )
     
-    return {
-        "co2e": 100.0,
-        "distance": "1902.0 km",
-        "transport_mode": "air",
-        "input": input,
-        "source": "Climatiq"
-    }    
+        print(f"[TOOL] API status: {response.status_code}")
+        print(f"[TOOL] API response: {response.text}")
+
+        return response.json()
+    
+    except Exception as e:
+        print(f"[TOOL] Error calling Climatiq API: {str(e)}")
+        return {
+            "error": str(e),
+            "message": "Failed to calculate emissions. Please check data."
+        }
+
+    # return {
+    #     "co2e": 100.0,
+    #     "distance": "1902.0 km",
+    #     "transport_mode": "air",
+    #     "input": input,
+    #     "source": "Climatiq"
+    # }    
 
     # return {
     #     "co2e": 100.0,
@@ -27,51 +76,6 @@ def calculate_emissions(input):
     #     "input": input,
     #     "source": "Climatiq"
     # }    
-
-
-    # def calculate_emissions(input):
-    # print(f"[TOOL] Parsed input: {input}")
-
-    # headers = {"Authorization": f"Bearer {CLIMATIQ_API_KEY}"}
-
-    # response = requests.post(
-    #     "https://api.climatiq.io/estimate",
-    #     headers=headers,
-    #     json={
-    #         "emission_factor": {
-    #             "activity_id": "freight_flight_route_type_domestic_aircraft_type_narrowbody",
-    #             "source": "GREET",
-    #             "region": "US"
-    #         },
-    #         "parameters": {
-    #             "weight": float(input["weight"]),
-    #             "distance": float(input["distance"]),
-    #             "weight_unit": "kg",
-    #             "distance_unit": "km"
-    #         }
-    #     }
-    # )
-
-
-    # try: 
-    #     headers = {"Authorization": f"Bearer {CLIMATIQ_API_KEY}"}
-    #     response = requests.post(
-    #         "https://api.climatiq.io/estimate",
-    #         headers=headers,
-    #         json=input
-    #     )
-        
-    #     print(f"[TOOL] API status: {response.status_code}")
-    #     print(f"[TOOL] API response: {response.text}")
-
-    #     return response.json()
-    
-    # except Exception as e:
-    #     print(f"[TOOL] Error calling Climatiq API: {str(e)}")
-    #     return {
-    #         "error": str(e),
-    #         "message": "Failed to calculate emissions. Please check data."
-    #     }
 
 
 
