@@ -15,7 +15,10 @@ async def chat(request: Request):
         return {"message": "Was there something you wanted to ask?"}
 
     agent = await build_agent()
-    response = await agent.ainvoke(input=user_message)
+    response = await agent.ainvoke({
+        "input": user_message,
+        "chat_history": []                                  # to inject memory-aware history here.. No chat history for now; can be extended later
+    })
     # response = await agent.arun(input=user_message)
     print(f"[DEBUG] Agent Response: {response}")
 
