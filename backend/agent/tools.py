@@ -8,9 +8,20 @@ from agent.utils.parser_service import parse_agent_input
 
 ## TODO: add structured, agent-friendly error handling wrapper (safe_tool)
 ## TODO: add distance resolver tool 
-## TODO: add caching layer (avoid re-calling with same inputs),
+## TODO: add caching layer (avoid re-calling with same inputs), using ConversationBufferMemory and/or Redis 
 
-# ===== Shipping Emissions Calculation Tool (Carbon Interface) =====
+# Emission factos (g CO2e / tonne-km) for fallback calculations
+FALLBACK_EMISSION_FACTORS = {
+    "plane": 0.602,                             # kg CO2e / tonne-km
+    "truck": 0.062,  
+    "train": 0.022,  
+    "ship": 0.008 ,                             # ocean_container              
+    # "diesel_truck": 0.062,  
+    # "diesel_train": 0.022, 
+}
+
+
+# Shipping Emissions Calculation Tool 
 class ShippingEmissionsInput(BaseModel):
     weight_value: float = Field(..., description="Weight value (e.g., 200)")
     weight_unit: str = Field(default="kg", description="Weight unit (g, kg, lb, mt)")
@@ -57,15 +68,18 @@ def calculate_shipping_emissions(
 ## TODO: Safe_tool: handle 400 errors gracefully to avoid agent crashes
 
         if response.status_code == 201:
-            return response.json()
-
-            # data = response.json().get("data", {}).get("attributes", {})
-            # return {
-            #     "carbon_kg": data.get("carbon_kg"),
-            #     "distance_km": data.get("distance_value"),
-            #     "weight_kg": data.get("weight_value"),
-            #     "transport_method": data.get("transport_method")
-            # }
+            data = response.json().get("data", {}).get("attributes", {})
+            return {
+                "method": data.get("transport_method"),
+                "carbon_g": data.get("carbon_g"),
+                "carbon_lb": data.get("carbon_lb"),
+                "carbon_kg": data.get("carbon_kg"),
+                "distance": data.get("distance_value"),
+                "weight": data.get("weight_value"),
+                "distance_unit": data.get("distance_unit"),
+                "weight_unit": data.get("weight_unit"),
+                "source": "Carbon Interface API",
+            }
 
         
         # Otherwise return graceful error, no exceptions
@@ -79,13 +93,76 @@ def calculate_shipping_emissions(
             "error": str(e),
             "message": "Failed to calculate emissions. Please check data."
         }
+    
 
-emissions_tool = StructuredTool.from_function(
-    name = "EmissionsCalculator",
-    func = calculate_shipping_emissions,
-    args_schema = ShippingEmissionsInput,
-    description = "Calculate CO2 for shipments. Input should include distance, transport_mode, weight."
-)
+# ===== Comparing Tool: transport mode CO2 emissions =====
+class CompareInput(BaseModel):
+    weight_value: float = Field(..., description="Weight value (e.g., 200)")
+    distance_value: float = Field(..., description="Distance value (e.g., 2000)")
+    weight_unit: str = Field(default="kg", description="Weight unit (g, kg, lb, mt)")
+    distance_unit: str = Field(default="km", description="Distance unit (km or mi)")
+    transport_method: list[str] = Field(..., description="Transport modes to compare, e.g. ['ship', 'train', 'truck', 'plane']")
+
+
+def fallback_emission_estimate(weight_kg: float, distance_km: float, method: str):
+    factor = FALLBACK_EMISSION_FACTORS.get(method.lower())
+
+    if not factor:
+        return { "error": f"Unsupported transport method: {method}" }
+
+    emissions = (weight_kg / 1000) * (distance_km * factor)  # Convert weight to tonnes
+    return {
+        "method": method,
+        "emissions_kg": round(emissions, 2),
+        "emissions_tonnes": round(emissions / 1000, 3),
+        "note": "Fallback estimate: This is an approximation using emission factors from ECTA, CN Rail, and IPCC."
+    }
+
+def compare_emissions(weight_value: float, distance_value: float, transport_method: list[str], weight_unit: str = "kg", distance_unit: str = "km"):  
+    try:
+        results = {}
+        api_calls = 0
+
+        for method in transport_method: 
+            if api_calls < 3:
+                print(f"[TOOL] Calculating emissions for method--: {method}")
+                result = calculate_shipping_emissions(
+                            weight_value=weight_value,
+                            distance_value=distance_value,
+                            transport_method=method,
+                            weight_unit=weight_unit,
+                            distance_unit=distance_unit
+                        )
+                
+                if "carbon_kg" in result or "carbon_g" in result:
+                    results[method] = {
+                        "emissions_kg": result["carbon_kg"],
+                        "emissions_tonnes": round(result["carbon_kg"] / 1000, 3),
+                        "source": "Carbon Interface API"
+                    }
+                    api_calls += 1
+                    continue        
+            else:
+                print(f"[TOOL] API call limit reached, using fallback for method: {method}")
+                results[method] = fallback_emission_estimate(
+                    weight_value, 
+                    distance_value, 
+                    method
+                )
+        # 
+        if api_calls == 0 and bool(results) == False:
+            for method in transport_method:
+                results[method] = fallback_emission_estimate(
+                    weight_value, 
+                    distance_value, 
+                    method
+                )
+
+        return results
+
+    except Exception as e:
+        return {"error": str(e)}
+
 
 
 # ===== Supplier Selector Tool =====
@@ -102,6 +179,23 @@ def select_supplier(input: SupplierInput):
     except Exception as e:
         return {"error": str(e), "message": "Could not load suppliers."}
 
+
+# langchain tools
+
+emissions_tool = StructuredTool.from_function(
+    name = "EmissionsCalculator",
+    func = calculate_shipping_emissions,
+    args_schema = ShippingEmissionsInput,
+    description = "Calculate CO2 for shipments. Input should include distance, transport_mode, weight."
+)
+
+compare_shipping_emissions = StructuredTool.from_function(
+    name="OptionComparer",
+    description="Compare different transport options based on CO2 emissions. Input should include distance and weight.",
+    func=compare_emissions,
+    args_schema=CompareInput
+)
+
 supplier_tool = StructuredTool.from_function(
     name="SupplierSelector",
     description="Select suppliers based on region. Input should include the region name.",
@@ -109,31 +203,6 @@ supplier_tool = StructuredTool.from_function(
     args_schema=SupplierInput
 )
 
-
-# ===== Transport Option Comparison Tool =====
-class CompareInput(BaseModel):
-    distance: float = Field(..., description="Distance in kilometers")
-    weight: float = Field(..., description="Weight in kilograms")
-
-
-def compare_options(input: CompareInput):
-    try:
-        # Placeholder for real comparison logic
-        return {
-            "air": f"{input.weight * 1.2:.1f}kg CO2",
-            "rail": f"{input.weight * 0.4:.1f}kg CO2",
-            "sea": f"{input.weight * 0.2:.1f}kg CO2"
-        }
-    except Exception as e:
-        return {"error": str(e)}
-
-
-compare_tool = StructuredTool.from_function(
-    name="OptionComparer",
-    description="Compare different transport options based on CO2 emissions. Input should include distance and weight.",
-    func=compare_options,
-    args_schema=CompareInput
-)
 
 
 # def compare_options(input):
