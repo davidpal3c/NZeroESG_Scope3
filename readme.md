@@ -1,7 +1,9 @@
 
-## 🌱 NZeroESG Scope3: Trace emissions, materials, and vendor compliance across supply chain.
+## 🌱 NZeroESG Scope3
 
-Procurement and logistics account for a large share of Scope 3 emissions—but tracking their impact is often fragmented and non-actionable, without real-time tools to analyze environmental impact. This project builds an agentic AI system using **LangChain’s ReAct framework** to make carbon intelligence conversational, traceable, and decision-ready.
+Sustainable Sourcing Through Agentic Ai: Trace emissions, materials, and vendor compliance across supply chain.
+
+Procurement and logistics account for a large share of Scope 3 emissions, but tracking their impact is often fragmented, non-actionable, and without real-time tools to analyze environmental impact. This project builds an agentic AI system using **LangChain’s ReAct framework** to make carbon intelligence conversational, traceable, and decision-ready.
 
 <!-- Spreadsheet calculations and post-hoc reporting are no longer enough. -->
 <!-- - AI for Carbon-Smart Supply-chain: Conversational, Context-Aware, and API-Powered -->
@@ -93,28 +95,4 @@ It combines real emissions APIs, ReAct-style reasoning, and structured tool invo
 - Frontend UI using React, TypeScript, TailwindCSS, Framer Motion
 
 
-## 🔮 Planned Enhancements (2025)
 
-- **Authentication and Security enhancements** auth routes, SSO, account management. 
-- **Procurement simulation tool** (cost vs. emissions vs. delivery time)
-- **Vector DB integration (RAG)** for ESG policies, vendor PDFs
-- **Vendor compliance checker** (e.g., match vendor to sustainability policies)
-- **CSV/Excel ingestion** of shipments for bulk emissions analysis
-
-- **LangChain Expression Language (LCEL)** to dynamically adjust agent behavior
-- **Persistent Redis-based chat + cache**
-
-- **RAG-enhanced supplier intelligence** (combine structured + doc insights)
-- **n8n workflow triggers** for emission reports, audit alerts
-- **Scheduled emissions summaries** (weekly/monthly snapshot via n8n)
-- **Live emissions benchmarking** via web data scraping (IPCC, OECD)
-- **Real-time anomaly detection** for extreme values or data inconsistencies
-
-
-## Procurement Simulation Tool
-Eventually (Procurement Simulation Tool) (to be implemented)
-“Should we ship by truck or train for this 500kg order from Hamburg to Milan?”
-“What’s the best vendor if I want the lowest carbon + cost within 5 days delivery?”
-“Simulate sourcing locally vs. from our Asia-based supplier.”
-
-Enable users to simulate procurement choices and compare CO₂ emissions, cost, and delivery time — helping them make better tradeoff decisions aligned with ESG and operational priorities.
