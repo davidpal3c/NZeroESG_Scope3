@@ -313,7 +313,7 @@ class SupplierInput(BaseModel):
 
 def select_supplier(input: SupplierInput):
     try:
-        with open("backend/data/suppliers.json", "r") as file:
+        with open("nzeroesg-api/data/suppliers.json", "r") as file:
             suppliers = json.load(file)
         return [s for s in suppliers if s["region"].lower() == input.region.lower()]
         # return json.dumps([ s for s in suppliers if s["region"] == criteria["region"] ])
