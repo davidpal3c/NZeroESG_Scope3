@@ -1,5 +1,5 @@
 
-## 🌱 NZeroESG Scope3
+## 🌱 NZeroESG - Scope3
 
 #### Sustainable Sourcing Through Agentic Ai: Trace emissions, materials, and vendor compliance across supply chain.
 
