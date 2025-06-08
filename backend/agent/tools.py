@@ -29,6 +29,13 @@ class DistanceInput(BaseModel):
 
 def resolve_distance(origin: str, destination: str):
     try:
+
+        # TODO: add transport-mode-aware API calls (branch out), use geopy (generic geodesic calculations) as fallback
+        # OpenRouteService API (ORS):                                   truck / road 
+        # OpenAIP / AviationStack :                                     air / plane
+        # TransportAPI (UK), DB API (Germany), Navitia (France/ EU):    train / rail
+        # SeaRoutes.com / MarineTraffic/ ExactEarth:                    ship / ocean
+
         print(f"[TOOL] Resolving distance from {origin} to {destination}")
         geolocator = Nominatim(user_agent="emission-agent")
         loc1 = geolocator.geocode(origin)
