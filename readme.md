@@ -63,15 +63,15 @@ It combines real emissions APIs, ReAct-style reasoning, and structured tool invo
 ---
 ## Implemented Features (Backend)
 
-[✓] LangChain ReAct Agent with structured tool use
-[✓] Configurable LLM provider (OpenAI, OpenRouter)
-[✓] EmissionsCalculator tool (real API + fallback logic)
-[✓] DistanceResolver tool (via geopy + Nominatim)
-[✓] OptionComparer tool (supports truck, train, ship, plane)
-[✓] Input parser: extracts origin, destination, weight, transport mode
-[✓] Clear fallback to reliable emission factors (IPCC, ECTA, CN Rail)
-[✓] Conversation memory with LangChain `ConversationBufferMemory`
-[✓] Emissions caching via hash key (avoids redundant API calls)
+- [ ] LangChain ReAct Agent with structured tool use
+- [ ] Configurable LLM provider (OpenAI, OpenRouter)
+- [ ] EmissionsCalculator tool (real API + fallback logic)
+- [ ] DistanceResolver tool (via geopy + Nominatim)
+- [ ] OptionComparer tool (supports truck, train, ship, plane)
+- [ ] Input parser: extracts origin, destination, weight, transport mode
+- [ ] Clear fallback to reliable emission factors (IPCC, ECTA, CN Rail)
+- [ ] Conversation memory with LangChain `ConversationBufferMemory`
+- [ ] Emissions caching via hash key (avoids redundant API calls)
 
 
 
