@@ -61,7 +61,7 @@ It combines real emissions APIs, ReAct-style reasoning, and structured tool invo
 
 
 ---
-## Implemented Features (Backend)
+### Implemented Features (Backend)
 
 - LangChain ReAct Agent with structured tool use
 - Configurable LLM provider (OpenAI, OpenRouter)
@@ -75,7 +75,7 @@ It combines real emissions APIs, ReAct-style reasoning, and structured tool invo
 
 
 
-## What's Coming (2025)
+### What's Coming (2025)
 
 - [ ] SupplierSelector tool with region-based filtering
 - [ ] Redis session and emissions cache
@@ -85,7 +85,7 @@ It combines real emissions APIs, ReAct-style reasoning, and structured tool invo
 - [ ] Vendor compliance checker: e.g., match vendor to sustainability policies
 - [ ] **LangChain Expression Language (LCEL)** dynamically adjust agent behavior
 
-### (Frontend)
+#### (Frontend)
 - Real-time chat interface with:
   - Streaming message display
   - Tool metadata (confidence, source, processing time)
