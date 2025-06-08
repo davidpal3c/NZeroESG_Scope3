@@ -1,97 +1,58 @@
 import json
 import re
 
+
+# uses regex to find key-value pairs in the input text to extract relevant information for the agent.
 def parse_agent_input(text):
-    # ## Parse the input text to extract relevant information for the agent.
-    # # This function uses regex to find key-value pairs in the input text.
-    # print(f"[PARSER] Parsing input: {text}")
-    # try:
-    #     return json.loads(text)  # Try strict JSON first
-    # except:
-    #     # Fallback: parse natural string like "distance: 2000km, weight: 100kg"
-    #     match = re.findall(r'(\w+):\s*([\w\d.]+)', text)
-    #     return {k: v for k, v in match}
-    
     """
-    Safely parse LangChain agent tool input.
+    Parse user input to extract emissions-related parameters.
 
     Supports:
-    - JSON strings
-    - Natural key:value strings (e.g., "weight: 2 tons, distance: 1240 miles")
-
-    Normalizes common units to metric:
-    - tons → kg
-    - grams → kg
-    - miles → km
+    - JSON strings (structured input)
+    - Natural phrases like:
+        * "from X to Y" → origin/destination
+        * "<number>kg" → weight_value
+        * "in plane and train" → transport_method (list)
 
     Returns:
-        dict[str, str]
+        dict with keys like: weight_value, origin, destination, transport_method
     """
-    # try:
-    #     return json.loads(text)
-    # except json.JSONDecodeError:
-    #     # Fallback to "key: value" parser
-    #     result = {}
-    #     matches = re.findall(r'(\w+)\s*:\s*([\w\d\.\-]+)', text)
-    #     for k, v in matches:
-    #         # Try to extract number from values like '2000km' or '100kg'
-    #         if v.endswith(("kg", "KM", "km")):
-    #             num = re.findall(r'[\d.]+', v)
-    #             result[k] = float(num[0]) if num else v
-    #         else:
-    #             result[k] = v
-    #     return result
 
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        pass  # try fallback below
+    text = text.lower()
 
     result = {}
-    matches = re.findall(r'(\w+)\s*:\s*([^\s,]+)', text)
-    for key, value in matches:
-        key = key.lower()
-        original = value
 
-        # Extract numeric part
-        num_match = re.match(r'([\d.]+)', value)
-        num = float(num_match.group()) if num_match else None
-        unit = value.replace(str(num), '').lower() if num else value.lower()
-
-        # Normalize known units
-        if key in ["weight", "mass"]:
-            if "ton" in unit:
-                result[key] = num * 1000  # tons to kg
-            elif "g" in unit or "gr" or "grams" in unit and not "kg" in unit:
-                result[key] = num / 1000  # grams to kg
-            else:
-                result[key] = num
-        elif key in ["distance"]:
-            if "mile" in unit:
-                result[key] = num * 1.60934  # miles to km
-            elif "m" in unit and not "km" in unit:
-                result[key] = num / 1000  # meters to km
-            else:
-                result[key] = num
+    # --- Weight ---
+    weight_match = re.search(r'(\d+(?:\.\d+)?)\s*(kg|kilograms|tons|tonnes|g|grams|gr)', text)
+    if weight_match:
+        weight, unit = weight_match.groups()
+        weight = float(weight)
+        if "ton" in unit:
+            result["weight_value"] = weight * 1000
+        elif unit.startswith("g") and not "kg" in unit:
+            result["weight_value"] = weight / 1000
         else:
-            result[key] = original if num is None else num
+            result["weight_value"] = weight
 
-    if not result:
-        raise ValueError("Unable to parse tool input: " + text)
+    # --- Origin/Destination ---
+    route_match = re.search(r'from\s+([a-z\s]+?)\s+to\s+([a-z\s]+?)(?:\s|,|\.|\?|$)', text)
+    if route_match:
+        result["origin"] = route_match.group(1).strip()
+        result["destination"] = route_match.group(2).strip()
+
+    # --- Transport Modes ---
+    modes_match = re.search(r'in\s+((?:[a-z]+\s*(?:and\s*)?)+)', text)
+    if modes_match:
+        modes_raw = modes_match.group(1)
+        synonym_map = {
+            "air": "plane", "aerial": "plane", "plane": "plane",
+            "rail": "train", "train": "train",
+            "truck": "truck", "road": "truck", "lorry": "truck", "van": "truck",
+            "ship": "ship", "ocean": "ship", "boat": "ship"
+        }
+        tokens = re.findall(r'\w+', modes_raw)
+        modes = list({synonym_map[m] for m in tokens if m in synonym_map})
+        if modes:
+            result["transport_method"] = modes
 
     return result
-
-
-
-    # """
-    # Parse the input text to extract relevant information for the agent.
-    # This function uses regex to find key-value pairs in the input text.
-    # """
-    # pattern = r"(\w+):\s*([^,]+)"
-    # matches = re.findall(pattern, text)
-    
-    # parsed_data = {}
-    # for key, value in matches:
-    #     parsed_data[key.strip()] = value.strip()
-    
-    # return parsed_data

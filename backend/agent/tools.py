@@ -1,14 +1,15 @@
-import requests
 import json
-from langchain.tools import Tool
+import requests
 from langchain.tools import StructuredTool
 from pydantic import BaseModel, Field
 from config import CLIMATIQ_API_KEY, CARBON_INTERFACE_API_KEY
+from agent.cache import make_cache_key, _emissions_cache, debug_registry
 from agent.utils.parser_service import parse_agent_input
+from geopy.distance import geodesic
+from geopy.geocoders import Nominatim
 
 ## TODO: add structured, agent-friendly error handling wrapper (safe_tool)
-## TODO: add distance resolver tool 
-## TODO: add caching layer (avoid re-calling with same inputs), using ConversationBufferMemory and/or Redis 
+## TODO: change in-memory caching to Redis
 
 # Emission factos (g CO2e / tonne-km) for fallback calculations
 FALLBACK_EMISSION_FACTORS = {
@@ -19,6 +20,30 @@ FALLBACK_EMISSION_FACTORS = {
     # "diesel_truck": 0.062,  
     # "diesel_train": 0.022, 
 }
+
+
+# Distance resolver tool
+class DistanceInput(BaseModel):
+    origin: str = Field(..., description="Origin city or location")
+    destination: str = Field(..., description="Destination city or location")
+
+def resolve_distance(origin: str, destination: str):
+    try:
+        print(f"[TOOL] Resolving distance from {origin} to {destination}")
+        geolocator = Nominatim(user_agent="emission-agent")
+        loc1 = geolocator.geocode(origin)
+        loc2 = geolocator.geocode(destination)
+
+        if loc1 and loc2:
+            distance_km = round(geodesic((loc1.latitude, loc1.longitude), (loc2.latitude, loc2.longitude)).km, 1)
+            
+            print(f"\n[TOOL] Distance resolved: {distance_km} km\n")
+            return {"origin": origin, "destination": destination, "distance_km": distance_km}
+        else:
+            return {"error": "Could not resolve one or both locations."}
+    except Exception as e:
+        return {"error": str(e)}
+
 
 
 # Shipping Emissions Calculation Tool 
@@ -39,6 +64,18 @@ def calculate_shipping_emissions(
     ):
     
     try: 
+        weight_value = round(weight_value, 1)
+        distance_value = round(distance_value, 1)
+        key = make_cache_key(weight_value, distance_value, transport_method)
+
+        if key in _emissions_cache:
+            print(f"[CACHE] Using cached result for method: {transport_method}")
+            cached = _emissions_cache[key]
+            return {
+                **cached,
+                "note": f"As mentioned earlier: {debug_registry.get(key)}."
+            }
+
         headers = {
             "Authorization": f"Bearer {CARBON_INTERFACE_API_KEY}",
             "Content-Type": "application/json"
@@ -66,7 +103,6 @@ def calculate_shipping_emissions(
         print(f"[TOOL] API response: {response.text}")
 
 ## TODO: Safe_tool: handle 400 errors gracefully to avoid agent crashes
-
         if response.status_code == 201:
             data = response.json().get("data", {}).get("attributes", {})
             return {
@@ -74,13 +110,13 @@ def calculate_shipping_emissions(
                 "carbon_g": data.get("carbon_g"),
                 "carbon_lb": data.get("carbon_lb"),
                 "carbon_kg": data.get("carbon_kg"),
+                "carbon_mt": data.get("carbon_mt"),
                 "distance": data.get("distance_value"),
                 "weight": data.get("weight_value"),
                 "distance_unit": data.get("distance_unit"),
                 "weight_unit": data.get("weight_unit"),
                 "source": "Carbon Interface API",
             }
-
         
         # Otherwise return graceful error, no exceptions
         return {
@@ -98,35 +134,58 @@ def calculate_shipping_emissions(
 # ===== Comparing Tool: transport mode CO2 emissions =====
 class CompareInput(BaseModel):
     weight_value: float = Field(..., description="Weight value (e.g., 200)")
-    distance_value: float = Field(..., description="Distance value (e.g., 2000)")
     weight_unit: str = Field(default="kg", description="Weight unit (g, kg, lb, mt)")
     distance_unit: str = Field(default="km", description="Distance unit (km or mi)")
     transport_method: list[str] = Field(..., description="Transport modes to compare, e.g. ['ship', 'train', 'truck', 'plane']")
+    distance_value: float | None = Field(..., description="Distance value (e.g., 2000)")
+    origin: str | None = Field(default=None, description="Origin city or location (optional)")
+    destination: str | None = Field(default=None, description="Destination city or location (optional)")
 
 
-def fallback_emission_estimate(weight_kg: float, distance_km: float, method: str):
-    factor = FALLBACK_EMISSION_FACTORS.get(method.lower())
+def compare_emissions(
+        weight_value: float, 
+        transport_method: list[str], 
+        weight_unit: str = "kg", 
+        distance_unit: str = "km",
+        distance_value: float | None = None,
+        origin: str | None = None,
+        destination: str | None = None
+    ):  
 
-    if not factor:
-        return { "error": f"Unsupported transport method: {method}" }
-
-    emissions = (weight_kg / 1000) * (distance_km * factor)  # Convert weight to tonnes
-    return {
-        "method": method,
-        "emissions_kg": round(emissions, 2),
-        "emissions_tonnes": round(emissions / 1000, 3),
-        "note": "Fallback estimate: This is an approximation using emission factors from ECTA, CN Rail, and IPCC."
-    }
-
-def compare_emissions(weight_value: float, distance_value: float, transport_method: list[str], weight_unit: str = "kg", distance_unit: str = "km"):  
     try:
+        if distance_value is None and origin and destination:
+            resolved = resolve_distance(origin, destination)
+            if "distance_km" in resolved:
+                distance_value = resolved["distance_km"]
+                print(f"[TOOL] Resolved distance() inside tool: {distance_value} km")
+            else:
+                return {"error": "Could not resolve distance between origin and destination."}
+
+        if distance_value is None:
+            return {"error": "Missing distance or locations to resolve distance."}
+
         results = {}
         api_calls = 0
 
+        weight_value = round(weight_value, 1)
+        distance_value = round(distance_value, 1)
+
         for method in transport_method: 
+            key = make_cache_key(weight_value, distance_value, method)
+            print(">>>>> EMISSIONS CACHE: ", _emissions_cache)
+
+            if key in _emissions_cache:
+                print(f"[CACHE] Using cached result for method: {method}")
+                cached = _emissions_cache[key]
+                results[method] = {
+                    **cached,
+                    "note": f"As mentioned earlier: {debug_registry.get(key)}."
+                }
+                continue           
+
             if api_calls < 3:
                 print(f"[TOOL] Calculating emissions for method--: {method}")
-                result = calculate_shipping_emissions(
+                response = calculate_shipping_emissions(
                             weight_value=weight_value,
                             distance_value=distance_value,
                             transport_method=method,
@@ -134,34 +193,109 @@ def compare_emissions(weight_value: float, distance_value: float, transport_meth
                             distance_unit=distance_unit
                         )
                 
-                if "carbon_kg" in result or "carbon_g" in result:
-                    results[method] = {
-                        "emissions_kg": result["carbon_kg"],
-                        "emissions_tonnes": round(result["carbon_kg"] / 1000, 3),
+                if "carbon_kg" in response:
+                    entry = {
+                        "emissions_kg": response["carbon_kg"],
+                        "emissions_tonnes": response.get("carbon_mt") or round(response["carbon_kg"] / 1000, 3),
                         "source": "Carbon Interface API"
                     }
+                    _emissions_cache[key] = response
+                    results[method] = entry
+                    debug_registry[key] = f"API: {weight_value}kg over {distance_value}km by {method}"
                     api_calls += 1
                     continue        
-            else:
-                print(f"[TOOL] API call limit reached, using fallback for method: {method}")
-                results[method] = fallback_emission_estimate(
-                    weight_value, 
-                    distance_value, 
-                    method
-                )
-        # 
-        if api_calls == 0 and bool(results) == False:
-            for method in transport_method:
-                results[method] = fallback_emission_estimate(
-                    weight_value, 
-                    distance_value, 
-                    method
-                )
+            
+            print(f"[TOOL] API call limit reached, using fallback for method: {method}")
+            fallback_result = fallback_emission_estimate(
+                weight=weight_value, 
+                distance=distance_value, 
+                method=method,
+                weight_unit=weight_unit,
+                distance_unit=distance_unit
+            )
 
-        return results
+            _emissions_cache[key] = fallback_result
+            results[method] = fallback_result
+            debug_registry[key] = fallback_result["note"]
+                
+
+        # summary string for LLM
+        summary_lines = []
+        for method in transport_method:
+            data = results[method]
+            line = f"- {method}: {data['emissions_kg']} kg CO₂e ({data['emissions_tonnes']} tonnes)"
+            if "note" in data:
+                line += f" | {data['note']}"
+            summary_lines.append(line)
+
+        summary = summarize_emissions(
+            results, 
+            weight_value, 
+            weight_unit, 
+            distance_value, 
+            distance_unit,
+            origin=None, 
+            destination=None  
+        )
+
+        return {
+            "summary": summary,
+            "details": results
+        }
 
     except Exception as e:
         return {"error": str(e)}
+
+
+# === fallback and summary functions ===
+
+def fallback_emission_estimate(weight: float, distance: float, method: str, weight_unit: str = "kg", distance_unit: str = "km"):
+    factor = FALLBACK_EMISSION_FACTORS.get(method.lower())
+
+    if not factor:
+        return { "error": f"Unsupported transport method: {method}" }
+
+    # normalize to kg and km
+    if weight_unit == "g":
+        weight /= 1000  
+    elif weight_unit == "lb":
+        weight *= 0.453592  
+    elif weight_unit == "mt":
+        weight *= 1000
+    else:
+        weight = weight
+
+    if distance_unit == "mi":
+        distance *= 1.60934
+    elif distance_unit == "m":
+        distance /= 1000
+    else:
+        distance = distance
+
+    emissions = (weight / 1000) * (distance * factor)  # Convert weight to tonnes
+
+    return {
+        "method": method,
+        "emissions_kg": round(emissions, 2),
+        "emissions_tonnes": round(emissions / 1000, 3),
+        "source": "Fallback estimate",
+        "note": f"Fallback: {weight}{weight_unit} over {distance}{distance_unit} by {method} using ECTA, CN Rail, and IPCC factors."
+    }
+
+def summarize_emissions(results, weight_value, weight_unit, distance_value, distance_unit, origin=None, destination=None):
+    location_part = f" from {origin} to {destination}" if origin and destination else ""
+    shipment_desc = f"{weight_value}{weight_unit} shipment{location_part} over {distance_value}{distance_unit}"
+
+    parts = []
+    for method, data in results.items():
+        kg = round(data['emissions_kg'], 2)
+        t = round(data['emissions_tonnes'], 2)
+        parts.append(f"{method.capitalize()}: {kg} kg CO₂e ({t} t)")
+
+    sorted_methods = sorted(results.items(), key=lambda x: x[1]['emissions_kg'])
+    lowest = sorted_methods[0][0]
+
+    return f"For a {shipment_desc}, emissions are: " + "; ".join(parts) + f". {lowest.capitalize()} has the lowest footprint."
 
 
 
@@ -181,6 +315,12 @@ def select_supplier(input: SupplierInput):
 
 
 # langchain tools
+distance_tool = StructuredTool.from_function(
+    name="DistanceResolver",
+    func=resolve_distance,
+    args_schema=DistanceInput,
+    description="Resolve the geographic distance (in km) between two cities. Input must be origin and destination city names."
+)
 
 emissions_tool = StructuredTool.from_function(
     name = "EmissionsCalculator",
@@ -202,107 +342,4 @@ supplier_tool = StructuredTool.from_function(
     func=select_supplier,
     args_schema=SupplierInput
 )
-
-
-
-# def compare_options(input):
-#     try:
-#         # ToDO: implement comparison logic
-#         # Return dummy comparison
-#         return json.dumps({"air": "500kg CO2", "rail": "180kg CO2", "sea": "90kg CO2"})
-#     except Exception as e:
-#         return json.dumps({"error": str(e)})
-
-# compare_tool = Tool(
-#     name = "OptionComparer",
-#     func = compare_options,
-#     # func = lambda input: compare_options(json.loads(input)),
-#     description = "Compare different transport options based on CO2 emissions."
-# )
-
-# supplier_tool = Tool(
-#     name = "SupplierSelector",
-#     func = lambda input: select_supplier(input),
-#     description = "Select suppliers based on region or category."
-# )
-
-
-
-
-
-# TRANSPORT_ACTIVITY_IDS = {
-#     "air": "freight_flight_route_type_international_aircraft_type_widebody",
-#     "sea": "freight_ship_ocean",
-#     "rail": "freight_train",
-#     "road": "freight_truck"
-# }
-
-# # rename to calculate_shipping_emissions and accomodate more parameters:
-# # rename: 
-# # weight to weight_value
-# # distance to distance_value
-# # transport_mode to transport_method
-# def calculate_emissions(distance: float, weight: float, transport_mode: str):
-#     # This function should call the Climatiq API to calculate emissions based on the input data.
-#     try: 
-#         mode = transport_mode.lower()
-#         activity_id = TRANSPORT_ACTIVITY_IDS.get(mode)
-
-#         if not activity_id:
-#             return {
-#                 "error": f"Invalid transport mode: {mode}",
-#                 "message": f"Supported modes: {', '.join(TRANSPORT_ACTIVITY_IDS)}"
-#         }
-
-#         print(f"[TOOL] Calculating emissions for mode: {mode}, activity_id: {activity_id}")
-
-#         headers = {"Authorization": f"Bearer {CLIMATIQ_API_KEY}"}
-#         response = requests.post(
-#             "https://api.climatiq.io/data/v1/estimate",
-#             headers = headers,
-#             # json = input,
-#             json={
-#                 "emission_factor": {
-#                     "activity_id": activity_id,
-#                     "data_version": "^21"
-#                 },
-#                 "parameters": {
-#                     "weight": weight,
-#                     "distance": distance,
-#                     "weight_unit": "kg",
-#                     "distance_unit": "km"
-#                 }
-#             }
-#         )
-    
-#         print(f"[TOOL] API status: {response.status_code}")
-#         print(f"[TOOL] API response: {response.text}")
-
-#         return response.json()
-    
-#     except Exception as e:
-#         print(f"[TOOL] Error calling Climatiq API: {str(e)}")
-#         return {
-#             "error": str(e),
-#             "message": "Failed to calculate emissions. Please check data."
-#         }
-
-#     # return {
-#     #     "co2e": 100.0,
-#     #     "distance": "1902.0 km",
-#     #     "transport_mode": "air",
-#     #     "input": input,
-#     #     "source": "Climatiq"
-#     # }    
-
-#     # return {
-#     #     "co2e": 100.0,
-#     #     "distance": input["distance"],
-#     #     "transport_mode": input["transport_mode"],
-#     #     "weight": input["weight"],
-#     #     # "weight_unit": input.get("weight_unit", "kg"),
-#     #     "input": input,
-#     #     "source": "Climatiq"
-#     # }    
-
 
