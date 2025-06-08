@@ -36,7 +36,7 @@ It combines real emissions APIs, ReAct-style reasoning, and structured tool invo
 | **OpenRouter / OpenAI**   | LLM model serving (configurable)                    |
 | **Carbon Interface + Climatiq API** | Real-time CO₂ emission estimates          |
 | **Transport-mode-aware API calls**     | Distance resolution from city pairs                 |
-| **Caching**       | Persistent in-memory emissions and queries (in-memory/Redis)                          |
+| **Caching**       | Persistent in-memory emissions and queries (in-memory -> Redis)                          |
 | **Fallback Logic**        | Uses IPCC/ECTA factors if APIs fail or exceed limit |
 
 
