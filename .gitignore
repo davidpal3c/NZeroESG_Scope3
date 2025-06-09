@@ -14,6 +14,10 @@ backend/.venv/
 backend/venv/
 backend/env/
 
+nzeroesg-api/.venv/
+nzeroesg-api/venv/
+nzeroesg-api/env/
+
 # Distribution / packaging
 .Python
 build/
@@ -59,7 +63,7 @@ secrets.yml
 
 # macOS
 .DS_Store
-backend/.DS_Store
+nzeroesg-api/.DS_Store
 
 ### IDEs ###
 # VS Code
