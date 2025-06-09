@@ -4,7 +4,7 @@ import axios from 'axios';
 
 export const sendMessage = async (message: string): Promise<string> => {
     try {
-        const response = await axios.post<string>(
+        const response = await axios.post(
             `${process.env.NEXT_PUBLIC_BACKEND_URL}/chat`,
             { message },
             {
