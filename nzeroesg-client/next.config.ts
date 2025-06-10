@@ -1,7 +1,22 @@
-import type { NextConfig } from "next";
+// import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
-  /* config options here */
-};
+// const nextConfig: NextConfig = {
+//   async rewrites() {
+//     return [
+//       // {
+//       //   source: '/user-portal',
+//       //   destination: '/pages/user-portal', 
+//       // }
+//       // {
+//       //   source: "/api/chat",
+//       //   destination: `${process.env.NEXT_PUBLIC_BACKEND_URL}/chat`, // Proxy to Backend
+//       // },
+//       // {
+//       //   source: "/api/health",
+//       //   destination: `${process.env.NEXT_PUBLIC_BACKEND_URL}/health`, // Proxy to Backend
+//       // },
+//     ];
+//   }
+// };
 
-export default nextConfig;
+// export default nextConfig;

@@ -18,7 +18,8 @@
   --border: #d1e7dd;
   --primary: #184235;                 
   --secondary: #01682c;              
-  --tertiary: #a855f7;              
+  --tertiary: #b99100;              
+  /* --tertiary: #a855f7;               */
   --accent: #19a777;                
 }
 
@@ -34,7 +35,7 @@
   --border: #2f4f45;
   --primary: #cdf7e1;               
   --secondary: #04a949;              
-  --tertiary: #c084fc;              
+  --tertiary: #fec800;              
   --accent: #05ad75;                 
 }
 

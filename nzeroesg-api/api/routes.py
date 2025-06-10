@@ -7,7 +7,7 @@ chat_router = APIRouter()
 @chat_router.post("/")
 async def chat(request: Request):
     data = await request.json()
-    user_message = data.get("message")
+    user_message = data.get("input")
 
     print(f"\n>>> Received user message: \n{user_message}\n")
 

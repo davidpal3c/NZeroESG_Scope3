@@ -47,7 +47,6 @@ def load_llm():
 
 
 
-
 # class ChatOpenRouter(ChatOpenAI):
 #     openai_api_key: Optional[SecretStr] = Field(
 #         alias="api_key", default_factory=secret_from_env("OPENROUTER_API_KEY", default=None)

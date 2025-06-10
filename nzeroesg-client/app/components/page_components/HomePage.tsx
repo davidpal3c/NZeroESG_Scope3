@@ -2,40 +2,54 @@
 import Link from "next/link";
 import { useRef } from "react";
 import ThemeToggle from "@/app/components/ThemeToggle";
+import ParticlesContainer from "@/app/components/ParticlesContainer";
 import { featuresData, comingSoonData } from "@/app/lib/data"
+import { useRouter } from "next/navigation";
+
 import { motion, AnimatePresence } from "framer-motion";
+import AboutSection from "@/app/components/page_components/AboutSection";
+
+import ChatBox from "@/app/components/chat_ui/ChatBox";
 
 export default function HomePage() {
   const chatRef = useRef<HTMLDivElement>(null);
+
+  const router = useRouter();
 
   const scrollToChat = () => {
     chatRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-      const navBarLinks = [
-        {
-            "name": "About",
-            "link": "#about"
-        },
-        {
-            "name": "Features",
-            "link": "#features"
-        },
-        {
-            "name": "Roadmap",
-            "link": "#roadmap"
-        },
-        {
-            "name": "API",
-            "link": "#roadmap"
-        },
-        {
-            "name": "Chat",
-            "link": "#chat"
-        }
-    ]
+  const navBarLinks = [
+      {
+          "name": "About",
+          "link": "#about",
+          "type": "hash"
+      },
+      {
+          "name": "Features",
+          "link": "#features",
+          "type": "hash"
+      },
+      {
+          "name": "Roadmap",
+          "link": "#roadmap",
+          "type": "hash"
+      },
+      {
+          "name": "Portal",
+          "link": "/dashboard",
+          "type": "route"
+      },
+      {
+          "name": "Demo",
+          "link": "#demo",
+          "type": "route"
+      }
+  ]
 
-    return (
+
+  return (
     <>
       {/* NAVBAR */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-background shadow-lg dark:shadow-xl dark:shadow-indigo-600 transition-colors">
@@ -44,43 +58,61 @@ export default function HomePage() {
           <div className="flex flex-row justify-center items-center space-x-6 text-sm font-medium">
             {navBarLinks.map((item, index) => (
                 <div key={index}>
+                    {item.type === "hash" ? (
                     <a href={item.link} className="hover:text-secondary text-primary text-[1rem] font-semibold">
                         {item.name}
                     </a>
+                    ) : (
+                      <button
+                        onClick={() => router.push(item.link)}
+                        className="hover:text-secondary text-primary text-[1rem] font-semibold cursor-pointer"
+                      >
+                        {item.name}
+                      </button>
+                    )}
                 </div>
             ))}
-            <Link href="/login" className="bg-accent text-white px-4 py-2 rounded-lg hover:bg-secondary text-secondary text-[1rem] font-semibold">Login</Link>
+            <Link href="/login" className="bg-accent text-white px-4 py-2 rounded-lg hover:bg-secondary text-[1rem] font-semibold">Login</Link>
             <ThemeToggle />
           </div>
         </nav>
       </header>
 
-
       {/* HERO */}
-      <section className="pt-44 pb-26 bg-gradient-to-b from-background via-muted to-card">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <h2 className="text-4xl font-extrabold tracking-tight leading-tight mb-4">
-            <p className="text-primary">Sustainable Sourcing Through <span className="text-accent">Agentic AI</span></p>
-          </h2>
-          <p className="text-lg text-primary max-w-2xl mx-auto">
-            Track emissions, materials, and vendor compliance across your supply chain —
-            interactively and in real time.
-          </p>
-          <button onClick={scrollToChat} className="mt-8 bg-accent dark:bg-muted hover:bg-secondary text-white px-6 py-3 rounded-lg shadow cursor-pointer transition-colors delay-100">
-            Try our Carbon Assistant
-          </button>
-        </div>
-      </section>
+        <section className="relative h-[600px] pt-54 pb-32 bg-gradient-to-b from-background via-muted to-card overflow-hidden">
+            <div className="absolute inset-0 z-0 pointer-events-none">
+                <ParticlesContainer />
+            </div>
+            <motion.div 
+                className="relative z-10 max-w-4xl mx-auto px-6 text-center"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                animate={{ opacity: 1, y: 0 }}
+            >
+              <h2 className="text-4xl text-primary font-extrabold tracking-tight leading-tight mb-4">
+                  Sustainable Sourcing Through <span className="text-accent">Agentic AI</span>
+              </h2>
+              <p className="text-lg text-primary max-w-2xl mx-auto">
+                  Track emissions, materials, and vendor compliance across your supply chain —
+                  interactively and in real time.
+              </p>
+              <button onClick={scrollToChat} className="mt-8 bg-accent dark:bg-muted hover:bg-secondary text-white px-6 py-3 rounded-lg shadow cursor-pointer transition-colors delay-100">
+                  Try our Carbon Assistant
+              </button>
+            </motion.div>
+        </section>
 
 
         {/* ABOUT SECTION */}
-    <section id="about" className="py-24 bg-muted dark:bg-gray-950 transition-colors">
+        <AboutSection />
+        {/* <section id="about" className="py-24 bg-muted dark:bg-gray-950 transition-colors">
         <div className="max-w-5xl mx-auto px-6 text-center">
             <motion.h3
                 className="text-3xl font-extrabold text-primary mb-6"
                 initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
+                whileInView={{ opacity: 4, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.1 }}
             >
                 About NZeroESG
             </motion.h3>
@@ -103,7 +135,7 @@ export default function HomePage() {
                 transition={{ duration: 0.6, delay: 0.2 }}
             >
                 <div className="bg-background border border-border rounded-lg p-6 shadow-sm">
-                    <h4 className="text-lg font-semibold text-accent mb-2">🎯 Our Goal</h4>
+                    <h4 className="text-lg font-semibold text-accent mb-2">🌍 Purpose-Driven Procurement</h4>
                     <p className="text-muted-foreground">
                     Empower procurement and logistics teams to understand the carbon impact of their decisions —
                     from vendor selection to shipment modes — using real-time data and agentic AI.
@@ -135,25 +167,28 @@ export default function HomePage() {
                 </div>
             </motion.div>
         </div>
-        </section>
+        </section> */}
 
 
-      {/* FEATURES */}
-      <section id="features" className="py-20 bg-background">
-        <div className="mt-8 mb-16 max-w-6xl mx-auto px-12 text-center">
-            <h3 className="text-primary text-2xl font-bold mb-10">What You Can Do Today</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left text-sm">
-                {featuresData.map((f, index) => {
-                return (
-                    <div key={index} className="bg-muted p-6 rounded-lg shadow border border-border hover:border-accent cursor-pointer hover:scale-105 transition-colors transition-transform ease-in-out duration-200">
-                    <h4 className="font-semibold mb-2 text-primary font-stretch-110%">{f.icon} {f.title}</h4>
-                    <p className="text-muted-foreground">{f.description}</p>
-                    </div>
-                );
-                } )}
+        {/* CHAT PREVIEW SECTION */}
+
+
+        {/* FEATURES */}
+        <section id="features" className="py-20 bg-background">
+            <div className="mt-8 mb-16 max-w-6xl mx-auto px-12 text-center">
+                <h3 className="text-primary text-2xl font-bold mb-10">What You Can Do Today</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left text-sm">
+                    {featuresData.map((f, index) => {
+                    return (
+                        <div key={index} className="bg-muted p-6 rounded-lg shadow border border-border hover:border-accent cursor-pointer hover:scale-105 transition-colors transition-transform ease-in-out duration-200">
+                        <h4 className="font-semibold mb-2 text-primary font-stretch-110%">{f.icon} {f.title}</h4>
+                        <p className="text-muted-foreground">{f.description}</p>
+                        </div>
+                    );
+                    } )}
+                </div>
             </div>
-        </div>
-      </section>
+        </section>
 
       {/* ROADMAP */}
       <section id="roadmap" className="py-20 bg-gradient-to-bl from-background via-muted to-background">
@@ -199,7 +234,7 @@ export default function HomePage() {
 
       {/* CHAT PREVIEW SECTION */}
       
-      <section id="chat" ref={chatRef} className="py-20 bg-white dark:bg-gray-900 text-center">
+      <section id="demo" ref={chatRef} className="py-20 bg-white dark:bg-gray-900 text-center">
         <div className="max-w-3xl mx-auto px-6">
           <h3 className="text-2xl font-bold mb-4 text-green-700">Try It Out</h3>
           <p className="text-gray-500 dark:text-gray-300 mb-6">
@@ -207,6 +242,7 @@ export default function HomePage() {
           </p>
           <div className="text-gray-400 italic border border-dashed p-12 rounded-lg dark:border-gray-700">
             [ 💬 Chatbot Interface Coming Here Soon ]
+            <ChatBox />
           </div>
         </div>
       </section>
