@@ -20,6 +20,6 @@ app.add_middleware(
 app.include_router(chat_router, prefix="/chat", tags=["chat"])
 
 
-@app.get("/")
+@app.get("/health")
 async def root():
     return {"message": "Health check successful!"}
