@@ -32,10 +32,10 @@ export default function ThemeToggle() {
         {isDark ? (
           <motion.span
             key="sun"
-            initial={{ rotate: -90, opacity: 0 }}
+            initial={{ rotate: -120, opacity: 0 }}
             animate={{ rotate: 0, opacity: 1 }}
             exit={{ rotate: 90, opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
           >
             <SunIcon className="w-5 h-5 text-yellow-400"/>
           </motion.span>

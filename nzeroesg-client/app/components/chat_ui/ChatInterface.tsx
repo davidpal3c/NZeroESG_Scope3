@@ -8,7 +8,7 @@ interface Message {
 }
 
 // export default function ChatBox({ apiUrl }: { apiUrl: string })
-export default function ChatBox() {
+export default function ChatInterface() {
     const [messages, setMessages ] = useState<Message[]>([]);
     const [input, setInput] = useState("");
     const [ chatOpen, setChatOpen ] = useState(false);
@@ -83,13 +83,12 @@ export default function ChatBox() {
             ) : (
                 <button onClick={toggleChat} 
                     className="group fixed bottom-4 right-4 bg-background p-3 rounded-full shadow-lg transition-colors
-                    border border-border hover:bg-green-700 hover:border-primary focus:ring-offset-2 cursor-pointer"
+                    border border-border hover:bg-accent hover:border-primary focus:ring-offset-2 cursor-pointer"
                 >
-                    <EnergySavingsLeafIcon className="text-green-500 text-2xl transition-colors group-hover:text-white" />
+                    <EnergySavingsLeafIcon className="text-accent text-2xl transition-colors group-hover:text-white" />
                 </button>
-            )}
+            )}x
         </div>
-        
     );
 }
 
