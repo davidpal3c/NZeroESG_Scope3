@@ -1,3 +1,12 @@
+const path = require("path");
+
+module.exports = {
+  webpack: (config: any) => {
+    config.resolve.alias['@'] = path.resolve(__dirname);
+    return config;
+  },
+};
+
 // import type { NextConfig } from "next";
 
 // const nextConfig: NextConfig = {
