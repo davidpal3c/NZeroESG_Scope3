@@ -1,0 +1,24 @@
+name: CI/CD Pipeline (NZeroESG)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy-backend:
+    name: Deploy Backend (FastAPI)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render Deploy
+        run: |
+          curl -X POST "https://api.render.com/deploy/srv-RENDER_SERVICE_ID_NZEROESG_API?key=${{ secrets.RENDER_API_KEY }}"
+
+  deploy-frontend:
+    name: Deploy Frontend (Next.js)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render Deploy
+        run: |
+          curl -X POST "https://api.render.com/deploy/srv-RENDER_SERVICE_ID_NZEROESG_CLIENT?key=${{ secrets.RENDER_API_KEY }}"
