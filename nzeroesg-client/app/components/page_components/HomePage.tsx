@@ -4,7 +4,6 @@ import { useRef } from "react";
 import ThemeToggle from "@/app/components/ThemeToggle";
 import HeroSection from "@/app/components/page_components/HeroSection";
 import AboutSection from "@/app/components/page_components/AboutSection";
-import ParticlesContainer from "@/app/components/ParticlesContainer";
 import { featuresData, comingSoonData } from "@/app/lib/data";
 import { useRouter } from "next/navigation";
 
