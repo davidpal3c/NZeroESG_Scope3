@@ -85,6 +85,7 @@ It combines real emissions APIs, ReAct-style reasoning, and structured tool invo
 - [ ] Vector DB integration (RAG): ESG policy / vendor PDF retrieval
 - [ ] Vendor compliance checker: e.g., match vendor to sustainability policies
 - [ ] **LangChain Expression Language (LCEL)** dynamically adjust agent behavior
+and more!...
 
 
 #### Extended Use Cases 
