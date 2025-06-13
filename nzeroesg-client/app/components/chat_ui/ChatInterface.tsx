@@ -46,7 +46,7 @@ export default function ChatInterface() {
     return (
         <div>
             { chatOpen ? (
-                <div className="fixed bottom-4 right-4 w-96 bg-white shadow-xl rounded-xl border border-gray-300 overflow-hidden text-sm">
+                <div className="fixed bottom-4 right-4 z-50 w-96 bg-white shadow-xl rounded-xl border border-gray-300 overflow-hidden text-sm">
                     <div className='bg-gray-100 border-b border-gray-300 flex items-center justify-between'>
                         <div></div>
                         <div className="p-3 font-semibold">Carb0n Ai Assistant</div>
@@ -82,7 +82,7 @@ export default function ChatInterface() {
                 </div>
             ) : (
                 <button onClick={toggleChat} 
-                    className="group fixed bottom-4 right-4 bg-background p-3 rounded-full shadow-lg transition-colors
+                    className="group fixed bottom-4 right-4 z-50 bg-background p-3 rounded-full shadow-lg transition-colors
                     border border-border hover:bg-accent hover:border-primary focus:ring-offset-2 cursor-pointer"
                 >
                     <EnergySavingsLeafIcon className="text-accent text-2xl transition-colors group-hover:text-white" />

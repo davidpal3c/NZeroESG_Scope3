@@ -49,7 +49,7 @@ export const comingSoonData = [
     },
     {
         id: 5,
-        title: "API for Embeddable Chat Interface",
+        title: "API for Embeddable Assistant Interface",
         icon: "🔌",
         description: "Enable 3rd-party integration of the carbon assistant with secure API keys."
     },
