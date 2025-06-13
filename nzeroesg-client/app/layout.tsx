@@ -29,6 +29,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased scroll-smooth`}
       >
         <Providers>
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-blue-500 text-white text-center p-4">
+            <p className="text-sm">
+                This is an agentic-ai system prototype. The project is currently under development.
+            </p>
+          </div>
           {children}
         </Providers>
       </body>
