@@ -52,7 +52,7 @@ export default function HomePage() {
   return (
     <>
       {/* NAVBAR */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-background shadow-lg dark:shadow-xl dark:shadow-indigo-600 transition-colors">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-transparent backdrop-blur-xs shadow-lg dark:shadow-xl dark:shadow-indigo-600 transition-colors">
         <nav className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <a href="#" className="text-2xl font-bold text-primary tracking-tight">🌱 NZeroESG</a>
           <div className="flex flex-row justify-center items-center space-x-6 text-sm font-medium">
