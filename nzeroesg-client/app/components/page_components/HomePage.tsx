@@ -1,6 +1,6 @@
 "use client"
 import Link from "next/link";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import ThemeToggle from "@/app/components/ThemeToggle";
 import HeroSection from "@/app/components/page_components/HeroSection";
 import AboutSection from "@/app/components/page_components/AboutSection";
@@ -13,6 +13,7 @@ import ChatInterface from "@/app/components/chat_ui/ChatInterface";
 
 export default function HomePage() {
   const chatRef = useRef<HTMLDivElement>(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const router = useRouter();
 
@@ -40,19 +41,21 @@ export default function HomePage() {
           "name": "Portal",
           "link": "/dashboard",
           "type": "route"
-      },
-      {
-          "name": "Demo",
-          "link": "#demo",
-          "type": "route"
       }
   ]
 
+  const handleOpenChat = () => {
+    setIsChatOpen(true);
+    
+    setTimeout(() => {
+      scrollToChat();
+    }, 50); 
+  }
 
   return (
     <>
       {/* NAVBAR */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-transparent backdrop-blur-xs shadow-lg dark:shadow-xl dark:shadow-indigo-600 transition-colors">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-transparent backdrop-blur-sm shadow-lg dark:shadow-xl dark:shadow-indigo-600 transition-colors">
         <nav className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <a href="#" className="text-2xl font-bold text-primary tracking-tight">🌱 NZeroESG</a>
           <div className="flex flex-row justify-center items-center space-x-6 text-sm font-medium">
@@ -72,6 +75,12 @@ export default function HomePage() {
                     )}
                 </div>
             ))}
+            <button
+              onClick={handleOpenChat}
+              className="hover:text-secondary text-primary text-[1rem] font-semibold cursor-pointer"
+            >
+              Try
+            </button>
             <Link href="/login" className="bg-accent text-white px-4 py-2 rounded-lg hover:bg-secondary text-[1rem] font-semibold">Login</Link>
             <ThemeToggle />
           </div>
@@ -236,25 +245,13 @@ export default function HomePage() {
             <div className="p-3 bg-background rounded transition-colors">
               <span className="text-primary">Test card 3 - Traditional Tailwind dark mode</span>
             </div>
-          </div>
+          </div>  
         </div>
       </main> */}
-
-      {/* CHAT PREVIEW SECTION */}
+      <div>
+        <ChatInterface initialOpen={isChatOpen} onOpenChange={setIsChatOpen} />
+      </div>
       
-      <section id="demo" ref={chatRef} className="py-20 bg-white dark:bg-gray-900 text-center">
-        <div className="max-w-3xl mx-auto px-6">
-          <h3 className="text-2xl font-bold mb-4 text-green-700">Try It Out</h3>
-          <p className="text-gray-500 dark:text-gray-300 mb-6">
-            This is an early-stage prototype. Expect active development and new tools soon!
-          </p>
-          <div className="text-gray-400 italic border border-dashed p-12 rounded-lg dark:border-gray-700">
-            [ Embeddable Chatbot Interface Coming Here Soon ]
-            <ChatInterface />
-          </div>
-        </div>
-      </section>
-
       {/* FOOTER */}
       <footer className="bg-gray-100 dark:bg-gray-800 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
         © {new Date().getFullYear()} NZeroESG · Made for sustainable supply chains
@@ -262,93 +259,3 @@ export default function HomePage() {
     </>
   );
 }
-
-//   return (
-//     <div className="min-h-screen transition-colors bg-white text-gray-800 dark:bg-gray-900 dark:text-gray-100">
-//       {/* Navbar */}
-//        <nav className="bg-card border-b border-border p-4 flex justify-between items-center transition-colors">
-//         <h1 className="text-xl font-bold text-primary">🌱 NZeroESG</h1>
-//         <div className="space-x-4 flex items-center">
-//           <Link href="#about">
-//             <span className="text-primary dark:text-[var(--accent)] hover:text-foreground cursor-pointer transition-colors">
-//               About
-//             </span>
-//           </Link>
-//           <Link href="/login">
-//             <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl transition-colors">
-//               Login
-//             </button>
-//           </Link>
-//           <ThemeToggle /> 
-//         </div>
-//       </nav>
-      
-
-//       {/* Hero Section */}
-//       <section className="text-center py-20 px-6 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200">
-//         <h2 className="text-4xl font-bold text-gray-800 mb-4">
-//           Empower Your Procurement with <span className="text-green-700">AI-Driven Sustainability</span>
-//         </h2>
-//         <p className="max-w-xl mx-auto text-gray-600 text-lg mb-8">
-//           NZeroESG helps you track and reduce carbon emissions across suppliers and shipments — 
-//           interactively and intelligently. Make procurement decisions that are both eco-conscious and cost-effective.
-//         </p>
-//         <button
-//           onClick={scrollToChat}
-//           className="bg-green-700 text-white px-6 py-3 rounded-xl hover:bg-green-800"
-//         >
-//           Try our Agentic Ai Chatbot
-//         </button>
-//       </section>
-
-
-//       {/* Content area */}
-      // <main className="container mx-auto px-4 py-8">
-      //   <div className="bg-card border border-border rounded-lg shadow-lg p-6 mb-6 transition-colors">
-      //     <h2 className="text-2xl font-bold text-card-foreground mb-4">
-      //       Welcome to NZeroESG
-      //     </h2>
-      //     <p className="text-muted-foreground mb-4">
-      //       This is a test paragraph to see if the dark mode is working properly. 
-      //       The background should change when you toggle between light and dark modes.
-      //     </p>
-      //     <div className="space-y-2">
-      //       <div className="p-3 bg-muted rounded transition-colors">
-      //         <span className="text-[var(--primary)]">Test card 1 - Using custom properties</span>
-      //       </div>
-      //       <div className="p-3 bg-background rounded transition-colors">
-      //         <span className="text-[var(--accent)]">Test card 2 - Using Tailwind classes</span>
-      //       </div>
-      //       <div className="p-3 bg-background rounded transition-colors">
-      //         <span className="text-primary">Test card 3 - Traditional Tailwind dark mode</span>
-      //       </div>
-      //     </div>
-      //   </div>
-      // </main>
-
-//       {/* About Section */}
-//       <section id="about" className="bg-white py-16 px-6">
-//         <div className="max-w-4xl mx-auto text-center">
-//           <h3 className="text-2xl font-semibold text-gray-800 mb-4">What Can It Do?</h3>
-//           <div className="flex justify-center mb-6">
-//             <p className="text-gray-600 text-md leading-relaxed justify-items-start">
-//               🟢 Calculate real-time CO₂ emissions from shipping, procurement, and logistics.<br />
-//               🧠 Use an intelligent chatbot to get greener alternatives for your shipments.<br />
-//               📉 Visualize emission reductions with easy-to-understand comparisons.<br />
-//               🔁 Track and compare suppliers by region, emission profile, or transport mode.<br />
-//               🌍 Built with Agentic AI, FastAPI, LangChain, and real emission APIs like Climatiq and Carbon Interface.
-//             </p>
-
-//           </div>
-//         </div>
-//       </section>
-
-//       {/* Placeholder for Chat Section */}
-//       <section ref={chatRef} className="min-h-[500px] bg-gray-100 p-8">
-//         <h4 className="text-xl font-semibold text-gray-700 text-center mb-4">Chat Assistant (Coming Below)</h4>
-//         {/* Later insert <ChatWindow /> or full chatbot SPA here */}
-//         <div className="text-center text-gray-400 italic">[ Chatbot will appear here ]</div>
-//       </section>
-//     </div>
-//   );
-// }
