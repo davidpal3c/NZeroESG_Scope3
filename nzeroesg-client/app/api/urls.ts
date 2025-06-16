@@ -1,1 +1,3 @@
-export const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL
+export const getBackendUrl = () => {
+    return process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+};
