@@ -19,7 +19,8 @@ It combines real emissions APIs, ReAct-style reasoning, and structured tool invo
 
 <br>
 
-[Live Demo](https://nzeroesg-client.onrender.com/): Please be patient with me, I'll take less than a minute to load. I'm still deployed on a free tier :)
+[Live Demo](https://nzeroesg-client.onrender.com/)
+<!-- Please be patient with me, I'll take less than a minute to load. I'm still deployed on a free tier :) -->
 
 ---
 ### The LangChain’s agent is not just answering questions — it’s:
