@@ -31,7 +31,6 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const handleSendMessage = async (message: string) => {
-        console.log('Sending message (chat interface):', message);
         const newMessages = [...messages, { role: 'user' as const, content: message, timestamp: new Date() }];
         setMessages(newMessages);     
         setIsLoading(true);
