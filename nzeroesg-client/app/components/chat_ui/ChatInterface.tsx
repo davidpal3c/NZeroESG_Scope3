@@ -73,15 +73,17 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
 
     useEffect(() => {
         setIsOpen(initialOpen)
-
-        // debugging
-        console.log("Backend URL:", process.env.NEXT_PUBLIC_BACKEND_URL);
-        console.log("Backend URL:", backendUrl);
     }, [initialOpen])
 
     useEffect(() => {
         scrollToBottom();
     }, [messages, isLoading])
+
+    useEffect(() => {
+        // debugging
+        console.log("Backend URL:", process.env.NEXT_PUBLIC_BACKEND_URL);
+        console.log("Backend URL:", backendUrl);
+    }, [backendUrl])
 
     return (
     <div>
