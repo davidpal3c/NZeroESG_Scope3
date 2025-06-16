@@ -26,6 +26,6 @@ async def chat(request: Request):
     return {"reply": response}
 
 
-@chat_router.get("/")
+@chat_router.get("/health")
 async def health_check():
     return {"status": "ok", "message": "NZeroESG-api service is running!"}
