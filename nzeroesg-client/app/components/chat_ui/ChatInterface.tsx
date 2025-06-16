@@ -4,6 +4,7 @@ import EnergySavingsLeafIcon from '@mui/icons-material/EnergySavingsLeaf';
 import { timeStamp } from 'console';
 // import { Message } from "@/app/types/chat"
 import ChatInput from './ChatInput';
+import { backendUrl } from '@/app/api/urls'; // Adjust the import path as needed
 
 interface Message {
     role: "user" | "agent";
@@ -37,7 +38,7 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
 
         try {
             const response = await axios.post(
-                `${process.env.NEXT_PUBLIC_BACKEND_URL}/chat`,
+                `${backendUrl}/chat`,
                     { message },
                     {
                         headers: {
@@ -72,6 +73,10 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
 
     useEffect(() => {
         setIsOpen(initialOpen)
+
+        // debugging
+        console.log("Backend URL:", process.env.NEXT_PUBLIC_BACKEND_URL);
+        console.log("Backend URL:", backendUrl);
     }, [initialOpen])
 
     useEffect(() => {
