@@ -14,6 +14,7 @@ export default function ChatInput({ sendMessage, disabled }: ChatInputProps) {
     
     const handleSend = () => {
         if (input.trim() && !disabled) {
+            console.log('Sending message (chat input):', input);
             sendMessage(input); 
             setInput('');
 

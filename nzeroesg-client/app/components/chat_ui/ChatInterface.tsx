@@ -28,8 +28,10 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
     const [isLoading, setIsLoading] = useState(false);
     const [isOpen, setIsOpen] = useState(false);                
     const chatRef = useRef<HTMLDivElement>(null);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const handleSendMessage = async (message: string) => {
+        console.log('Sending message (chat interface):', message);
         const newMessages = [...messages, { role: 'user' as const, content: message, timestamp: new Date() }];
         setMessages(newMessages);     
         setIsLoading(true);
@@ -48,9 +50,7 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
             const data = await response.data;
 
             // TODO: change for server-side timestamp
-            // data.timestamp = 
-            
-                
+            // data.timestamp =             
             console.log('Response from server:', data);
             setMessages([...newMessages, { role: 'agent' as const, content: data.reply.output, timestamp: new Date() }]);
         } catch (error) {
@@ -62,6 +62,10 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
         }
     }
 
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+
     const handleToggleChat = (newState: boolean) => {
         setIsOpen(newState);
         onOpenChange?.(newState);        
@@ -70,6 +74,10 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
     useEffect(() => {
         setIsOpen(initialOpen)
     }, [initialOpen])
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages, isLoading])
 
     return (
     <div>
@@ -108,8 +116,8 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
                     <div
                     className={`max-w-[80%] px-4 py-2 rounded-2xl ${
                         msg.role === 'user'
-                        ? 'bg-blue-100 text-right'
-                        : 'bg-green-100 text-left'
+                        ? 'bg-indigo-200 text-right'
+                        : 'bg-emerald-200 text-left'
                     }`}
                     >
                         <strong className="block text-gray-700 text-xs mb-1">
@@ -124,6 +132,7 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
                             })}
                         </div>
                     </div>
+                    <div ref={messagesEndRef}></div>
                 </div>
                 ))}
             </div>
