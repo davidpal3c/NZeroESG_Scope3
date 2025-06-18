@@ -38,18 +38,23 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
         setIsLoading(true);
 
         try {
+            // debugging 
+            const resolvedUrl = `${getBackendUrl()}/chat`;
+            console.log("Final Axios Target:", resolvedUrl);
+            
             const response = await axios.post(
-                `${getBackendUrl()}/chat`,
-                    { message },
-                    {
-                        headers: {
-                            'Content-Type': 'application/json',
-                        }
+                resolvedUrl,
+                { message },
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
                     }
-                );  
+                }
+            );  
 
             const data = await response.data;
 
+            
             // TODO: change for server-side timestamp
             // data.timestamp =             
             console.log('Response from server:', data);
@@ -82,7 +87,7 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
 
     useEffect(() => {
         const backend = getBackendUrl();
-        console.log("✅ Final Backend URL:", backend);
+        console.log("Final Backend URL:", backend);
         if (!backend.startsWith("https://")) {
             alert("backend starts with http://");
         }
