@@ -81,10 +81,12 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
     }, [messages, isLoading])
 
     useEffect(() => {
-        // debugging
-        console.log("Backend URL:", process.env.NEXT_PUBLIC_BACKEND_URL);
-        console.log("Backend URL:", getBackendUrl());
-    }, [])
+        const backend = getBackendUrl();
+        console.log("✅ Final Backend URL:", backend);
+        if (!backend.startsWith("https://")) {
+            alert("backend starts with http://");
+        }
+    }, []);
 
     return (
     <div>
