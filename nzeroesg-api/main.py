@@ -11,7 +11,8 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],                                # Changing to specific origins in production
+    # allow_origins=["*"],                                # Changing to specific origins in production
+    allow_origins=["https://nzeroesg-api.onrender.com", "http://localhost:8000"],                                # Changing to specific origins in production
     allow_credentials=True,                             # Allow credentials (cookies, authorization headers, etc.)   
     allow_methods=["*"],                                # Allow all HTTP methods
     allow_headers=["*"],                                # Allow all headers
