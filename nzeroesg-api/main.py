@@ -1,11 +1,11 @@
 from fastapi import FastAPI
 from api.routes import chat_router
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
+# from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 
 app = FastAPI()
 
-app.add_middleware(HTTPSRedirectMiddleware)
+# app.add_middleware(HTTPSRedirectMiddleware)
 
 origins = [
     "https://nzeroesg-client.onrender.com",
@@ -27,4 +27,4 @@ app.include_router(chat_router, prefix="/chat", tags=["chat"])
 
 @app.get("/health")
 async def root():
-    return {"message": "Health check successful!"}
+    return {"message": "Health check successful"}
