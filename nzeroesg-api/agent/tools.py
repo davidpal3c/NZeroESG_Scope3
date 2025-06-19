@@ -313,8 +313,10 @@ class SupplierInput(BaseModel):
 
 def select_supplier(input: SupplierInput):
     try:
+        # extend to vectorDB search for suppliers (private knowledge base)
         with open("nzeroesg-api/data/suppliers.json", "r") as file:
             suppliers = json.load(file)
+
         return [s for s in suppliers if s["region"].lower() == input.region.lower()]
         # return json.dumps([ s for s in suppliers if s["region"] == criteria["region"] ])
     except Exception as e:
