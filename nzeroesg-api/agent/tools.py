@@ -1,6 +1,8 @@
 import json
 import requests
 from langchain.tools import StructuredTool
+from langchain.tools import Tool
+from rag.supplier_chain import query_suppliers_rag
 from pydantic import BaseModel, Field
 from config import CLIMATIQ_API_KEY, CARBON_INTERFACE_API_KEY
 from agent.cache import make_cache_key, _emissions_cache, debug_registry
@@ -307,20 +309,29 @@ def summarize_emissions(results, weight_value, weight_unit, distance_value, dist
 
 
 # ===== Supplier Selector Tool =====
-class SupplierInput(BaseModel):
-    region: str = Field(..., description="Region to filter suppliers by")
+# class SupplierInput(BaseModel):
+#     region: str = Field(..., description="Region to filter suppliers by")
 
 
-def select_supplier(input: SupplierInput):
-    try:
-        # extend to vectorDB search for suppliers (private knowledge base)
-        with open("nzeroesg-api/data/suppliers.json", "r") as file:
-            suppliers = json.load(file)
+# def select_supplier(input: SupplierInput):
+#     try:
+#         # extend to vectorDB search for suppliers (private knowledge base)
+#         with open("nzeroesg-api/data/suppliers.json", "r") as file:
+#             suppliers = json.load(file)
 
-        return [s for s in suppliers if s["region"].lower() == input.region.lower()]
-        # return json.dumps([ s for s in suppliers if s["region"] == criteria["region"] ])
-    except Exception as e:
-        return {"error": str(e), "message": "Could not load suppliers."}
+#         return [s for s in suppliers if s["region"].lower() == input.region.lower()]
+#         # return json.dumps([ s for s in suppliers if s["region"] == criteria["region"] ])
+#     except Exception as e:
+#         return {"error": str(e), "message": "Could not load suppliers."}
+
+
+semantic_supplier_tool = Tool(
+    name="SupplierSelectorRAG",
+    func=lambda q: json.dumps(query_suppliers_rag(q, top_k=3)),
+    description="Query suppliers based on region, transport mode, description, certifications, " \
+    "carbon emissions per kg, esg rating, or other criteria using RAG (Retrieval-Augmented-Generation) " \
+    "search. Input should be a natural language query about suppliers (e.g., 'Find suppliers in Europe')."
+)
 
 
 # langchain tools
@@ -345,10 +356,10 @@ compare_shipping_emissions = StructuredTool.from_function(
     args_schema=CompareInput
 )
 
-supplier_tool = StructuredTool.from_function(
-    name="SupplierSelector",
-    description="Select suppliers based on region. Input should include the region name.",
-    func=select_supplier,
-    args_schema=SupplierInput
-)
+# supplier_tool = StructuredTool.from_function(
+#     name="SupplierSelector",
+#     description="Select suppliers based on region. Input should include the region name.",
+#     func=select_supplier,
+#     args_schema=SupplierInput
+# )
 

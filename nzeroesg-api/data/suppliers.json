@@ -3,9 +3,9 @@
     "name": "EcoWrap Ltd",
     "region": "Canada",
     "description": "ISO 14001 certified supplier offering biodegradable packaging. Ships via rail and sea freight.",
-    "certifications": ["ISO 14001", "Cradle to Cradle Bronze"],
-    "materials": ["biodegradable polymer", "recycled cardboard"],
-    "transport_modes": ["rail", "ship"],
+    "certifications": "ISO 14001, Cradle to Cradle Bronze",
+    "materials": "biodegradable polymer, recycled cardboard",
+    "transport_modes": "rail, ship",
     "carbon_emissions_per_shipment_kg": 45.6,
     "delivery_time_days": 5,
     "esg_rating": 8.9,
@@ -16,9 +16,9 @@
     "name": "GreenBox Asia",
     "region": "Singapore",
     "description": "Low-carbon transport options and compostable packaging for retail supply chains.",
-    "certifications": ["B Corp", "SG Green Label"],
-    "materials": ["compostable mailers", "PLA bioplastic"],
-    "transport_modes": ["ship", "truck"],
+    "certifications": "B Corp, SG Green Label",
+    "materials": "compostable mailers, PLA bioplastic",
+    "transport_modes": "ship, truck",
     "carbon_emissions_per_shipment_kg": 62.3,
     "delivery_time_days": 12,
     "esg_rating": 8.2,
@@ -29,9 +29,9 @@
     "name": "SustainaEurope",
     "region": "Germany",
     "description": "Certified with EU EcoLabel, supports ocean freight to reduce emissions. Supplies recycled paper packaging.",
-    "certifications": ["EU EcoLabel", "FSC"],
-    "materials": ["recycled paper", "corrugated cardboard"],
-    "transport_modes": ["ship"],
+    "certifications": "EU EcoLabel, FSC",
+    "materials": "recycled paper, corrugated cardboard",
+    "transport_modes": "ship",
     "carbon_emissions_per_shipment_kg": 30.1,
     "delivery_time_days": 9,
     "esg_rating": 9.3,
@@ -39,22 +39,3 @@
     "contact_email": "info@sustaineurope.de"
   }
 ]
-
-
-// [
-//   {
-//     "name": "EcoWrap Ltd",
-//     "region": "Canada",
-//     "description": "ISO 14001 certified supplier offering biodegradable packaging. Ships via rail and sea freight."
-//   },
-//   {
-//     "name": "GreenBox Asia",
-//     "region": "Singapore",
-//     "description": "Low-carbon transport options and compostable packaging for retail supply chains."
-//   },
-//   {
-//     "name": "SustainaEurope",
-//     "region": "Germany",
-//     "description": "Certified with EU EcoLabel, supports ocean freight to reduce emissions. Supplies recycled paper packaging."
-//   }
-// ]
