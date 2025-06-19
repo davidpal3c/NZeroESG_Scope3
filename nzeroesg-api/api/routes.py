@@ -21,9 +21,24 @@ async def chat(request: Request):
     })
     
     # response = await agent.arun(input=user_message)
-    print(f"[DEBUG] Agent Response: {response}")
+    # print(f"[DEBUG] Agent Response: {response}")
 
+    try:
+        if isinstance(response, str) and response.startswith("{"):
+            parsed = json.loads(response)
+        else:
+            parsed = response
+
+        print("[DEBUG] Agent Response (Pretty JSON):\n")
+        print(json.dumps(parsed, indent=2))
+    except Exception as e:
+        print("[DEBUG] Agent Response (Raw):")
+        print(response)
+        print(f"[DEBUG] Error during JSON formatting: {e}")
+
+ 
     return {"reply": response}
+
 
 
 @chat_router.get("/health")
