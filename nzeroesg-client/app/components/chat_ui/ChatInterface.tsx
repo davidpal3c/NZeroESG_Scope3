@@ -40,31 +40,19 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
         try {
             // debugging 
             const resolvedUrl = `${getBackendUrl()}/chat`;
-            console.log("Final fetch Target:", resolvedUrl);
+            console.log("Final Axios Target:", resolvedUrl);
             
-            // const response = await axios.post(
-            //     resolvedUrl,
-            //     { message },
-            //     {
-            //         headers: {
-            //             'Content-Type': 'application/json',
-            //         }
-            //     }
-            // );  
+            const response = await axios.post(
+                resolvedUrl,
+                { message },
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                }
+            );  
 
-            const response = await fetch(resolvedUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ message }),      
-            });
-
-            const data = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(data.error || 'Failed to fetch response from server');
-            }
+            const data = await response.data;
 
             // TODO: change for server-side timestamp
             // data.timestamp =             
