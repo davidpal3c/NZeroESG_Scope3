@@ -1,8 +1,11 @@
 from fastapi import FastAPI
 from api.routes import chat_router
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 
 app = FastAPI()
+
+app.add_middleware(HTTPSRedirectMiddleware)
 
 origins = [
     "https://nzeroesg-client.onrender.com",

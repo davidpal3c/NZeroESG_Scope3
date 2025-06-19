@@ -26,13 +26,13 @@ def main():
     try:
         response.raise_for_status()
         data = response.json()
-        print("\n✅ Success! Agent replied:")
+        print("\nSuccess! Agent replied:")
         print(json.dumps(data, indent=2))
     except requests.exceptions.HTTPError as e:
-        print("\n❌ HTTP Error:")
+        print("\nHTTP Error:")
         print(response.status_code, response.text)
     except Exception as e:
-        print("\n❌ Unexpected error:")
+        print("\nUnexpected error:")
         print(str(e))
 
 if __name__ == "__main__":
