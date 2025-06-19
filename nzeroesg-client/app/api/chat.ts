@@ -1,7 +1,5 @@
 import axios from 'axios';
 
-
-
 export const sendMessage = async (message: string): Promise<string> => {
     try {
         const response = await axios.post(
