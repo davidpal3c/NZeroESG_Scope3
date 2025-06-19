@@ -21,8 +21,14 @@ WORKDIR /app
 
 COPY --from=builder /app ./
 
-ENV PORT=3000
+# ENV PORT=3000
 
-EXPOSE 3000
+# EXPOSE 3000
+# Using whatever port Render gives (default 10000), fallback 3000
+ENV PORT=10000
 
-CMD ["npm", "run", "start"]
+EXPOSE 10000
+
+
+# CMD ["npm", "run", "start"]
+CMD ["sh", "-c", "PORT=${PORT:-3000} npm run start"]
