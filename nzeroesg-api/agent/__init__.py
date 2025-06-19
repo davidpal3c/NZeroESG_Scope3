@@ -1,6 +1,6 @@
 from langchain.agents import create_structured_chat_agent, AgentExecutor
 from langchain import hub
-from agent.tools import emissions_tool, supplier_tool, compare_shipping_emissions, distance_tool
+from agent.tools import emissions_tool, compare_shipping_emissions, distance_tool, semantic_supplier_tool
 from agent.memory import memory
 from agent.llm import load_llm
 from agent.prompts import initial_prompt
@@ -8,7 +8,7 @@ from agent.prompts import initial_prompt
 
 
 async def build_agent():
-    tools = [emissions_tool, supplier_tool, compare_shipping_emissions, distance_tool]
+    tools = [emissions_tool, compare_shipping_emissions, distance_tool, semantic_supplier_tool]
     llm = load_llm()
 
     print(f"...BUILDING AGENT...\n")
