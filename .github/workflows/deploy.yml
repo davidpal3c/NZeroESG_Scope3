@@ -13,7 +13,7 @@ jobs:
     steps:
       - name: Trigger Render Deploy
         run: |
-          curl -X POST "https://api.render.com/deploy/srv-RENDER_SERVICE_ID_NZEROESG_API?key=${{ secrets.RENDER_API_KEY }}"
+          curl -X POST "https://api.render.com/deploy/srv-d14ot7gdl3ps738gd9pg?key=MrBvopCi3X8?key=${{ secrets.RENDER_API_KEY }}"
 
   deploy-frontend:
     name: Deploy Frontend (Next.js)
@@ -21,4 +21,4 @@ jobs:
     steps:
       - name: Trigger Render Deploy
         run: |
-          curl -X POST "https://api.render.com/deploy/srv-RENDER_SERVICE_ID_NZEROESG_CLIENT?key=${{ secrets.RENDER_API_KEY }}"
+          curl -X POST "https://api.render.com/deploy/srv-d14pgqumcj7s73feghf0?key=285fqqE0lzI?key=${{ secrets.RENDER_API_KEY }}"
