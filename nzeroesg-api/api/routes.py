@@ -37,7 +37,14 @@ async def chat(request: Request):
         print(f"[DEBUG] Error during JSON formatting: {e}")
 
  
-    return {"reply": response}
+    try:
+        parsed = json.loads(response)
+        return {
+            "reply": parsed["summary"],
+            "raw": parsed
+        }
+    except Exception:
+        return { "reply": response }
 
 
 

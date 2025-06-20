@@ -333,11 +333,15 @@ def summarize_emissions(results, weight_value, weight_unit, distance_value, dist
 #     "search. Input should be a natural language query about suppliers (e.g., 'Find suppliers in Europe')."
 # )
 
+def structured_supplier_query(query: str) -> str:
+    result = query_suppliers_rag(query, top_k=3)
+    return json.dumps(result, indent=2)
 
 
 semantic_supplier_tool = Tool(
     name="SmartSupplierSearch - RAG",
-    func=lambda q: json.dumps(query_suppliers_rag(q, top_k=3), indent=2),
+    func=structured_supplier_query,
+    # func=lambda q: json.dumps(query_suppliers_rag(q, top_k=3), indent=2),
     description="Query suppliers based on region, transport mode, description, certifications, " \
     "carbon emissions per kg, esg rating, or other criteria using RAG (Retrieval-Augmented-Generation) " \
     "search. Input should be a natural language query about suppliers (e.g., 'Find suppliers in Europe')."
