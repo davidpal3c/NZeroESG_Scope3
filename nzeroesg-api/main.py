@@ -6,6 +6,7 @@ app = FastAPI()
 
 
 origins = [
+    "https://n-zero-esg-scope3.vercel.app/",
     "https://nzeroesg-client.onrender.com",
     "http://nzeroesg-client.onrender.com",
     "http://localhost:3000",    
