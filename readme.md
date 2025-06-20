@@ -20,8 +20,9 @@ This AI agent aims to make carbon intelligence **interactive** and **data-backed
 It combines real emissions APIs, vector-based document search (RAG), and structured tool invocation to provide trustworthy, data-driven responses.
 
 <br>
-
-[Live Demo](https://nzeroesg-client.onrender.com/)
+<!-- 
+[Live Demo](https://nzeroesg-client.onrender.com/) -->
+[Live Demo](https://n-zero-esg-scope3.vercel.app/)
 <!-- Please be patient with me, I'll take less than a minute to load. I'm still deployed on a free tier :) -->
 
 ---
