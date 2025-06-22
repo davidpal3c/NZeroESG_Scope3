@@ -9,6 +9,8 @@ services:
     env_file:
       - ./nzeroesg-api/.env
     restart: always
+    depends_on:
+      - chroma
 
   frontend:
     build:
@@ -16,9 +18,26 @@ services:
       dockerfile: Dockerfile
     container_name: nzeroesg-frontend
     ports:
-      - "3000:3000"
+      - "3000:3000"   
     env_file:
       - ./nzeroesg-client/.env.local
     restart: always
     depends_on:
       - backend
+
+  chroma: 
+    image: chromadb/chroma:latest
+    container_name: nzeroesg-chroma
+    ports:
+      - "8001:8000"                 # expose on 8001 externally, 8000 internally
+    volumes:
+      - ./chroma_storage:/chroma_storage
+    environment:
+      - IS_PERSISTENT=TRUE 
+    
+
+    # environment:
+    #   - CHROMA_DATABASE_DIR=/data    
+    #   - CHROMA_PERSISTENCE_DIR=/data.  
+    # volumes:
+    #   - chroma_data:/data
