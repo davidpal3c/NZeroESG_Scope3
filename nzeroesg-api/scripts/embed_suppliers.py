@@ -23,6 +23,7 @@ def load_suppliers():
 if __name__ == "__main__":
     os.makedirs(VECTOR_DB_DIR, exist_ok=True)
 
+    # TODO - use module import instead (rag/embedder.py)
     embedder = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
@@ -31,6 +32,7 @@ if __name__ == "__main__":
     vectordb = Chroma.from_documents(
         documents, embedder, persist_directory=VECTOR_DB_DIR
     )
-    vectordb.persist()
+    
+    vectordb.persist()           
     print("Supplier embeddings stored using HuggingFace.")
     print(f"Vector DB stored at: {VECTOR_DB_DIR}")
