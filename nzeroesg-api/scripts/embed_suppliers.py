@@ -1,8 +1,9 @@
+# in-memory vector database: development only 
 from dotenv import load_dotenv
 load_dotenv()
 
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_chroma import Chroma
 from langchain.schema import Document
 import json, os
 

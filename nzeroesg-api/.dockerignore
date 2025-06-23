@@ -25,6 +25,10 @@
 **/build
 **/dist
 
+
+
+
+
 # (temp)
 **/__test__
 /__test__
@@ -42,5 +46,27 @@ dist
 .env.development
 *.md
 
+venv
+venv/
+venv/*
+**/venv
+**/venv/
+.venv/
+.venv/*
+**/.venv
+**/.venv/
+**/venv/
+**/venv
+**/venv/*
+
+__pycache__/
+*.py[cod]
+
 LICENSE
 README.md
+
+# vectordb files
+vectordb
+vectordb/
+/vectordb/
+**/vectordb

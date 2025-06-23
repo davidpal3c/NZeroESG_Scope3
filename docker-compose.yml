@@ -31,7 +31,7 @@ services:
     ports:
       - "8001:8000"                 # expose on 8001 externally, 8000 internally
     volumes:
-      - ./chroma_storage:/chroma_storage
+      - ./vectordb:/chroma_storage
     environment:
       - IS_PERSISTENT=TRUE 
     
