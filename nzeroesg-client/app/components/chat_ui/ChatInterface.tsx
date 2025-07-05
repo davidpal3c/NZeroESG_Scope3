@@ -85,13 +85,13 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
 
 
     // debugging 
-    useEffect(() => {
-        const backend = getBackendUrl();
-        console.log("Final Backend URL:", backend);
-        if (!backend.startsWith("https://")) {
-            alert("backend starts with http://");
-        }
-    }, []);
+    // useEffect(() => {
+    //     const backend = getBackendUrl();
+    //     console.log("Final Backend URL:", backend);
+    //     if (!backend.startsWith("https://")) {
+    //         alert("backend starts with http://");
+    //     }
+    // }, []);
 
     return (
     <div>

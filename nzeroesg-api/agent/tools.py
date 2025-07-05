@@ -23,7 +23,6 @@ FALLBACK_EMISSION_FACTORS = {
     # "diesel_train": 0.022, 
 }
 
-
 # Distance resolver tool
 class DistanceInput(BaseModel):
     origin: str = Field(..., description="Origin city or location")
@@ -111,7 +110,9 @@ def calculate_shipping_emissions(
         print(f"[TOOL] API status: {response.status_code}")
         print(f"[TOOL] API response: {response.text}")
 
-## TODO: Safe_tool: handle 400 errors gracefully to avoid agent crashes
+
+        # TODo: finish Safe_tool: handle 400 errors gracefully to avoid agent crashes
+        
         if response.status_code == 201:
             data = response.json().get("data", {}).get("attributes", {})
             return {
@@ -227,7 +228,6 @@ def compare_emissions(
             results[method] = fallback_result
             debug_registry[key] = fallback_result["note"]
                 
-
         # summary string for LLM
         summary_lines = []
         for method in transport_method:

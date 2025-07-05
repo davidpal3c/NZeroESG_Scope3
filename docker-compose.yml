@@ -4,13 +4,45 @@ services:
       context: ./nzeroesg-api
       dockerfile: Dockerfile
     container_name: nzeroesg-backend
-    ports:
-      - "8000:8000"
     env_file:
       - ./nzeroesg-api/.env
-    restart: always
     depends_on:
       - chroma
+      - embedder
+    ports:
+      - "8000:8000"
+    # restart: always
+    restart: unless-stopped
+    environment: 
+      - EMBEDDER_URL=http://embedder:8001
+      # - CHROMA_URL=http://chroma:8001
+      # - HUGGINGFACEHUB_API_TOKEN=${HUGGINGFACEHUB_API_TOKEN} 
+    
+  embedder:
+    build: 
+      context: ./nzeroesg-embedder
+      dockerfile: Dockerfile
+    container_name: nzeroesg-embedder
+    ports:
+      - "8002:8002"                 
+    restart: unless-stopped
+
+  chroma: 
+    image: chromadb/chroma:latest
+    container_name: nzeroesg-chroma
+    ports:
+      - "8001:8000"                 # expose on 8001 externally, 8000 internally
+    volumes:
+      - ./vectordb:/chroma_storage
+    environment:
+      - IS_PERSISTENT=TRUE 
+    
+    # environment:
+    #   - CHROMA_DATABASE_DIR=/data    
+    #   - CHROMA_PERSISTENCE_DIR=/data.  
+    # volumes:
+    #   - chroma_data:/data
+
 
   frontend:
     build:
@@ -24,20 +56,3 @@ services:
     restart: always
     depends_on:
       - backend
-
-  chroma: 
-    image: chromadb/chroma:latest
-    container_name: nzeroesg-chroma
-    ports:
-      - "8001:8000"                 # expose on 8001 externally, 8000 internally
-    volumes:
-      - ./vectordb:/chroma_storage
-    environment:
-      - IS_PERSISTENT=TRUE 
-    
-
-    # environment:
-    #   - CHROMA_DATABASE_DIR=/data    
-    #   - CHROMA_PERSISTENCE_DIR=/data.  
-    # volumes:
-    #   - chroma_data:/data
