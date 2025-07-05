@@ -17,6 +17,8 @@ backend/env/
 nzeroesg-api/.venv/
 nzeroesg-api/venv/
 nzeroesg-api/env/
+nzeroesg-api/chroma/
+nzeroesg-api/chroma/**/*.bin
 
 # Distribution / packaging
 .Python

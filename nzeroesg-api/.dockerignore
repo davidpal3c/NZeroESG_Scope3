@@ -62,6 +62,20 @@ venv/*
 __pycache__/
 *.py[cod]
 
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.sqlite3
+*.db
+*.parquet
+tests/
+.git/
+*.log
+*.ipynb
+vectordb/
+
+
 LICENSE
 README.md
 
@@ -70,3 +84,6 @@ vectordb
 vectordb/
 /vectordb/
 **/vectordb
+
+nzeroesg-api/chroma/
+nzeroesg-api/chroma/**/*.bin

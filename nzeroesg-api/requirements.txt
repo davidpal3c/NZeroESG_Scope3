@@ -117,9 +117,7 @@ tenacity==9.1.2
 threadpoolctl==3.6.0
 tiktoken==0.9.0
 tokenizers==0.21.1
-torch==2.2.2
 tqdm==4.67.1
-transformers==4.52.4
 typer==0.16.0
 typing-inspect==0.9.0
 typing-inspection==0.4.1

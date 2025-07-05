@@ -3,7 +3,8 @@ FROM python:3.12-slim AS builder
 WORKDIR /app
 
 # install build tools for any wheels requiring compilation 
-RUN apt-get update && apt-get install -y gcc build-essential
+RUN apt-get update && apt-get install -y gcc build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
 RUN pip install --prefix=/install --no-cache-dir -r requirements.txt

@@ -5,7 +5,6 @@ import { timeStamp } from 'console';
 // import { Message } from "@/app/types/chat"
 import ChatInput from './ChatInput';
 import { getBackendUrl } from '@/app/api/urls'; // Adjust the import path as needed
-import { get } from 'http';
 
 interface Message {
     role: "user" | "agent";
@@ -84,6 +83,8 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
         scrollToBottom();
     }, [messages, isLoading])
 
+
+    // debugging 
     useEffect(() => {
         const backend = getBackendUrl();
         console.log("Final Backend URL:", backend);
