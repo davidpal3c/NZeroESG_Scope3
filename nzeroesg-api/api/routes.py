@@ -1,9 +1,12 @@
 import json
 from fastapi import APIRouter, Request
 from agent import build_agent
+# from agent.memory import memory
+# from agent.utils import trim_history
+
 chat_router = APIRouter()
 
-
+@chat_router.post("")
 @chat_router.post("/")
 async def chat(request: Request):
     data = await request.json()
@@ -15,9 +18,15 @@ async def chat(request: Request):
         return {"message": "Was there something you wanted to ask?"}
 
     agent = await build_agent()
+
+    # history = memory.chat_memory.messages 
+    # if history:
+    #     trim_history(history, window=900)
+
     response = await agent.ainvoke({
         "input": user_message,
-        "chat_history": []      
+        "chat_history": []
+        # "chat_history": history      
     })
     
     # response = await agent.arun(input=user_message)
@@ -45,6 +54,8 @@ async def chat(request: Request):
         }
     except Exception:
         return { "reply": response }
+
+
 
 
 

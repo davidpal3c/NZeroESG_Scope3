@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_community.llms import Ollama
 from agent.utils.openrouter_llm import ChatOpenRouter
+from openai import APIStatusError
 from config import LLM_PROVIDER, OPENAI_API_KEY, OPENROUTER_API_KEY, OPENROUTER_MODEL
 
 def load_llm():
@@ -31,20 +32,31 @@ def load_llm():
 
         print(f"Using LLM: {OPENROUTER_MODEL} via {LLM_PROVIDER}\n")
 
-        return ChatOpenRouter(
-            model_name=OPENROUTER_MODEL,
-            openai_api_key=OPENROUTER_API_KEY,
-            openai_api_base="https://openrouter.ai/v1",
-            max_tokens=500,
-            temperature=0.3, 
-        )
+        try:
+            return ChatOpenRouter(
+                model_name=OPENROUTER_MODEL,
+                openai_api_key=OPENROUTER_API_KEY,
+                openai_api_base="https://openrouter.ai/v1",
+                max_tokens=256,
+                temperature=0.2, 
+            )
+        except APIStatusError as e:
+            # if e.status_code == 402:
+            #     return ChatOpenAI(
+            #     model_name="openai/gpt-3.5-turbo-0125",
+            #     temperature=0.2,
+            #     openai_api_base="https://openrouter.ai/api/v1",
+            #     openai_api_key=OPENROUTER_API_KEY,
+            #     max_tokens=250,
+            # )
+            raise RuntimeError(f"Failed to initialize OpenRouter LLM: {e}")
+
 
     elif LLM_PROVIDER == "ollama":
         return f"Ollama model: {OLLAMA_MODEL} via {LLM_PROVIDER}\n"
 
     # Extend for other providers (or local models) as needed
     raise ValueError(f"Unsupported provider: {LLM_PROVIDER}")
-
 
 
 # class ChatOpenRouter(ChatOpenAI):

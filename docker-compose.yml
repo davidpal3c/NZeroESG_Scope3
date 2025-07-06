@@ -14,7 +14,7 @@ services:
     # restart: always
     restart: unless-stopped
     environment: 
-      - EMBEDDER_URL=http://embedder:8001
+      - EMBEDDER_URL=http://embedder:8002
       # - CHROMA_URL=http://chroma:8001
       # - HUGGINGFACEHUB_API_TOKEN=${HUGGINGFACEHUB_API_TOKEN} 
     
@@ -42,7 +42,6 @@ services:
     #   - CHROMA_PERSISTENCE_DIR=/data.  
     # volumes:
     #   - chroma_data:/data
-
 
   frontend:
     build:

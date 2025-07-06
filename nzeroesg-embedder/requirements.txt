@@ -1,3 +1,8 @@
 fastapi
 uvicorn
 sentence-transformers==2.6.1        # (pulls transitive dependencies: torch & transformers)
+# ↓ pull the CPU-only wheel (no CUDA, ~230 MB)
+torch==2.2.2+cpu
+numpy<2   
+# the +cpu build is on the “pytorch-cpu” index:
+--extra-index-url https://download.pytorch.org/whl/cpu

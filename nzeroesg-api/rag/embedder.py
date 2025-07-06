@@ -33,7 +33,7 @@ class RemoteEmbedder(Embeddings):
 
 
 def get_supplier_embedder() -> Embeddings:
-    return RemoteEmbedder(url=EMBEDDER_URL)
+    return RemoteEmbedder(url=f"{EMBEDDER_URL}/embed")  
 
 
 

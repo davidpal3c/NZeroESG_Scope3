@@ -7,11 +7,11 @@ app = FastAPI()
 
 
 origins = [
+    "http://localhost:3000",    
+    "http://127.0.0.1:3000",
     "https://n-zero-esg-scope3.vercel.app/",
     "https://nzeroesg-client.onrender.com",
     "http://nzeroesg-client.onrender.com",
-    "http://localhost:3000",    
-    "http://127.0.0.1:3000",
 ]
 
 app.add_middleware(
