@@ -83,7 +83,5 @@ README.md
 vectordb
 vectordb/
 /vectordb/
-**/vectordb
+**/vectordb/*
 
-nzeroesg-api/chroma/
-nzeroesg-api/chroma/**/*.bin

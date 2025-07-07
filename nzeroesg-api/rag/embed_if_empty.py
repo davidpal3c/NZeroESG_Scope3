@@ -1,11 +1,30 @@
 from rag.vectorstore import load_supplier_db
 from rag.embedder import get_supplier_embedder
 from langchain.schema import Document
-import json, os
+import time, requests, json
 
 SUPPLIER_JSON = "data/suppliers.json"
 
+
+def _wait_for(url: str, timeout=30):
+    deadline = time.time() + timeout
+
+    while time.time() < deadline:
+        try:
+            res = requests.get(url, timeout=5)
+            if res.status_code == 200:
+                return
+        except requests.RequestException as e:
+            print(f"Waiting for {url}... {e}")
+
+        time.sleep(1)
+    raise RuntimeError(f"Service at {url} did not become ready.")
+
+
 def run_if_empty():
+    _wait_for("http://embedder:8002/health")
+    _wait_for("http://chroma:8000")
+
     db = load_supplier_db()
 
     try:

@@ -40,12 +40,17 @@ async def vectorstore_health():
 
     try:
         db = load_supplier_db()
+        n = db._collection.count()                                              # get the number of documents in the collection
+
         test = db.similarity_search("test", k=1)
+
         if test and db: 
             return {
                 "status": "OK", 
-                "message": "Vector store is healthy", 
-                "collections": db.get().keys()
+                "message": "Vector store is healthy",
+                "vectors": n, 
+                "collection_name": db._collection.name,
+                # "collections": db.get().keys()
             }
         else:
             return {"message": "Vector store is empty"}

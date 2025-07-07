@@ -7,8 +7,10 @@ services:
     env_file:
       - ./nzeroesg-api/.env
     depends_on:
-      - chroma
-      - embedder
+      embedder:
+        condition: service_healthy
+      chroma:
+        condition: service_healthy
     ports:
       - "8000:8000"
     # restart: always
@@ -26,8 +28,23 @@ services:
     ports:
       - "8002:8002"                 
     restart: unless-stopped
+    healthcheck: 
+      # test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      test: ["CMD-SHELL", "python - <<'PY'\nimport socket,sys,urllib.request, json, time; \
+        s=socket.socket(); \
+        s.settimeout(2); \
+        s.connect(('localhost',8002)); \
+        s.close(); \
+        data=urllib.request.urlopen('http://localhost:8002/health', timeout=3).read(); \
+        sys.exit(0 if json.loads(data).get('status')=='ok' else 1)\nPY"]
+      interval: 5s
+      timeout: 5s
+      retries: 9
 
   chroma: 
+    # build:
+    #   context: ./nzeroesg-chroma
+    #   dockerfile: Dockerfile
     image: chromadb/chroma:latest
     container_name: nzeroesg-chroma
     ports:
@@ -36,7 +53,19 @@ services:
       - ./vectordb:/chroma_storage
     environment:
       - IS_PERSISTENT=TRUE 
-    
+    healthcheck:
+      # test: ["CMD", "curl", "-sf", "http://localhost:8000/api/v1/heartbeat || exit 1"]
+      test: ["CMD-SHELL", "python - <<'PY'\nimport socket,sys,urllib.request, json, time; \
+        s=socket.socket(); \
+        s.settimeout(2); \
+        s.connect(('localhost',8000)); \
+        s.close(); \
+        data=urllib.request.urlopen('http://localhost:8000/api/v1/heartbeat', timeout=3).read(); \
+        sys.exit(0 if json.loads(data).get('status')=='ok' else 1)\nPY"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     # environment:
     #   - CHROMA_DATABASE_DIR=/data    
     #   - CHROMA_PERSISTENCE_DIR=/data.  

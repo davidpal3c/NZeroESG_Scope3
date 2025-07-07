@@ -33,10 +33,12 @@ async def chat(request: Request):
     # print(f"[DEBUG] Agent Response: {response}")
 
     try:
-        if isinstance(response, str) and response.startswith("{"):
+        if isinstance(response, dict):
+            parsed = response
+        elif isinstance(response, str) and response.startswith("{"):
             parsed = json.loads(response)
         else:
-            parsed = response
+            parsed = {"summary": str(response)}
 
         print("[DEBUG] Agent Response (Pretty JSON):\n")
         print(json.dumps(parsed, indent=2))
