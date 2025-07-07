@@ -60,7 +60,7 @@ It combines real emissions APIs, vector-based document search (RAG), and structu
 |------------------------|-------------------------------------------------------|
 | **React + TypeScript** | Modern, typed UI for smooth UX (NextJS)               |
 | **Tailwind CSS**       | Utility-first styling with responsive design          |
-| **Reacharts**          | Visualizes emissions comparisons and reporting        |
+| **Recharts**          | Visualizes emissions comparisons and reporting        |
 | **Framer Motion**      | UI animations, loading indicators, typing simulation  |
 <!-- | **React Query**        | Efficient client-server state handling                | -->
 
