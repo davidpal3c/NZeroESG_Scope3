@@ -60,7 +60,7 @@ It combines real emissions APIs, vector-based document search (RAG), and structu
 |------------------------|-------------------------------------------------------|
 | **React + TypeScript** | Modern, typed UI for smooth UX (NextJS)               |
 | **Tailwind CSS**       | Utility-first styling with responsive design          |
-| **Reacharts**          | Visualizes emissions comparisons and reporting        |
+| **Recharts**          | Visualizes emissions comparisons and reporting        |
 | **Framer Motion**      | UI animations, loading indicators, typing simulation  |
 <!-- | **React Query**        | Efficient client-server state handling                | -->
 
@@ -92,7 +92,7 @@ It combines real emissions APIs, vector-based document search (RAG), and structu
 
 ### What's Coming (2025)
 
-- [x] **SmartSupplierSearch (RAG + Chroma Vector DB)** (implemented)
+- [x] **SmartSupplierSearch (RAG + Chroma Vector DB)** (in progress)
 - [ ] Redis session and emissions cache
 - [ ] Upload CSV of purchase orders and tool invocation for emissions analysis
 - [ ] Procurement simulation tool: cost vs. emissions vs. delivery time tradeoffs
