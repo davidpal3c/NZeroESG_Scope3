@@ -1,9 +1,13 @@
 from rag.vectorstore import load_supplier_db
 from rag.embedder import get_supplier_embedder
 from langchain.schema import Document
+from config import EMBEDDER_URL
 import json, os
+import requests, time
+
 
 SUPPLIER_JSON = "data/suppliers.json"
+
 
 def run_if_empty():
     db = load_supplier_db()
@@ -58,4 +62,18 @@ def run_if_empty():
     db.add_documents(docs, embedding=embedder)
        
     print("Supplier embeddings stored using HuggingFace.")
+
+
+def wait_for_embedder(url=EMBEDDER_URL, retries: int=10):
+        for i in range(retries):
+            try:
+                if requests.get(f"{url}/health", timeout=2).status_code == 200:
+                    print("Embedder is ready")
+                    return
+            except requests.exceptions.RequestException as e:
+                print(f"Embedder not ready yet: {e}")
+            
+            time.sleep(1 + i * 0.5)
+        raise RuntimeError(f"Embedder service did not become healthy after {retries} retries")
+
 

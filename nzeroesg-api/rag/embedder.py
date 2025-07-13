@@ -1,12 +1,13 @@
 from langchain.embeddings.base import Embeddings
 from config import EMBEDDER_URL
-import requests
+import requests, time
 
 class RemoteEmbedder(Embeddings):
-    """LangChain-compatible wrapper that calls embedder micro-service"""
+    """LangChain-compatible wrapper that calls the embedder microservice"""
 
     def __init__(self, url: str = EMBEDDER_URL):
         self.url = url
+        # print(f"[Embedder-client] will call → {self.url}")
 
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
         res = requests.post(
@@ -29,11 +30,13 @@ class RemoteEmbedder(Embeddings):
 
     def embed_query(self, text: str) -> list[float]:
         return self.embed_documents([text])[0]
-    
+
 
 
 def get_supplier_embedder() -> Embeddings:
     return RemoteEmbedder(url=f"{EMBEDDER_URL}/embed")  
+
+
 
 
 

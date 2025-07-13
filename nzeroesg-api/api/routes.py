@@ -43,8 +43,7 @@ async def chat(request: Request):
     except Exception as e:
         print("[DEBUG] Agent Response (Raw):")
         print(response)
-        print(f"[DEBUG] Error during JSON formatting: {e}")
-
+        
  
     try:
         parsed = json.loads(response)

@@ -1,3 +1,4 @@
+from curses import raw
 import json
 import requests
 from langchain.tools import StructuredTool
@@ -334,8 +335,23 @@ def summarize_emissions(results, weight_value, weight_unit, distance_value, dist
 # )
 
 def structured_supplier_query(query: str) -> str:
-    result = query_suppliers_rag(query, top_k=3)
-    return json.dumps(result, indent=2)
+
+    region = "Canada" if "canada" in query.lower() else None
+    results = query_suppliers_rag(query, top_k=3, region=region)
+
+    matches = results["matches"]
+
+    if not matches:
+        return json.dumps({"summary": "No suppliers found matching your query."}, indent=2)
+
+    best = min(matches, key=lambda m: m["metadata"].get("carbon_emissions_per_shipment_kg", float("inf")))
+    # best = min(results, key=lambda r: r["metadata"]["carbon_emissions_per_shipment_kg"])
+    summary = (f"{best['metadata']['name']} emits only "
+               f"{best['metadata']['carbon_emissions_per_shipment_kg']} kg "
+               f"CO₂e per shipment — the lowest among the results.")
+
+    return json.dumps({"summary": summary, "matches": matches}, indent=2)
+    # return json.dumps(results, indent=2)
 
 
 semantic_supplier_tool = Tool(

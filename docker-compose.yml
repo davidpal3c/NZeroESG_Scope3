@@ -36,6 +36,11 @@ services:
       - ./vectordb:/chroma_storage
     environment:
       - IS_PERSISTENT=TRUE 
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/heartbeat || exit 1"]
+      interval: 30s
+      timeout: 3s
+      retries: 5
     
     # environment:
     #   - CHROMA_DATABASE_DIR=/data    

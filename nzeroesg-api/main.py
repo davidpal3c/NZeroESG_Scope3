@@ -1,9 +1,10 @@
 from fastapi import FastAPI
 from api.routes import chat_router
 from fastapi.middleware.cors import CORSMiddleware
-from rag.embed_if_empty import run_if_empty
+from rag.embed_if_empty import run_if_empty, wait_for_embedder
 
 app = FastAPI()
+
 
 
 # origins = [
@@ -25,6 +26,7 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup_event():
+    wait_for_embedder()
     run_if_empty()
 
 
