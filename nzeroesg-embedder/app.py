@@ -30,7 +30,7 @@ async def embed_texts(req: EmbedRequest):
 
 @app.get("/")
 def redirect_root():
-    return RedirectResponse(url="/embed", status_code=302)
+    return RedirectResponse(url="/embed", status_code=302, headers={"status": "ok"})
 
 @app.get("/health", response_model=dict, include_in_schema=False)
 def health():
