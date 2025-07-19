@@ -74,14 +74,29 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
 
             const data = await response.data;
 
+            const agentMessage: Message = {
+                id: (Date.now() + Math.random()).toString(),
+                content: data.reply.output || "No response from server",
+                role: 'agent' as const,
+                timestamp: new Date(),
+            };
+
             // TODO: change for server-side timestamp
             // data.timestamp =             
             console.log('Response from server:', data);
-            setMessages([...newMessages, { role: 'agent' as const, content: data.reply.output, timestamp: new Date() }]);
+            setMessages([...newMessages, agentMessage]);
         
         } catch (error) {
             console.error('Error sending message:', error);
-            setMessages([...newMessages, { role: 'agent' as const, content: 'Server Error: Failed to send message.', timestamp: new Date() }]);
+            const errorMessage: Message = {
+                id: (Date.now() + 1).toString(),
+                content: "I apologize, but I'm experiencing technical difficulties. Please try again in a moment.",
+                role: "agent",
+                timestamp: new Date(),
+                isError: true,
+            }
+            
+            setMessages([...newMessages, errorMessage]);
             throw new Error('Failed to send message. ChatBox.tsx');
         } finally {
             setIsLoading(false);
