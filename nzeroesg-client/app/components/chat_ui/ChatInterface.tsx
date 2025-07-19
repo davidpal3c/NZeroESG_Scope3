@@ -5,6 +5,7 @@ import { timeStamp } from 'console';
 // import { Message } from "@/app/types/chat"
 import ChatInput from './ChatInput';
 import { getBackendUrl } from '@/app/api/urls'; // Adjust the import path as needed
+import { LoadingIndicator } from './LoadingIndicator';
 
 interface Message {
     role: "user" | "agent";
@@ -57,6 +58,7 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
             // data.timestamp =             
             console.log('Response from server:', data);
             setMessages([...newMessages, { role: 'agent' as const, content: data.reply.output, timestamp: new Date() }]);
+        
         } catch (error) {
             console.error('Error sending message:', error);
             setMessages([...newMessages, { role: 'agent' as const, content: 'Server Error: Failed to send message.', timestamp: new Date() }]);
@@ -133,7 +135,7 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
                         : 'bg-emerald-200 text-left'
                     }`}
                     >
-                        <strong className="block text-gray-700 text-xs mb-1">
+                        <strong className="block text-indigo-800 text-xs mb-1">
                             {msg.role === 'user' ? 'You' : 'Agent'}
                         </strong>
                         <div className="text-gray-800 leading-relaxed whitespace-pre-wrap">{msg.content}</div>
@@ -146,12 +148,14 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
                         </div>
                     </div>
                     <div ref={messagesEndRef}></div>
+
+                    {isLoading && <LoadingIndicator />}
                 </div>
+
                 ))}
             </div>
 
             <ChatInput sendMessage={handleSendMessage} disabled={isLoading} />
-
         </div>
       ) : (
         <button
