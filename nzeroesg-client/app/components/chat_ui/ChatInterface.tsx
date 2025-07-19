@@ -83,7 +83,6 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
         scrollToBottom();
     }, [messages, isLoading])
 
-
     // debugging 
     // useEffect(() => {
     //     const backend = getBackendUrl();
@@ -98,7 +97,7 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
       {isOpen ? (
         <div
             ref={chatRef}
-            className="fixed bottom-4 right-4 w-8/12 max-w-full h-[35rem] bg-white/10 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/20 flex flex-col  overflow-hidden z-50 animate-fade-in">
+            className="fixed bottom-4 right-4 w-9/12 max-w-full h-[45rem] bg-white/10 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/20 flex flex-col  overflow-hidden z-50 animate-fade-in">
             <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 px-6 py-5 rounded-t-3xl">
                 <div className="flex items-center justify-between">
                     <div className="justify-items-start">
