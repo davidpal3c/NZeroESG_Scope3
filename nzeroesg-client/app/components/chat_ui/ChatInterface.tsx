@@ -2,16 +2,19 @@ import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import EnergySavingsLeafIcon from '@mui/icons-material/EnergySavingsLeaf';
 import { timeStamp } from 'console';
-// import { Message } from "@/app/types/chat"
+import { Message } from "@/app/types/chat"
 import ChatInput from './ChatInput';
 import { getBackendUrl } from '@/app/api/urls'; // Adjust the import path as needed
 import { LoadingIndicator } from './LoadingIndicator';
 
-interface Message {
-    role: "user" | "agent";
-    content: string;
-    timestamp: Date
-}
+
+// interface Message {
+//     id: string;
+//     role: "user" | "agent";
+//     content: string;
+//     timestamp: Date;
+//     // interactive?: InteractiveMessage;
+// }
 
 interface ChatInterfaceProps {
     initialOpen?: boolean;
@@ -20,20 +23,37 @@ interface ChatInterfaceProps {
 
 // export default function ChatBox({ apiUrl }: { apiUrl: string })
 export default function ChatInterface({ initialOpen = false, onOpenChange }: ChatInterfaceProps) {
-    const [messages, setMessages ] = useState<Message[]>([
-        {
-            role: "agent" as const,
-            content: "Welcome to NZeroESG! 🌱 I'm your advanced emissions intelligence assistant. I can analyze carbon data, provide sustainability insights, and help you build a greener future. What would you like to explore today?",
-            timestamp: new Date()
-        }
-    ]);
+    const [messages, setMessages] = useState<Message[]>([
+    {
+        id: "1",
+        content:
+            "Welcome to NZeroESG! 🌱 I'm your advanced emissions intelligence assistant. I can analyze carbon data, provide sustainability insights, and help you build a greener future. What would you like to explore today?",
+        role: "agent" as const,
+        timestamp: new Date(),
+        interactive: {
+            type: "quick_replies",
+            options: [
+            { id: "analyze", label: "📊 Analyze Emissions", value: "I want to analyze my carbon emissions data" },
+            { id: "reduce", label: "🎯 Reduction Strategies", value: "Show me ways to reduce carbon footprint" },
+            { id: "report", label: "📋 Generate Report", value: "Help me create a sustainability report" },
+            { id: "calculate", label: "🧮 Calculate Footprint", value: "Calculate carbon footprint for my activities" },
+            ],
+        },
+    }])
+
     const [isLoading, setIsLoading] = useState(false);
     const [isOpen, setIsOpen] = useState(false);                
     const chatRef = useRef<HTMLDivElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const handleSendMessage = async (message: string) => {
-        const newMessages = [...messages, { role: 'user' as const, content: message, timestamp: new Date() }];
+        const newMessages = [...messages, { 
+            id: (Date.now() + Math.random()).toString(),
+            content: message, 
+            role: 'user' as const, 
+            timestamp: new Date() 
+        }];
+
         setMessages(newMessages);     
         setIsLoading(true);
 
@@ -147,12 +167,10 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
                             })}
                         </div>
                     </div>
-                    <div ref={messagesEndRef}></div>
-
-                    {/* {isLoading && <LoadingIndicator />} */}
                 </div>
-
                 ))}
+                 {isLoading && <LoadingIndicator />}
+                <div ref={messagesEndRef}></div>
             </div>
 
             <ChatInput sendMessage={handleSendMessage} disabled={isLoading} />
