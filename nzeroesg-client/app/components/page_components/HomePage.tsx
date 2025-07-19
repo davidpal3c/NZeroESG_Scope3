@@ -88,7 +88,7 @@ export default function HomePage() {
       </header>
 
       {/* HERO */}
-      <HeroSection onScrollToChat={scrollToChat} />
+      <HeroSection onScrollToChat={scrollToChat} onTryBtn={handleOpenChat} />
 
       
 
