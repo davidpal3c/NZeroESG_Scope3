@@ -135,7 +135,7 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
                         : 'bg-emerald-200 text-left'
                     }`}
                     >
-                        <strong className="block text-indigo-800 text-xs mb-1">
+                        <strong className="block text-gray-800 text-xs mb-1">
                             {msg.role === 'user' ? 'You' : 'Agent'}
                         </strong>
                         <div className="text-gray-800 leading-relaxed whitespace-pre-wrap">{msg.content}</div>
@@ -149,7 +149,7 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
                     </div>
                     <div ref={messagesEndRef}></div>
 
-                    {isLoading && <LoadingIndicator />}
+                    {/* {isLoading && <LoadingIndicator />} */}
                 </div>
 
                 ))}
