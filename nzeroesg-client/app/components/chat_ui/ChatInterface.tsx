@@ -25,7 +25,7 @@ interface ChatInterfaceProps {
 export default function ChatInterface({ initialOpen = false, onOpenChange }: ChatInterfaceProps) {
     const [messages, setMessages] = useState<Message[]>([
     {
-        id: "1",
+        id: (Date.now() + 1).toString(),
         content:
             "Welcome to NZeroESG! 🌱 I'm your advanced emissions intelligence assistant. I can analyze carbon data, provide sustainability insights, and help you build a greener future. What would you like to explore today?",
         role: "agent" as const,
@@ -89,7 +89,7 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
         } catch (error) {
             console.error('Error sending message:', error);
             const errorMessage: Message = {
-                id: (Date.now() + 1).toString(),
+                id: (Date.now() + Math.random()).toString(),
                 content: "I apologize, but I'm experiencing technical difficulties. Please try again in a moment.",
                 role: "agent",
                 timestamp: new Date(),
@@ -201,4 +201,3 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
     </div>
   );
 }
-
