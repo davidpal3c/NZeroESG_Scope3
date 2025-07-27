@@ -95,7 +95,6 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
                 timestamp: new Date(),
                 isError: true,
             }
-            
             setMessages([...newMessages, errorMessage]);
             throw new Error('Failed to send message. ChatBox.tsx');
         } finally {
