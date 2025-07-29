@@ -1,4 +1,3 @@
-from curses import raw
 import json
 import requests
 from langchain.tools import StructuredTool
@@ -16,10 +15,12 @@ from geopy.geocoders import Nominatim
 
 # Emission factos (g CO2e / tonne-km) for fallback calculations
 FALLBACK_EMISSION_FACTORS = {
-    "plane": 0.602,                             # kg CO2e / tonne-km
+    "plane": 0.602,
+    "air": 0.602,                              # kg CO2e / tonne-km
     "truck": 0.062,  
     "train": 0.022,  
-    "ship": 0.008 ,                             # ocean_container              
+    "ship": 0.008 ,                             # ocean_container 
+    "ocean container": 0.008,                
     # "diesel_truck": 0.062,  
     # "diesel_train": 0.022, 
 }
@@ -37,6 +38,7 @@ def resolve_distance(origin: str, destination: str):
         # OpenAIP / AviationStack :                                     air / plane
         # TransportAPI (UK), DB API (Germany), Navitia (France/ EU):    train / rail
         # SeaRoutes.com / MarineTraffic/ ExactEarth:                    ship / ocean
+        
 
         print(f"[TOOL] Resolving distance from {origin} to {destination}")
         geolocator = Nominatim(user_agent="emission-agent")
