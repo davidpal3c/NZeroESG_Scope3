@@ -2,7 +2,7 @@
 import { motion } from "framer-motion";
 import ParticlesContainer from "@/app/components/ParticlesContainer";
 
-export default function HeroSection({ onScrollToChat }: { onScrollToChat: () => void }) {
+export default function HeroSection({ onScrollToChat, onTryBtn }: { onScrollToChat: () => void, onTryBtn: () => void }) {
     return(
         <section className="relative h-[700px] pt-72 pb-32 bg-gradient-to-b from-background via-muted to-card overflow-hidden">
             <div className="absolute inset-0 z-0 pointer-events-none">
@@ -22,7 +22,7 @@ export default function HeroSection({ onScrollToChat }: { onScrollToChat: () => 
                   Track emissions, materials, and vendor compliance across your supply chain —
                   interactively and in real time.
               </p>
-              <button onClick={onScrollToChat} className="mt-8 bg-accent dark:bg-muted hover:bg-secondary text-white px-6 py-3 rounded-lg shadow cursor-pointer transition-colors delay-100">
+              <button onClick={onTryBtn} className="mt-8 bg-accent dark:bg-muted hover:bg-secondary text-white px-6 py-3 rounded-lg shadow cursor-pointer transition-colors delay-100">
                   Try our Carbon Assistant
               </button>
             </motion.div>

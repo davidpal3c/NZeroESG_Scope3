@@ -1,22 +1,24 @@
 from fastapi import FastAPI
 from api.routes import chat_router
 from fastapi.middleware.cors import CORSMiddleware
-from rag.embed_if_empty import run_if_empty
+from rag.embed_if_empty import run_if_empty, wait_for_embedder
 
 app = FastAPI()
 
 
-origins = [
-    "http://localhost:3000",    
-    "http://127.0.0.1:3000",
-    "https://n-zero-esg-scope3.vercel.app/",
-    "https://nzeroesg-client.onrender.com",
-    "http://nzeroesg-client.onrender.com",
-]
+
+# origins = [
+#     "http://localhost:3000",    
+#     "http://127.0.0.1:3000",
+#     "https://n-zero-esg-scope3.vercel.app",
+#     "https://nzeroesg-client.onrender.com",
+#     "http://nzeroesg-client.onrender.com",
+# ]
 
 app.add_middleware(
     CORSMiddleware,                              
-    allow_origins=origins,                                
+    # allow_origins=origins,     
+    allow_origin_regex=r"https:\/\/.*\.vercel\.app|https:\/\/nzeroesg-client\.onrender\.com|http:\/\/localhost:3000",                           
     allow_credentials=True,                             
     allow_methods=["*"],                                
     allow_headers=["*"],                                
@@ -24,6 +26,7 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup_event():
+    wait_for_embedder()
     run_if_empty()
 
 

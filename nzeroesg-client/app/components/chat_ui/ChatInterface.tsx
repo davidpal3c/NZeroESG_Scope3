@@ -2,15 +2,19 @@ import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import EnergySavingsLeafIcon from '@mui/icons-material/EnergySavingsLeaf';
 import { timeStamp } from 'console';
-// import { Message } from "@/app/types/chat"
+import { Message } from "@/app/types/chat"
 import ChatInput from './ChatInput';
 import { getBackendUrl } from '@/app/api/urls'; // Adjust the import path as needed
+import { LoadingIndicator } from './LoadingIndicator';
 
-interface Message {
-    role: "user" | "agent";
-    content: string;
-    timestamp: Date
-}
+
+// interface Message {
+//     id: string;
+//     role: "user" | "agent";
+//     content: string;
+//     timestamp: Date;
+//     // interactive?: InteractiveMessage;
+// }
 
 interface ChatInterfaceProps {
     initialOpen?: boolean;
@@ -19,20 +23,37 @@ interface ChatInterfaceProps {
 
 // export default function ChatBox({ apiUrl }: { apiUrl: string })
 export default function ChatInterface({ initialOpen = false, onOpenChange }: ChatInterfaceProps) {
-    const [messages, setMessages ] = useState<Message[]>([
-        {
-            role: "agent" as const,
-            content: "Welcome to NZeroESG! 🌱 I'm your advanced emissions intelligence assistant. I can analyze carbon data, provide sustainability insights, and help you build a greener future. What would you like to explore today?",
-            timestamp: new Date()
-        }
-    ]);
+    const [messages, setMessages] = useState<Message[]>([
+    {
+        id: (Date.now() + 1).toString(),
+        content:
+            "Welcome to NZeroESG! 🌱 I'm your advanced emissions intelligence assistant. I can analyze carbon data, provide sustainability insights, and help you build a greener future. What would you like to explore today?",
+        role: "agent" as const,
+        timestamp: new Date(),
+        interactive: {
+            type: "quick_replies",
+            options: [
+            { id: "analyze", label: "📊 Analyze Emissions", value: "I want to analyze my carbon emissions data" },
+            { id: "reduce", label: "🎯 Reduction Strategies", value: "Show me ways to reduce carbon footprint" },
+            { id: "report", label: "📋 Generate Report", value: "Help me create a sustainability report" },
+            { id: "calculate", label: "🧮 Calculate Footprint", value: "Calculate carbon footprint for my activities" },
+            ],
+        },
+    }])
+
     const [isLoading, setIsLoading] = useState(false);
     const [isOpen, setIsOpen] = useState(false);                
     const chatRef = useRef<HTMLDivElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const handleSendMessage = async (message: string) => {
-        const newMessages = [...messages, { role: 'user' as const, content: message, timestamp: new Date() }];
+        const newMessages = [...messages, { 
+            id: (Date.now() + Math.random()).toString(),
+            content: message, 
+            role: 'user' as const, 
+            timestamp: new Date() 
+        }];
+
         setMessages(newMessages);     
         setIsLoading(true);
 
@@ -53,13 +74,28 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
 
             const data = await response.data;
 
+            const agentMessage: Message = {
+                id: (Date.now() + Math.random()).toString(),
+                content: data.reply.output || "No response from server",
+                role: 'agent' as const,
+                timestamp: new Date(),
+            };
+
             // TODO: change for server-side timestamp
             // data.timestamp =             
             console.log('Response from server:', data);
-            setMessages([...newMessages, { role: 'agent' as const, content: data.reply.output, timestamp: new Date() }]);
+            setMessages([...newMessages, agentMessage]);
+        
         } catch (error) {
             console.error('Error sending message:', error);
-            setMessages([...newMessages, { role: 'agent' as const, content: 'Server Error: Failed to send message.', timestamp: new Date() }]);
+            const errorMessage: Message = {
+                id: (Date.now() + Math.random()).toString(),
+                content: "I apologize, but I'm experiencing technical difficulties. Please try again in a moment.",
+                role: "agent",
+                timestamp: new Date(),
+                isError: true,
+            }
+            setMessages([...newMessages, errorMessage]);
             throw new Error('Failed to send message. ChatBox.tsx');
         } finally {
             setIsLoading(false);
@@ -83,7 +119,6 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
         scrollToBottom();
     }, [messages, isLoading])
 
-
     // debugging 
     // useEffect(() => {
     //     const backend = getBackendUrl();
@@ -98,7 +133,7 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
       {isOpen ? (
         <div
             ref={chatRef}
-            className="fixed bottom-4 right-4 w-8/12 max-w-full h-[35rem] bg-white/10 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/20 flex flex-col  overflow-hidden z-50 animate-fade-in">
+            className="fixed bottom-4 right-4 w-9/12 max-w-full h-[45rem] bg-white/10 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/20 flex flex-col  overflow-hidden z-50 animate-fade-in">
             <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 px-6 py-5 rounded-t-3xl">
                 <div className="flex items-center justify-between">
                     <div className="justify-items-start">
@@ -134,7 +169,7 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
                         : 'bg-emerald-200 text-left'
                     }`}
                     >
-                        <strong className="block text-gray-700 text-xs mb-1">
+                        <strong className="block text-gray-800 text-xs mb-1">
                             {msg.role === 'user' ? 'You' : 'Agent'}
                         </strong>
                         <div className="text-gray-800 leading-relaxed whitespace-pre-wrap">{msg.content}</div>
@@ -146,13 +181,13 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
                             })}
                         </div>
                     </div>
-                    <div ref={messagesEndRef}></div>
                 </div>
                 ))}
+                 {isLoading && <LoadingIndicator />}
+                <div ref={messagesEndRef}></div>
             </div>
 
             <ChatInput sendMessage={handleSendMessage} disabled={isLoading} />
-
         </div>
       ) : (
         <button
@@ -165,4 +200,3 @@ export default function ChatInterface({ initialOpen = false, onOpenChange }: Cha
     </div>
   );
 }
-

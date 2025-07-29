@@ -22,7 +22,9 @@ async def build_agent():
         tools=tools,
         memory=memory,
         verbose=True,                                               
-        handle_parsing_errors=True
+        handle_parsing_errors=True,
+        max_iterations=8,
+        early_stopping_method="generate" 
     )
 
     # return initialize_agent(

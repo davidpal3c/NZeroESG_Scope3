@@ -7,13 +7,22 @@ import AboutSection from "@/app/components/page_components/AboutSection";
 import { featuresData, comingSoonData } from "@/app/lib/data";
 import { useRouter } from "next/navigation";
 
-import { motion, AnimatePresence } from "framer-motion";
+import Modal from '@mui/material/Modal';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
+// import { motion, AnimatePresence } from "framer-motion";
 
+import SmsRoundedIcon from '@mui/icons-material/SmsRounded';
 import ChatInterface from "@/app/components/chat_ui/ChatInterface";
 
 export default function HomePage() {
   const chatRef = useRef<HTMLDivElement>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
+
+  const [open, setOpen] = useState(false);
+  const openExamplesModal = () => setOpen(true);
+  const closeExamplesModal = () => setOpen(false);
 
   const router = useRouter();
 
@@ -88,7 +97,7 @@ export default function HomePage() {
       </header>
 
       {/* HERO */}
-      <HeroSection onScrollToChat={scrollToChat} />
+      <HeroSection onScrollToChat={scrollToChat} onTryBtn={handleOpenChat} />
 
       
 
@@ -175,6 +184,77 @@ export default function HomePage() {
                   );
                   } )}
               </div>
+              <div>
+                <button onClick={openExamplesModal} className="mt-12 -mb-4 bg-accent dark:bg-muted hover:bg-secondary text-white px-6 py-3 rounded-lg shadow cursor-pointer transition-colors delay-100">
+                  See Interaction Examples
+                </button>
+                <Modal
+                  open={open}
+                  onClose={closeExamplesModal}
+                  aria-labelledby="modal-examples-title"
+                  aria-describedby="modal-examples-description"
+                  closeAfterTransition
+                  keepMounted
+                >
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '90%',
+                      maxWidth: '600px',
+                      bgcolor: 'transparent',
+                      boxShadow: 'none',
+                      p: 0,
+                    }}
+                  >
+                    <div className="rounded-3xl overflow-hidden border border-white/20 bg-white/10 backdrop-blur-xl shadow-2xl animate-fade-in">
+                      {/* Header */}
+                      <div className="bg-gradient-to-r from-green-500/30 to-emerald-500/20 px-6 py-4">
+                        <div className="flex items-center justify-start space-x-2">
+                          <SmsRoundedIcon className="h-6 w-6 text-primary mb-2" />
+                          <h2 id="modal-examples-title" className="text-lg font-bold text-primary">Interaction Examples</h2>
+                        </div>
+                        <p className="text-sm text-primary mt-1">Here's how to interact with the AI Assistant.</p>
+                      </div>
+
+                      {/* Body */}
+                      <div className="p-6 space-y-4 text-sm text-muted-foreground bg-background">
+                        <div className="bg-muted rounded-xl p-4 border border-border">
+                          <strong className="text-primary">"What’s the carbon footprint of a 100kg shipment from Toronto to Vancouver by air?"</strong>
+                          <p className="mt-1">→ Calculates emissions using real logistics APIs.</p>
+                        </div>
+                        <div className="bg-muted rounded-xl p-4 border border-border">
+                          <strong className="text-primary">"Compare emissions between plane and ship for 2 tons over 5000km."</strong>
+                          <p className="mt-1">→ Returns a side-by-side breakdown with fallback values if needed.</p>
+                        </div>
+                        <div className="bg-muted rounded-xl p-4 border border-border">
+                          <strong className="text-primary">"Find suppliers in Canada that support carbon offset programs for this shipment."</strong>
+                          <p className="mt-1">→ Uses smart RAG retrieval from your supplier vector database.</p>
+                        </div>
+                        <div className="bg-muted rounded-xl p-4 border border-border">
+                          <strong className="text-primary">"What’s the best vendor for low carbon + cost within 5 days delivery?"</strong>
+                          <p className="mt-1">→ Compares vendors based on your criteria and provides a ranked list.</p>
+                        </div>
+                      </div>
+
+                      {/* Footer */}
+                      <div className="px-6 py-4 flex justify-end bg-background border-t border-border">
+                        {open && (
+                          <button
+                            onClick={closeExamplesModal}
+                            className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-secondary transition"
+                          >
+                            Got it
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </Box>
+                </Modal>
+                
+              </div>
           </div>
       </section>
 
@@ -206,7 +286,10 @@ export default function HomePage() {
 
                     {/* Card */}
                     <div className="mt-8 bg-muted w-full md:max-w-md p-6 rounded-lg shadow-lg border border-border transition-all hover:shadow-xl">
-                      <h4 className="text-lg font-semibold mb-1">{item.icon} {item.title}</h4>
+                      <div className="flex items-center gap-2 mb-4">
+                        <item.icon />
+                        <h4 className="text-lg font-semibold mb-1">{item.title}</h4>
+                      </div>
                       <p className="text-sm text-muted-foreground leading-relaxed">
                         {item.description}
                       </p>
