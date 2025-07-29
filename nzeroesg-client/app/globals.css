@@ -24,7 +24,7 @@
 
 .dark {
   --background: #0f251e;              
-  --foreground: #f1f5f9;
+  --foreground: #04a949;
   --secondary-bg: #1a2d25;    
   --secondary-fg: #e2e8f0;
   --card: #20342d;
@@ -34,7 +34,7 @@
   --border: #2f4f45;
   --primary: #cdf7e1;               
   --secondary: #04a949;              
-  --tertiary: #fec800;              
+  --tertiary: #f6d45b;              
   --accent: #05ad75;                 
 }
 

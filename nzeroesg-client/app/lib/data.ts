@@ -1,4 +1,10 @@
 
+import ContentPasteSearchRoundedIcon from '@mui/icons-material/ContentPasteSearchRounded';
+import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
+import LocalPoliceRoundedIcon from '@mui/icons-material/LocalPoliceRounded';
+import CompostRoundedIcon from '@mui/icons-material/CompostRounded';
+import WebhookRoundedIcon from '@mui/icons-material/WebhookRounded';
+import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
 
 export const featuresData = [
     {
@@ -17,46 +23,53 @@ export const featuresData = [
         "id": 3,
         "title": "Conversational Carbon AI",
         "icon": "",
-        "description": "Ask natural questions like: “What’s the footprint of shipping 300kg from London (UK) to Berlin? What’s the best vendor if I want the lowest carbon + cost within 5 days delivery?",
+        "description": "Ask natural questions like: “What’s the carbon emission of shipping 300kg from Madrid to Berlin by train? What’s the best vendor if I want the lowest carbon + cost within 5 days delivery?",
     }
 ]
+
 
 
 export const comingSoonData = [
     {
         "id": 1,
         "title": "Procurement Simulation Tool",
-        "icon": "📑",
+        // "icon": "📑",
+        "icon": ContentPasteSearchRoundedIcon,
         "description": "Balance cost, emissions, and delivery time to simulate supplier decisions.",
     },
     {
         "id": 2,
         "title": "Upload POs or CSVs",
-        "icon": "📎",
+        // "icon": "📎",
+        "icon": AttachFileRoundedIcon,
         "description": "Drop in your purchase orders and get a full emissions breakdown instantly.",
     },
     {
         "id": 3,
         "title": "ESG Policy Integration",
-        "icon": "📚",
+        // "icon": "📚",
+        "icon": LocalPoliceRoundedIcon,
         "description": "Use vector search to ground agent answers in your company’s ESG policies.",
     },
     {
         "id": 4,
         "title": "Vendor Compliance Checker",
-        "icon": "🧠",
+        // "icon": "🧠",
+        "icon": CompostRoundedIcon,
         "description": "Match supplier data against sustainability criteria using automated AI compliance checks.",
     },
     {
         id: 5,
         title: "API for Embeddable Assistant Interface",
-        icon: "🔌",
+        // icon: "🔌",
+        icon: WebhookRoundedIcon,
         description: "Enable 3rd-party integration of the carbon assistant with secure API keys."
     },
     {
         id: 6,
         title: "User Dashboard & ESG Document Portal",
-        icon: "📂",
+        // icon: "📂",
+        icon: DashboardRoundedIcon,
         description: "Manage documents, policies, and emissions reports in one ESG-aware interface."
     }
 ]
