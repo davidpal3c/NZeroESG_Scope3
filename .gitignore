@@ -20,6 +20,8 @@ nzeroesg-api/env/
 nzeroesg-api/chroma/
 nzeroesg-api/chroma/**/*.bin
 
+.github/copilot-instructions
+copilot-instructions.md
 # Distribution / packaging
 .Python
 build/
@@ -98,3 +100,6 @@ logs/
 alembic.ini
 
 readme(original).md
+
+
+/testing/node_modules
