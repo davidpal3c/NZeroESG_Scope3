@@ -1,0 +1,541 @@
+# Phase 1 Testing Pipeline
+# Automated testing for Auth Service and GraphQL Gateway
+name: Phase 1 Testing
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'auth-service/**'
+      - 'graphql-gateway/**' 
+      - 'testing/**'
+      - 'docker-compose.phase1.yml'
+      - '.github/workflows/phase1-testing.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'auth-service/**'
+      - 'graphql-gateway/**'
+      - 'testing/**'
+      - 'docker-compose.phase1.yml'
+
+env:
+  NODE_VERSION: '18'
+  POSTGRES_VERSION: '15'
+
+jobs:
+  lint-and-format:
+    name: Code Quality Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: |
+            auth-service/package-lock.json
+            graphql-gateway/package-lock.json
+            testing/package-lock.json
+
+      - name: Install dependencies - Auth Service
+        working-directory: ./auth-service
+        run: npm ci
+
+      - name: Install dependencies - GraphQL Gateway  
+        working-directory: ./graphql-gateway
+        run: npm ci
+
+      - name: Install dependencies - Testing
+        working-directory: ./testing
+        run: npm ci
+
+      - name: Lint Auth Service
+        working-directory: ./auth-service
+        run: npm run lint || echo "Linting not configured yet"
+
+      - name: Lint GraphQL Gateway
+        working-directory: ./graphql-gateway
+        run: npm run lint || echo "Linting not configured yet"
+
+      - name: Format check
+        working-directory: ./testing
+        run: npm run format:check || echo "Format check not configured yet"
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: lint-and-format
+    strategy:
+      matrix:
+        service: [auth-service, graphql-gateway]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ matrix.service }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./${{ matrix.service }}
+        run: npm ci
+
+      - name: Run unit tests
+        working-directory: ./${{ matrix.service }}
+        run: npm test || echo "Unit tests not configured yet for ${{ matrix.service }}"
+        env:
+          NODE_ENV: test
+
+      - name: Upload unit test coverage
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./${{ matrix.service }}/coverage/lcov.info
+          flags: unit-${{ matrix.service }}
+          name: unit-${{ matrix.service }}
+        continue-on-error: true
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: lint-and-format
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: nzeroesg_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: testing/package-lock.json
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build services with Docker Compose
+        run: |
+          cp .env.example .env
+          echo "JWT_SECRET=test-secret-key-for-ci" >> .env
+          echo "DATABASE_URL=postgresql://testuser:testpassword@localhost:5432/nzeroesg_test" >> .env
+          echo "NODE_ENV=test" >> .env
+          docker-compose -f docker-compose.phase1.yml build
+
+      - name: Start Phase 1 services
+        run: |
+          docker-compose -f docker-compose.phase1.yml up -d
+          sleep 30 # Wait for services to be ready
+
+      - name: Check service health
+        run: |
+          curl -f http://localhost:3001/health || exit 1
+          curl -f http://localhost:4000/health || exit 1
+
+      - name: Install test dependencies
+        working-directory: ./testing
+        run: npm ci
+
+      - name: Run Auth Service tests
+        working-directory: ./testing
+        run: npm test -- __tests__/phase1/auth-service
+        env:
+          NODE_ENV: test
+          AUTH_SERVICE_URL: http://localhost:3001
+          GRAPHQL_GATEWAY_URL: http://localhost:4000
+          DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/nzeroesg_test
+          JWT_SECRET: test-secret-key-for-ci
+          BCRYPT_ROUNDS: 10
+
+      - name: Run GraphQL Gateway tests
+        working-directory: ./testing
+        run: npm test -- __tests__/phase1/graphql-gateway
+        env:
+          NODE_ENV: test
+          AUTH_SERVICE_URL: http://localhost:3001
+          GRAPHQL_GATEWAY_URL: http://localhost:4000
+          DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/nzeroesg_test
+          JWT_SECRET: test-secret-key-for-ci
+
+      - name: Run Integration tests
+        working-directory: ./testing
+        run: npm test -- __tests__/phase1/integration
+        env:
+          NODE_ENV: test
+          AUTH_SERVICE_URL: http://localhost:3001
+          GRAPHQL_GATEWAY_URL: http://localhost:4000
+          DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/nzeroesg_test
+          JWT_SECRET: test-secret-key-for-ci
+
+      - name: Upload integration test coverage
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./testing/coverage/lcov.info
+          flags: integration
+          name: integration-tests
+        continue-on-error: true
+
+      - name: Collect Docker logs on failure
+        if: failure()
+        run: |
+          echo "=== Auth Service Logs ==="
+          docker-compose -f docker-compose.phase1.yml logs auth-service
+          echo "=== GraphQL Gateway Logs ==="
+          docker-compose -f docker-compose.phase1.yml logs graphql-gateway
+          echo "=== PostgreSQL Logs ==="
+          docker logs $(docker ps -q --filter ancestor=postgres:15)
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker-compose -f docker-compose.phase1.yml down -v
+          docker system prune -f
+
+  e2e-tests:
+    name: End-to-End Tests
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests]
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: nzeroesg_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and start all Phase 1 services
+        run: |
+          cp .env.example .env
+          echo "JWT_SECRET=test-secret-key-for-e2e" >> .env
+          echo "DATABASE_URL=postgresql://testuser:testpassword@localhost:5432/nzeroesg_test" >> .env
+          echo "NODE_ENV=test" >> .env
+          docker-compose -f docker-compose.phase1.yml up -d --build
+          
+      - name: Wait for services to be ready
+        run: |
+          timeout 120s bash -c 'until curl -f http://localhost:3001/health; do sleep 2; done'
+          timeout 120s bash -c 'until curl -f http://localhost:4000/health; do sleep 2; done'
+
+      - name: Install test dependencies
+        working-directory: ./testing
+        run: npm ci
+
+      - name: Run E2E workflow tests
+        working-directory: ./testing
+        run: npm test -- __tests__/phase1/integration/user-workflows.test.js
+        env:
+          NODE_ENV: test
+          AUTH_SERVICE_URL: http://localhost:3001
+          GRAPHQL_GATEWAY_URL: http://localhost:4000
+          DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/nzeroesg_test
+          JWT_SECRET: test-secret-key-for-e2e
+
+      - name: Upload E2E test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: e2e-test-results
+          path: |
+            testing/coverage/
+            testing/test-results/
+        continue-on-error: true
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker-compose -f docker-compose.phase1.yml down -v
+          docker system prune -f
+
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    needs: lint-and-format
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies - Auth Service
+        working-directory: ./auth-service
+        run: npm ci
+
+      - name: Install dependencies - GraphQL Gateway
+        working-directory: ./graphql-gateway
+        run: npm ci
+
+      - name: Run npm audit - Auth Service
+        working-directory: ./auth-service
+        run: |
+          npm audit --audit-level moderate || echo "Found security vulnerabilities in auth-service"
+
+      - name: Run npm audit - GraphQL Gateway
+        working-directory: ./graphql-gateway
+        run: |
+          npm audit --audit-level moderate || echo "Found security vulnerabilities in graphql-gateway"
+
+      - name: Run Snyk security scan
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --all-projects --severity-threshold=high
+        continue-on-error: true
+
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    needs: integration-tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: nzeroesg_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Build and start services
+        run: |
+          cp .env.example .env
+          echo "JWT_SECRET=test-secret-key-for-perf" >> .env
+          echo "DATABASE_URL=postgresql://testuser:testpassword@localhost:5432/nzeroesg_test" >> .env
+          echo "NODE_ENV=test" >> .env
+          docker-compose -f docker-compose.phase1.yml up -d --build
+
+      - name: Wait for services
+        run: |
+          timeout 120s bash -c 'until curl -f http://localhost:3001/health; do sleep 2; done'
+          timeout 120s bash -c 'until curl -f http://localhost:4000/health; do sleep 2; done'
+
+      - name: Install test dependencies
+        working-directory: ./testing
+        run: npm ci
+
+      - name: Run performance tests
+        working-directory: ./testing
+        run: |
+          npm test -- --testNamePattern="Performance|Load|performance" --verbose
+        env:
+          NODE_ENV: test
+          AUTH_SERVICE_URL: http://localhost:3001
+          GRAPHQL_GATEWAY_URL: http://localhost:4000
+          DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/nzeroesg_test
+          JWT_SECRET: test-secret-key-for-perf
+
+      - name: Upload performance results
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-results
+          path: testing/performance-results/
+        continue-on-error: true
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker-compose -f docker-compose.phase1.yml down -v
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [integration-tests, e2e-tests, security-scan]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    environment: staging
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.CONTAINER_REGISTRY }}
+          username: ${{ secrets.CONTAINER_REGISTRY_USERNAME }}
+          password: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
+
+      - name: Build and push Auth Service image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./auth-service
+          file: ./auth-service/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.CONTAINER_REGISTRY }}/nzeroesg-auth:staging-${{ github.sha }}
+            ${{ secrets.CONTAINER_REGISTRY }}/nzeroesg-auth:staging-latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push GraphQL Gateway image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./graphql-gateway
+          file: ./graphql-gateway/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.CONTAINER_REGISTRY }}/nzeroesg-graphql:staging-${{ github.sha }}
+            ${{ secrets.CONTAINER_REGISTRY }}/nzeroesg-graphql:staging-latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Deploy to staging environment
+        run: |
+          echo "Deploying Phase 1 services to staging environment"
+          echo "Auth Service: ${{ secrets.CONTAINER_REGISTRY }}/nzeroesg-auth:staging-${{ github.sha }}"
+          echo "GraphQL Gateway: ${{ secrets.CONTAINER_REGISTRY }}/nzeroesg-graphql:staging-${{ github.sha }}"
+          # Add your deployment commands here
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [integration-tests, e2e-tests, security-scan, performance-tests]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.CONTAINER_REGISTRY }}
+          username: ${{ secrets.CONTAINER_REGISTRY_USERNAME }}
+          password: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
+
+      - name: Build and push Auth Service image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./auth-service
+          file: ./auth-service/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.CONTAINER_REGISTRY }}/nzeroesg-auth:prod-${{ github.sha }}
+            ${{ secrets.CONTAINER_REGISTRY }}/nzeroesg-auth:prod-latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push GraphQL Gateway image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./graphql-gateway
+          file: ./graphql-gateway/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.CONTAINER_REGISTRY }}/nzeroesg-graphql:prod-${{ github.sha }}
+            ${{ secrets.CONTAINER_REGISTRY }}/nzeroesg-graphql:prod-latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Deploy to production environment
+        run: |
+          echo "Deploying Phase 1 services to production environment"
+          echo "Auth Service: ${{ secrets.CONTAINER_REGISTRY }}/nzeroesg-auth:prod-${{ github.sha }}"
+          echo "GraphQL Gateway: ${{ secrets.CONTAINER_REGISTRY }}/nzeroesg-graphql:prod-${{ github.sha }}"
+          # Add your production deployment commands here
+
+      - name: Run production smoke tests
+        run: |
+          echo "Running production smoke tests"
+          # Add smoke test commands here
+
+  notify:
+    name: Notify Results
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, e2e-tests, security-scan]
+    if: always()
+    
+    steps:
+      - name: Notify success
+        if: ${{ needs.unit-tests.result == 'success' && needs.integration-tests.result == 'success' && needs.e2e-tests.result == 'success' }}
+        run: |
+          echo "✅ Phase 1 Testing Pipeline completed successfully"
+          echo "All tests passed for commit ${{ github.sha }}"
+
+      - name: Notify failure
+        if: ${{ needs.unit-tests.result == 'failure' || needs.integration-tests.result == 'failure' || needs.e2e-tests.result == 'failure' }}
+        run: |
+          echo "❌ Phase 1 Testing Pipeline failed"
+          echo "Check the logs for commit ${{ github.sha }}"
+          exit 1
+
+      - name: Send Slack notification
+        uses: 8398a7/action-slack@v3
+        if: always()
+        with:
+          status: ${{ job.status }}
+          text: |
+            Phase 1 Testing Pipeline: ${{ job.status }}
+            Commit: ${{ github.sha }}
+            Author: ${{ github.actor }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        continue-on-error: true

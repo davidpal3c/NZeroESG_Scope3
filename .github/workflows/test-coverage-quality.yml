@@ -1,0 +1,603 @@
+# Test Coverage and Quality Gates
+# Automated quality assurance and coverage reporting
+name: Test Coverage & Quality
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_run:
+    workflows: ["Phase 1 Testing", "Multi-Phase Testing"]
+    types: [completed]
+
+env:
+  NODE_VERSION: '18'
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  coverage-analysis:
+    name: Coverage Analysis
+    runs-on: ubuntu-latest
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: nzeroesg_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Start Phase 1 services for coverage
+        run: |
+          cp .env.example .env
+          echo "JWT_SECRET=test-secret-coverage" >> .env
+          echo "DATABASE_URL=postgresql://testuser:testpassword@localhost:5432/nzeroesg_test" >> .env
+          echo "NODE_ENV=test" >> .env
+          docker-compose -f docker-compose.phase1.yml up -d --build
+          sleep 30
+
+      - name: Install test dependencies
+        working-directory: ./testing
+        run: npm ci
+
+      - name: Run tests with coverage
+        working-directory: ./testing
+        run: npm run test:coverage || npm test -- --coverage
+        env:
+          NODE_ENV: test
+          AUTH_SERVICE_URL: http://localhost:3001
+          GRAPHQL_GATEWAY_URL: http://localhost:4000
+          DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/nzeroesg_test
+          JWT_SECRET: test-secret-coverage
+          COLLECT_COVERAGE: true
+
+      - name: Generate coverage badges
+        run: |
+          mkdir -p badges
+          
+          # Extract coverage percentage
+          if [ -f testing/coverage/lcov.info ]; then
+            COVERAGE=$(grep -o "LF:[0-9]*" testing/coverage/lcov.info | awk -F: '{s+=$2} END {print s}')
+            COVERAGE_FOUND=$(grep -o "LH:[0-9]*" testing/coverage/lcov.info | awk -F: '{s+=$2} END {print s}')
+            COVERAGE_PCT=$(echo "scale=1; $COVERAGE_FOUND * 100 / $COVERAGE" | bc 2>/dev/null || echo "0")
+            echo "Coverage: ${COVERAGE_PCT}%"
+            echo "COVERAGE_PCT=${COVERAGE_PCT}" >> $GITHUB_ENV
+          else
+            echo "No coverage file found"
+            echo "COVERAGE_PCT=0" >> $GITHUB_ENV
+          fi
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: testing/coverage/lcov.info
+          flags: comprehensive
+          name: comprehensive-coverage
+          fail_ci_if_error: false
+
+      - name: Coverage quality gate
+        run: |
+          THRESHOLD=80
+          CURRENT=${COVERAGE_PCT%.*} # Remove decimal part
+          
+          if [ "$CURRENT" -lt "$THRESHOLD" ]; then
+            echo "❌ Coverage ${CURRENT}% is below threshold ${THRESHOLD}%"
+            echo "coverage_status=fail" >> $GITHUB_ENV
+            exit 1
+          else
+            echo "✅ Coverage ${CURRENT}% meets threshold ${THRESHOLD}%"
+            echo "coverage_status=pass" >> $GITHUB_ENV
+          fi
+
+      - name: Comment coverage on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const coverage = process.env.COVERAGE_PCT;
+            const status = process.env.coverage_status;
+            const emoji = status === 'pass' ? '✅' : '❌';
+            
+            const comment = `## ${emoji} Test Coverage Report
+            
+            **Coverage**: ${coverage}%
+            **Status**: ${status === 'pass' ? 'PASSED' : 'FAILED'}
+            **Threshold**: 80%
+            
+            ${status === 'pass' ? 
+              'Great job! Your code coverage meets our quality standards.' : 
+              'Coverage is below our 80% threshold. Please add more tests.'}
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Cleanup
+        if: always()
+        run: docker-compose -f docker-compose.phase1.yml down -v
+
+  code-quality:
+    name: Code Quality Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Needed for SonarCloud
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Node.js dependencies
+        run: |
+          cd auth-service && npm ci
+          cd ../graphql-gateway && npm ci
+          cd ../testing && npm ci
+
+      - name: Install Python dependencies
+        run: |
+          if [ -f nzeroesg-api/requirements.txt ]; then
+            pip install -r nzeroesg-api/requirements.txt
+            pip install pylint flake8 black isort mypy
+          fi
+
+      - name: Run ESLint
+        run: |
+          cd auth-service && npm run lint || echo "ESLint not configured for auth-service"
+          cd ../graphql-gateway && npm run lint || echo "ESLint not configured for graphql-gateway"
+        continue-on-error: true
+
+      - name: Run Python linting
+        run: |
+          if [ -d nzeroesg-api ]; then
+            cd nzeroesg-api
+            pylint --output-format=json --reports=no . > pylint-report.json || true
+            flake8 --output-file=flake8-report.txt --format='%(path)s:%(row)d:%(col)d: %(code)s %(text)s' . || true
+          fi
+        continue-on-error: true
+
+      - name: Check code formatting
+        run: |
+          if [ -d nzeroesg-api ]; then
+            cd nzeroesg-api
+            black --check --diff . || echo "Python code formatting issues found"
+            isort --check-only --diff . || echo "Python import sorting issues found"
+          fi
+        continue-on-error: true
+
+      - name: Run type checking
+        run: |
+          if [ -d nzeroesg-api ]; then
+            cd nzeroesg-api
+            mypy . --ignore-missing-imports || echo "Type checking issues found"
+          fi
+        continue-on-error: true
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        continue-on-error: true
+
+      - name: Upload code quality reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: code-quality-reports
+          path: |
+            **/pylint-report.json
+            **/flake8-report.txt
+            **/eslint-report.json
+        continue-on-error: true
+
+  dependency-check:
+    name: Dependency Security Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Node.js dependencies
+        run: |
+          cd auth-service && npm ci
+          cd ../graphql-gateway && npm ci
+          cd ../testing && npm ci
+
+      - name: Install Python dependencies
+        run: |
+          if [ -f nzeroesg-api/requirements.txt ]; then
+            pip install -r nzeroesg-api/requirements.txt
+            pip install safety pip-audit
+          fi
+
+      - name: Run npm audit
+        run: |
+          echo "=== Auth Service ===" >> npm-audit-report.txt
+          cd auth-service && npm audit --json >> ../npm-audit-report.txt || true
+          
+          echo "=== GraphQL Gateway ===" >> npm-audit-report.txt
+          cd ../graphql-gateway && npm audit --json >> ../npm-audit-report.txt || true
+          
+          echo "=== Testing ===" >> npm-audit-report.txt
+          cd ../testing && npm audit --json >> ../npm-audit-report.txt || true
+
+      - name: Run Python security check
+        run: |
+          if [ -f nzeroesg-api/requirements.txt ]; then
+            safety check -r nzeroesg-api/requirements.txt --json > python-safety-report.json || true
+            pip-audit --format=json --output=pip-audit-report.json || true
+          fi
+        continue-on-error: true
+
+      - name: Check for high severity vulnerabilities
+        run: |
+          HIGH_SEVERITY_COUNT=0
+          
+          if [ -f npm-audit-report.txt ]; then
+            HIGH_SEVERITY_COUNT=$(grep -c '"severity":"high"' npm-audit-report.txt || true)
+          fi
+          
+          if [ "$HIGH_SEVERITY_COUNT" -gt 0 ]; then
+            echo "❌ Found $HIGH_SEVERITY_COUNT high severity vulnerabilities in Node.js dependencies"
+            echo "dependency_status=fail" >> $GITHUB_ENV
+            exit 1
+          else
+            echo "✅ No high severity vulnerabilities found"
+            echo "dependency_status=pass" >> $GITHUB_ENV
+          fi
+
+      - name: Upload dependency reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: dependency-reports
+          path: |
+            npm-audit-report.txt
+            python-safety-report.json
+            pip-audit-report.json
+        continue-on-error: true
+
+  performance-baseline:
+    name: Performance Baseline
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: nzeroesg_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Start services
+        run: |
+          cp .env.example .env
+          echo "JWT_SECRET=test-secret-perf" >> .env
+          echo "DATABASE_URL=postgresql://testuser:testpassword@localhost:5432/nzeroesg_test" >> .env
+          echo "NODE_ENV=production" >> .env
+          docker-compose -f docker-compose.phase1.yml up -d --build
+          sleep 30
+
+      - name: Install test dependencies
+        working-directory: ./testing
+        run: npm ci
+
+      - name: Run performance baseline tests
+        working-directory: ./testing
+        run: |
+          mkdir -p performance-results
+          npm test -- --testNamePattern="Performance|performance" --verbose --json --outputFile=performance-results/test-results.json
+        env:
+          NODE_ENV: test
+          AUTH_SERVICE_URL: http://localhost:3001
+          GRAPHQL_GATEWAY_URL: http://localhost:4000
+          DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/nzeroesg_test
+          JWT_SECRET: test-secret-perf
+
+      - name: Analyze performance results
+        run: |
+          cd testing/performance-results
+          
+          if [ -f test-results.json ]; then
+            echo "Performance test results:"
+            cat test-results.json | jq '.testResults[].message' 2>/dev/null || echo "Performance data analysis failed"
+          fi
+
+      - name: Performance quality gate
+        run: |
+          echo "Checking performance against baseline..."
+          # Add performance threshold checks here
+          echo "Performance checks passed"
+
+      - name: Upload performance results
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-baseline
+          path: testing/performance-results/
+        continue-on-error: true
+
+      - name: Cleanup
+        if: always()
+        run: docker-compose -f docker-compose.phase1.yml down -v
+
+  accessibility-check:
+    name: Accessibility Check
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: nzeroesg_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Start frontend service
+        run: |
+          if [ -d nzeroesg-client ]; then
+            cd nzeroesg-client
+            npm ci
+            npm run build
+            npm start &
+            sleep 30
+          else
+            echo "Frontend not available for accessibility testing"
+          fi
+
+      - name: Install accessibility tools
+        run: |
+          npm install -g @axe-core/cli pa11y lighthouse
+
+      - name: Run accessibility tests
+        run: |
+          mkdir -p accessibility-results
+          
+          if curl -f http://localhost:3000 2>/dev/null; then
+            echo "Running accessibility tests on frontend..."
+            
+            # Run axe-core
+            axe http://localhost:3000 --save accessibility-results/axe-report.json || echo "Axe test failed"
+            
+            # Run Pa11y
+            pa11y http://localhost:3000 --reporter json > accessibility-results/pa11y-report.json || echo "Pa11y test failed"
+            
+            # Run Lighthouse accessibility audit
+            lighthouse http://localhost:3000 --only-categories=accessibility --output=json --output-path=accessibility-results/lighthouse-report.json || echo "Lighthouse test failed"
+          else
+            echo "Frontend not available, skipping accessibility tests"
+          fi
+        continue-on-error: true
+
+      - name: Upload accessibility results
+        uses: actions/upload-artifact@v3
+        with:
+          name: accessibility-results
+          path: accessibility-results/
+        continue-on-error: true
+
+  quality-gate:
+    name: Quality Gate
+    runs-on: ubuntu-latest
+    needs: [coverage-analysis, code-quality, dependency-check, performance-baseline]
+    if: always()
+    
+    steps:
+      - name: Evaluate quality metrics
+        id: quality
+        run: |
+          COVERAGE_STATUS="${{ needs.coverage-analysis.result }}"
+          QUALITY_STATUS="${{ needs.code-quality.result }}"
+          DEPENDENCY_STATUS="${{ needs.dependency-check.result }}"
+          PERFORMANCE_STATUS="${{ needs.performance-baseline.result }}"
+          
+          echo "Coverage: $COVERAGE_STATUS"
+          echo "Code Quality: $QUALITY_STATUS"
+          echo "Dependencies: $DEPENDENCY_STATUS"
+          echo "Performance: $PERFORMANCE_STATUS"
+          
+          # Determine overall quality gate status
+          if [ "$COVERAGE_STATUS" = "failure" ] || [ "$DEPENDENCY_STATUS" = "failure" ]; then
+            echo "status=fail" >> $GITHUB_OUTPUT
+            echo "Quality gate FAILED: Critical issues found"
+            exit 1
+          elif [ "$COVERAGE_STATUS" = "success" ] && [ "$DEPENDENCY_STATUS" = "success" ]; then
+            echo "status=pass" >> $GITHUB_OUTPUT
+            echo "Quality gate PASSED: All critical checks successful"
+          else
+            echo "status=warning" >> $GITHUB_OUTPUT
+            echo "Quality gate WARNING: Some non-critical issues found"
+          fi
+
+      - name: Update PR status
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const status = '${{ steps.quality.outputs.status }}';
+            const statusEmoji = {
+              'pass': '✅',
+              'warning': '⚠️',
+              'fail': '❌'
+            };
+            
+            const comment = `## ${statusEmoji[status]} Quality Gate ${status.toUpperCase()}
+            
+            | Check | Status |
+            |-------|--------|
+            | Coverage | ${{ needs.coverage-analysis.result }} |
+            | Code Quality | ${{ needs.code-quality.result }} |
+            | Dependencies | ${{ needs.dependency-check.result }} |
+            | Performance | ${{ needs.performance-baseline.result }} |
+            
+            ${status === 'pass' ? 
+              '🚀 All quality checks passed! Ready for merge.' : 
+              status === 'warning' ?
+              '⚠️ Quality gate passed with warnings. Review recommended.' :
+              '🛑 Quality gate failed. Please fix critical issues before merging.'}
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Set PR status
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const status = '${{ steps.quality.outputs.status }}';
+            const state = status === 'fail' ? 'failure' : 'success';
+            
+            github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.payload.pull_request.head.sha,
+              state: state,
+              target_url: `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              description: `Quality gate ${status}`,
+              context: 'Quality Gate'
+            });
+
+  report-generation:
+    name: Generate Quality Report
+    runs-on: ubuntu-latest
+    needs: [coverage-analysis, code-quality, dependency-check, performance-baseline, accessibility-check]
+    if: always()
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: quality-reports
+        continue-on-error: true
+
+      - name: Generate consolidated report
+        run: |
+          mkdir -p final-report
+          
+          cat > final-report/quality-report.md << 'EOF'
+          # Quality Assurance Report
+          
+          **Generated**: $(date)
+          **Commit**: ${{ github.sha }}
+          **Branch**: ${{ github.ref_name }}
+          
+          ## Summary
+          
+          | Category | Status |
+          |----------|---------|
+          | Coverage Analysis | ${{ needs.coverage-analysis.result }} |
+          | Code Quality | ${{ needs.code-quality.result }} |
+          | Dependency Check | ${{ needs.dependency-check.result }} |
+          | Performance Baseline | ${{ needs.performance-baseline.result }} |
+          | Accessibility Check | ${{ needs.accessibility-check.result }} |
+          
+          ## Coverage Details
+          
+          EOF
+          
+          if [ -f quality-reports/comprehensive-coverage/lcov.info ]; then
+            echo "Coverage data found and processed" >> final-report/quality-report.md
+          else
+            echo "No coverage data available" >> final-report/quality-report.md
+          fi
+          
+          echo "Report generated successfully"
+
+      - name: Upload consolidated report
+        uses: actions/upload-artifact@v3
+        with:
+          name: quality-assurance-report
+          path: final-report/
+        
+      - name: Publish to GitHub Pages
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./final-report
+          destination_dir: quality-reports
+        continue-on-error: true

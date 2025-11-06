@@ -1,0 +1,626 @@
+# Multi-Phase Testing Pipeline
+# Comprehensive testing for all phases of the NZeroESG system
+name: Multi-Phase Testing
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run full test suite daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+env:
+  NODE_VERSION: '18'
+  PYTHON_VERSION: '3.11'
+  POSTGRES_VERSION: '15'
+  REDIS_VERSION: '7'
+
+jobs:
+  detect-changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      phase1: ${{ steps.changes.outputs.phase1 }}
+      phase2: ${{ steps.changes.outputs.phase2 }}
+      phase3: ${{ steps.changes.outputs.phase3 }}
+      testing: ${{ steps.changes.outputs.testing }}
+      all: ${{ steps.changes.outputs.all }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect file changes
+        uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            phase1:
+              - 'auth-service/**'
+              - 'graphql-gateway/**'
+              - 'docker-compose.phase1.yml'
+            phase2:
+              - 'vendor-service/**'
+              - 'compliance-service/**'
+              - 'docker-compose.phase2.yml'
+            phase3:
+              - 'nzeroesg-api/**'
+              - 'nzeroesg-client/**'
+              - 'nzeroesg-embedder/**'
+              - 'docker-compose.yml'
+            testing:
+              - 'testing/**'
+              - '.github/workflows/**'
+            all:
+              - '**'
+
+  phase1-tests:
+    name: Phase 1 Tests
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.phase1 == 'true' || needs.detect-changes.outputs.testing == 'true' || github.event_name == 'schedule'
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: nzeroesg_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Start Phase 1 services
+        run: |
+          cp .env.example .env
+          echo "JWT_SECRET=test-secret-multi-phase" >> .env
+          echo "DATABASE_URL=postgresql://testuser:testpassword@localhost:5432/nzeroesg_test" >> .env
+          echo "NODE_ENV=test" >> .env
+          docker-compose -f docker-compose.phase1.yml up -d --build
+          sleep 30
+
+      - name: Install test dependencies
+        working-directory: ./testing
+        run: npm ci
+
+      - name: Run Phase 1 tests
+        working-directory: ./testing
+        run: npm test -- __tests__/phase1
+        env:
+          NODE_ENV: test
+          AUTH_SERVICE_URL: http://localhost:3001
+          GRAPHQL_GATEWAY_URL: http://localhost:4000
+          DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/nzeroesg_test
+          JWT_SECRET: test-secret-multi-phase
+
+      - name: Upload Phase 1 test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: phase1-test-results
+          path: testing/coverage/
+        continue-on-error: true
+
+      - name: Cleanup Phase 1
+        if: always()
+        run: docker-compose -f docker-compose.phase1.yml down -v
+
+  phase2-tests:
+    name: Phase 2 Tests
+    runs-on: ubuntu-latest
+    needs: [detect-changes, phase1-tests]
+    if: needs.detect-changes.outputs.phase2 == 'true' || needs.detect-changes.outputs.testing == 'true' || github.event_name == 'schedule'
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: nzeroesg_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Start Phase 2 services
+        run: |
+          cp .env.example .env
+          echo "JWT_SECRET=test-secret-multi-phase" >> .env
+          echo "DATABASE_URL=postgresql://testuser:testpassword@localhost:5432/nzeroesg_test" >> .env
+          echo "NODE_ENV=test" >> .env
+          docker-compose -f docker-compose.phase2.yml up -d --build || echo "Phase 2 services not implemented yet"
+          sleep 30
+
+      - name: Install test dependencies
+        working-directory: ./testing
+        run: npm ci
+
+      - name: Run Phase 2 tests
+        working-directory: ./testing
+        run: |
+          if [ -d "__tests__/phase2" ]; then
+            npm test -- __tests__/phase2
+          else
+            echo "Phase 2 tests not implemented yet"
+          fi
+        env:
+          NODE_ENV: test
+          AUTH_SERVICE_URL: http://localhost:3001
+          GRAPHQL_GATEWAY_URL: http://localhost:4000
+          VENDOR_SERVICE_URL: http://localhost:3002
+          COMPLIANCE_SERVICE_URL: http://localhost:3003
+          DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/nzeroesg_test
+          JWT_SECRET: test-secret-multi-phase
+        continue-on-error: true
+
+      - name: Upload Phase 2 test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: phase2-test-results
+          path: testing/coverage/
+        continue-on-error: true
+
+      - name: Cleanup Phase 2
+        if: always()
+        run: |
+          docker-compose -f docker-compose.phase2.yml down -v || echo "Phase 2 cleanup not needed"
+
+  phase3-tests:
+    name: Phase 3 Tests
+    runs-on: ubuntu-latest
+    needs: [detect-changes, phase2-tests]
+    if: needs.detect-changes.outputs.phase3 == 'true' || needs.detect-changes.outputs.testing == 'true' || github.event_name == 'schedule'
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: nzeroesg_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Start Phase 3 services
+        run: |
+          cp .env.example .env
+          echo "JWT_SECRET=test-secret-multi-phase" >> .env
+          echo "DATABASE_URL=postgresql://testuser:testpassword@localhost:5432/nzeroesg_test" >> .env
+          echo "NODE_ENV=test" >> .env
+          echo "LLM_PROVIDER=openrouter" >> .env
+          echo "OPENROUTER_API_KEY=test-key" >> .env
+          echo "CARBON_INTERFACE_API_KEY=test-key" >> .env
+          docker-compose up -d --build
+          sleep 60 # Phase 3 services need more time
+
+      - name: Install test dependencies
+        working-directory: ./testing
+        run: npm ci
+
+      - name: Run Phase 3 tests
+        working-directory: ./testing
+        run: |
+          if [ -d "__tests__/phase3" ]; then
+            npm test -- __tests__/phase3
+          else
+            echo "Phase 3 tests not implemented yet"
+          fi
+        env:
+          NODE_ENV: test
+          AUTH_SERVICE_URL: http://localhost:3001
+          GRAPHQL_GATEWAY_URL: http://localhost:4000
+          NZEROESG_API_URL: http://localhost:8000
+          NZEROESG_CLIENT_URL: http://localhost:3000
+          EMBEDDER_SERVICE_URL: http://localhost:8002
+          DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/nzeroesg_test
+          JWT_SECRET: test-secret-multi-phase
+        continue-on-error: true
+
+      - name: Upload Phase 3 test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: phase3-test-results
+          path: testing/coverage/
+        continue-on-error: true
+
+      - name: Cleanup Phase 3
+        if: always()
+        run: docker-compose down -v
+
+  integration-tests-full:
+    name: Full System Integration Tests
+    runs-on: ubuntu-latest
+    needs: [phase1-tests, phase2-tests, phase3-tests]
+    if: github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: nzeroesg_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Start all services
+        run: |
+          cp .env.example .env
+          echo "JWT_SECRET=test-secret-full-integration" >> .env
+          echo "DATABASE_URL=postgresql://testuser:testpassword@localhost:5432/nzeroesg_test" >> .env
+          echo "NODE_ENV=test" >> .env
+          echo "LLM_PROVIDER=openrouter" >> .env
+          echo "OPENROUTER_API_KEY=test-key" >> .env
+          echo "CARBON_INTERFACE_API_KEY=test-key" >> .env
+          
+          # Try to start full system, fallback to implemented phases
+          docker-compose up -d --build || docker-compose -f docker-compose.phase1.yml up -d --build
+          sleep 60
+
+      - name: Install test dependencies
+        working-directory: ./testing
+        run: npm ci
+
+      - name: Run full system integration tests
+        working-directory: ./testing
+        run: |
+          if [ -d "__tests__/integration/full-system" ]; then
+            npm test -- __tests__/integration/full-system
+          else
+            echo "Full system integration tests not implemented yet"
+            npm test -- __tests__/phase1/integration
+          fi
+        env:
+          NODE_ENV: test
+          AUTH_SERVICE_URL: http://localhost:3001
+          GRAPHQL_GATEWAY_URL: http://localhost:4000
+          NZEROESG_API_URL: http://localhost:8000
+          NZEROESG_CLIENT_URL: http://localhost:3000
+          DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/nzeroesg_test
+          JWT_SECRET: test-secret-full-integration
+
+      - name: Upload full integration test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: full-integration-test-results
+          path: testing/coverage/
+        continue-on-error: true
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker-compose down -v || docker-compose -f docker-compose.phase1.yml down -v
+
+  performance-tests:
+    name: Performance & Load Tests
+    runs-on: ubuntu-latest
+    needs: [phase1-tests]
+    if: github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: nzeroesg_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Start services for performance testing
+        run: |
+          cp .env.example .env
+          echo "JWT_SECRET=test-secret-performance" >> .env
+          echo "DATABASE_URL=postgresql://testuser:testpassword@localhost:5432/nzeroesg_test" >> .env
+          echo "NODE_ENV=production" >> .env
+          docker-compose -f docker-compose.phase1.yml up -d --build
+          sleep 30
+
+      - name: Install test dependencies
+        working-directory: ./testing
+        run: npm ci
+
+      - name: Run performance tests
+        working-directory: ./testing
+        run: |
+          npm test -- --testNamePattern="Performance|Load|Stress" --maxWorkers=1 --verbose
+        env:
+          NODE_ENV: test
+          AUTH_SERVICE_URL: http://localhost:3001
+          GRAPHQL_GATEWAY_URL: http://localhost:4000
+          DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/nzeroesg_test
+          JWT_SECRET: test-secret-performance
+
+      - name: Upload performance results
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-test-results
+          path: |
+            testing/performance-results/
+            testing/coverage/
+        continue-on-error: true
+
+      - name: Cleanup
+        if: always()
+        run: docker-compose -f docker-compose.phase1.yml down -v
+
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Node.js dependencies
+        run: |
+          cd auth-service && npm ci
+          cd ../graphql-gateway && npm ci
+          cd ../testing && npm ci
+
+      - name: Install Python dependencies
+        run: |
+          if [ -f nzeroesg-api/requirements.txt ]; then
+            cd nzeroesg-api && pip install -r requirements.txt
+          fi
+
+      - name: Run npm audit
+        run: |
+          cd auth-service && npm audit --audit-level moderate || true
+          cd ../graphql-gateway && npm audit --audit-level moderate || true
+
+      - name: Run Snyk security scan
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --all-projects --severity-threshold=high
+        continue-on-error: true
+
+      - name: Run Python security scan
+        run: |
+          pip install safety bandit
+          if [ -f nzeroesg-api/requirements.txt ]; then
+            safety check -r nzeroesg-api/requirements.txt || true
+            bandit -r nzeroesg-api/ -f json -o bandit-report.json || true
+          fi
+        continue-on-error: true
+
+      - name: Upload security scan results
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-scan-results
+          path: |
+            bandit-report.json
+            snyk-report.json
+        continue-on-error: true
+
+  test-coverage:
+    name: Test Coverage Analysis
+    runs-on: ubuntu-latest
+    needs: [phase1-tests, phase2-tests, phase3-tests]
+    if: always()
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download test results
+        uses: actions/download-artifact@v3
+        with:
+          path: test-results
+        continue-on-error: true
+
+      - name: Combine coverage reports
+        run: |
+          mkdir -p combined-coverage
+          find test-results -name "*.lcov" -exec cat {} \; > combined-coverage/lcov.info || echo "No coverage files found"
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: combined-coverage/lcov.info
+          flags: all-phases
+          name: multi-phase-coverage
+        continue-on-error: true
+
+      - name: Generate coverage report
+        run: |
+          if [ -f combined-coverage/lcov.info ]; then
+            echo "Coverage report generated successfully"
+            wc -l combined-coverage/lcov.info
+          else
+            echo "No coverage data available"
+          fi
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: [phase1-tests, security-scan]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.CONTAINER_REGISTRY }}
+          username: ${{ secrets.CONTAINER_REGISTRY_USERNAME }}
+          password: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
+
+      - name: Determine deployment environment
+        id: env
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
+          else
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build and push images
+        run: |
+          ENV=${{ steps.env.outputs.environment }}
+          
+          # Build and push Auth Service
+          docker build -t ${{ secrets.CONTAINER_REGISTRY }}/nzeroesg-auth:${ENV}-${{ github.sha }} ./auth-service
+          docker push ${{ secrets.CONTAINER_REGISTRY }}/nzeroesg-auth:${ENV}-${{ github.sha }}
+          
+          # Build and push GraphQL Gateway
+          docker build -t ${{ secrets.CONTAINER_REGISTRY }}/nzeroesg-graphql:${ENV}-${{ github.sha }} ./graphql-gateway
+          docker push ${{ secrets.CONTAINER_REGISTRY }}/nzeroesg-graphql:${ENV}-${{ github.sha }}
+          
+          # Build and push other services if they exist
+          if [ -d nzeroesg-api ]; then
+            docker build -t ${{ secrets.CONTAINER_REGISTRY }}/nzeroesg-api:${ENV}-${{ github.sha }} ./nzeroesg-api
+            docker push ${{ secrets.CONTAINER_REGISTRY }}/nzeroesg-api:${ENV}-${{ github.sha }}
+          fi
+
+      - name: Deploy to environment
+        run: |
+          echo "Deploying to ${{ steps.env.outputs.environment }} environment"
+          echo "Commit: ${{ github.sha }}"
+          # Add actual deployment commands here
+
+  notify:
+    name: Notify Results
+    runs-on: ubuntu-latest
+    needs: [phase1-tests, phase2-tests, phase3-tests, integration-tests-full, security-scan, deploy]
+    if: always()
+    
+    steps:
+      - name: Determine overall status
+        id: status
+        run: |
+          if [ "${{ needs.phase1-tests.result }}" = "failure" ] || 
+             [ "${{ needs.security-scan.result }}" = "failure" ]; then
+            echo "status=failure" >> $GITHUB_OUTPUT
+          elif [ "${{ needs.phase1-tests.result }}" = "success" ]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+          else
+            echo "status=partial" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send notification
+        uses: 8398a7/action-slack@v3
+        if: always()
+        with:
+          status: ${{ steps.status.outputs.status }}
+          text: |
+            Multi-Phase Testing Pipeline: ${{ steps.status.outputs.status }}
+            
+            Phase 1: ${{ needs.phase1-tests.result }}
+            Phase 2: ${{ needs.phase2-tests.result }}  
+            Phase 3: ${{ needs.phase3-tests.result }}
+            Integration: ${{ needs.integration-tests-full.result }}
+            Security: ${{ needs.security-scan.result }}
+            Deploy: ${{ needs.deploy.result }}
+            
+            Commit: ${{ github.sha }}
+            Author: ${{ github.actor }}
+            Branch: ${{ github.ref_name }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        continue-on-error: true
+
+      - name: Update status badge
+        run: |
+          echo "Updating status badge for multi-phase testing"
+          echo "Status: ${{ steps.status.outputs.status }}"
