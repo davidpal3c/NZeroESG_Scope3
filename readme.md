@@ -99,6 +99,7 @@ Though not ready yet, it aims at a broader scope
 ### What's Coming (2025)
 
 - [x] **SmartSupplierSearch (RAG + Chroma Vector DB)** (in progress)
+- [ ] GraphQL gateway - unify microservices and improve system design for scalability and UI integration 
 - [ ] Redis session and emissions cache
 - [ ] Upload CSV of purchase orders and tool invocation for emissions analysis
 - [ ] Procurement simulation tool: cost vs. emissions vs. delivery time tradeoffs
@@ -109,13 +110,11 @@ and more!...
 - [ ] **Frontend improvement**: structured rendering of supplier metadata (e.g., certifications, ratings, delivery time, emission intensity), user portal and dataset (file) uploads and management. 
 
 
-
 #### Extended Use Cases 
 - [ ] Cloud Computing & IT Emissions
 - [ ] Employee Commuting / Business Travel
 - [ ] Waste Disposal Emissions 
 <!-- - [ ] User-facing CO₂ Calculators (B2B/B2C) -->
-
 
 #### (Frontend)
 - Real-time chat interface with:
