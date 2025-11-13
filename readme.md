@@ -73,7 +73,6 @@ Though not ready yet, it aims at a broader scope
 **Features:**
 - Follow-up and context-aware replies
 - Auto-scrolling, error-friendly UX
-(working on ...)
 - Typing indicators, graceful error handling, follow-up logic
 - Resizable chat UI with drag-handle
 - Real-time streaming messages with metadata (confidence, source, time)  
@@ -98,8 +97,9 @@ Though not ready yet, it aims at a broader scope
 
 ### What's Coming (2025)
 
-- [x] **SmartSupplierSearch (RAG + Chroma Vector DB)** (in progress)
-- [ ] GraphQL gateway - unify microservices and improve system design for scalability and UI integration 
+- [x] **SmartSupplierSearch (RAG + Chroma Vector DB)** and document ingestion (in progress)
+- [ ] GraphQL gateway - unify microservices and improve system design for scalability and UI integration (in progress)
+- [ ] Improve Vector search metadata, Outputs
 - [ ] Redis session and emissions cache
 - [ ] Upload CSV of purchase orders and tool invocation for emissions analysis
 - [ ] Procurement simulation tool: cost vs. emissions vs. delivery time tradeoffs
