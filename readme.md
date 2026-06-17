@@ -2,6 +2,10 @@
 ## 🌱 NZeroESG - Scope3
 ----
 
+> Development restart: see the [demo-readiness roadmap](docs/demo-roadmap.md)
+> and [engineering contract](AGENTS.md). The roadmap distinguishes the
+> historical prototype from the functionality required for a public demo.
+
 ### Sustainable Sourcing Through Agentic Ai: Trace emissions, materials, and vendor compliance across supply chain.
 
 Procurement and logistics account for a large share of Scope 3 emissions, but tracking their impact is often fragmented, non-actionable, and without real-time tools to analyze environmental impact. This project builds an agentic AI system using **LangChain’s ReAct framework** to make carbon intelligence conversational, traceable, and decision-ready.
