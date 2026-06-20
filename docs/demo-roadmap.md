@@ -157,6 +157,9 @@ Current external action:
 - Rotate the historical Render deploy hooks before deployment is restored.
   Removing the workflow prevents future use but cannot invalidate credentials
   already present in public Git history.
+- A repository-history pattern audit on June 19, 2026 found secret-shaped
+  matches only in the historical `.github/workflows/deploy.yml`; no additional
+  credential file or key pattern was identified.
 
 Verification:
 
