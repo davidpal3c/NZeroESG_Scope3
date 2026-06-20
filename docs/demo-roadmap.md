@@ -143,13 +143,20 @@ deployment design must be simplified before adding features.
 
 Deliverables:
 
-- Remove abandoned migration artifacts and zero-byte placeholders.
-- Rotate exposed deploy hooks and audit secrets.
-- Reduce and pin dependencies.
-- Make local startup reproducible from documented commands.
-- Define environment variables with a checked-in example file.
-- Add linting, formatting, type checking, and a minimal CI workflow.
-- Replace stale README claims with an honest implemented/roadmap split.
+- [x] Remove abandoned migration artifacts and zero-byte placeholders.
+- [ ] Rotate exposed deploy hooks and audit secrets.
+- [x] Reduce and pin dependencies.
+- [x] Make local startup reproducible from documented commands.
+- [x] Define environment variables with checked-in example files.
+- [x] Add linting, formatting, type checking, and a minimal CI workflow.
+- [x] Replace stale README claims with an honest implemented/roadmap split.
+- [x] Align architecture, retrieval, and assistant messaging with the rebuild.
+
+Current external action:
+
+- Rotate the historical Render deploy hooks before deployment is restored.
+  Removing the workflow prevents future use but cannot invalidate credentials
+  already present in public Git history.
 
 Verification:
 

@@ -37,7 +37,7 @@ export default function ThemeToggle() {
             exit={{ rotate: 90, opacity: 0 }}
             transition={{ duration: 0.5, ease: "easeInOut" }}
           >
-            <SunIcon className="w-5 h-5 text-yellow-400"/>
+            <SunIcon className="w-5 h-5 text-yellow-400" />
           </motion.span>
         ) : (
           <motion.span
@@ -54,8 +54,6 @@ export default function ThemeToggle() {
     </button>
   );
 }
-
-
 
 // "use client";
 

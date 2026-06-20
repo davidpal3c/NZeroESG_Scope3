@@ -1,13 +1,16 @@
-
 export const metadata = {
   title: "User Portal",
-  description: "User Portal for NZeroes ESG",       
+  description: "User Portal for NZeroes ESG",
 };
 
 import { ReactNode } from "react";
-import ParticlesContainer from "@/app/components/ParticlesContainer";   
+import ParticlesContainer from "@/app/components/ParticlesContainer";
 
-export default function UserPortalLayout({ children }: { children: ReactNode }) {
+export default function UserPortalLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
   return (
     <div className="">
       <div className="relative h-screen">
@@ -18,10 +21,10 @@ export default function UserPortalLayout({ children }: { children: ReactNode }) 
       </div>
     </div>
   );
-//   return (
-//     <main className="min-h-screen bg-background text-primary">
-//       {/* You can add a sidebar or portal nav here if needed */}
-//       {children}
-//     </main>
-//   );
+  //   return (
+  //     <main className="min-h-screen bg-background text-primary">
+  //       {/* You can add a sidebar or portal nav here if needed */}
+  //       {children}
+  //     </main>
+  //   );
 }

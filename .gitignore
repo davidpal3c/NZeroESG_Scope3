@@ -1,100 +1,54 @@
-### Python ###
-# Byte-compiled files
+### Python
 __pycache__/
 *.py[cod]
-*$py.class
-
-# Virtual environment
 .venv/
 venv/
 env/
-.env/  # Avoid conflict with environment variable files
-
-backend/.venv/
-backend/venv/
-backend/env/
-
-nzeroesg-api/.venv/
-nzeroesg-api/venv/
-nzeroesg-api/env/
-nzeroesg-api/chroma/
-nzeroesg-api/chroma/**/*.bin
-
-# Distribution / packaging
 .Python
 build/
-develop-eggs/
 dist/
-downloads/
-eggs/
 .eggs/
-
-lib64/
-parts/
-sdist/
-var/
-wheels/
 *.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
 htmlcov/
-.tox/
-.nox/
 .coverage
-*.cover
-*.py,cover
-.hypothesis/
 .pytest_cache/
+.ruff_cache/
 
-# Jupyter Notebook
-.ipynb_checkpoints
-
-### Environment ###
-# Environment variables
+### Environment and secrets
 .env
 .env.local
+.env.*
+!.env.example
 .env.*.local
 secrets.yml
 
-# macOS
+### JavaScript
+node_modules/
+.next/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+### Local data
+vectordb/
+nzeroesg-api/chroma/
+uploads/
+
+### OS and editors
 .DS_Store
-nzeroesg-api/.DS_Store
-
-### IDEs ###
-# VS Code
 .vscode/
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-
-# PyCharm
 .idea/
 *.iml
-*.ipr
-*.iws
-
-# Vim
 *.swp
 *.swo
 
-### FastAPI Specific ###
-# Logs
+### Runtime
 logs/
 *.log
-
-# SQLite
 *.sqlite
 *.sqlite3
-
-# Alembic migrations (if using)
-alembic.ini
-
 readme(original).md
+
+# Leftovers from the abandoned migration are intentionally not part of dev.
+/testing/
+/.github/copilot-instructions.md

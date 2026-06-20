@@ -1,8 +1,7 @@
-import HomePage from "@/app/components/page_components/HomePage"
-import ParticlesContainer from "./components/ParticlesContainer";
+import HomePage from "@/app/components/page_components/HomePage";
 
 export default function Home() {
-    return (
+  return (
     <div className="bg-background">
       <HomePage />
     </div>
