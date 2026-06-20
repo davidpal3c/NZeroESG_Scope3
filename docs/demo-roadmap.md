@@ -168,6 +168,15 @@ Verification:
 - Secret scanning finds no active credentials.
 - Frontend type check and backend test collection pass.
 
+Verified baseline evidence:
+
+- Commit `8b6d324` passed the GitHub Actions `repository`, `backend`, and
+  `frontend` jobs on June 19, 2026, including a credential-free clean install,
+  backend tests, frontend production build, and production dependency audit.
+- A clean local clone of the same baseline built and started through Docker
+  Compose without local environment override files; frontend, dashboard, and
+  backend health requests returned successfully.
+
 Exit gate:
 
 > A contributor can clone, configure, run, and test the baseline without
