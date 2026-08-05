@@ -263,15 +263,21 @@ Initial implementation evidence:
 - Backend tests cover signature tampering, expiry, unique workspace sessions,
   logout, direct API rejection, and two-client isolation. Frontend typecheck,
   lint, formatting, and the Webpack production build pass.
+- The `persistence` package adds a checked-in PostgreSQL migration for
+  workspace, quota, retention, and revocation records. The repository applies
+  migrations idempotently, atomically increments daily analysis quotas, purges
+  expired workspaces, and rejects revoked sessions. The CI backend job runs
+  against a disposable PostgreSQL service; the full suite passes locally with
+  both the development fallback and a temporary PostgreSQL server.
 - Commit `3fb8b49` passed GitHub Actions run `31034311577` on August 5, 2026;
   the `repository`, `backend`, and `frontend` jobs all succeeded.
 
 Scope boundary for this slice:
 
-- The claims are intentionally stateless while the PostgreSQL repository is
-  still roadmap work. Quota consumption, revocation, and cleanup of persisted
-  workspace data are not yet complete and remain required before the Phase 2
-  exit gate.
+- The in-memory adapter is only a native-development fallback. The public
+  deployment path requires `DATABASE_URL` and the PostgreSQL adapter.
+- Browser-level isolation against a running frontend/API pair and the public
+  deployment smoke gate remain outstanding before the Phase 2 exit gate.
 
 Verification:
 

@@ -22,13 +22,17 @@ demo.
 
 ## Local baseline
 
-The credential-free local stack contains two services:
+The credential-free local stack contains a frontend, API, and PostgreSQL
+database:
 
 ```text
 localhost:3000  Next.js frontend
        │
        ▼
 localhost:8000  FastAPI backend
+       │
+       ▼
+local PostgreSQL   workspace/quota records
 ```
 
 Start it with:
@@ -36,6 +40,11 @@ Start it with:
 ```bash
 docker compose up --build
 ```
+
+Compose applies the checked-in workspace migration and uses PostgreSQL for
+session-backed workspace records. Native development without `DATABASE_URL`
+uses the explicitly documented in-memory adapter; production must configure a
+managed PostgreSQL URL.
 
 The Compose configuration intentionally sets `ASSISTANT_ENABLED=false`. This
 keeps the baseline reproducible without provider credentials and verifies that
@@ -105,5 +114,5 @@ CI must remain credential-free and run:
 - frontend type checking, lint, formatting, and production build;
 - production dependency audit.
 
-Production smoke checks and the end-to-end demo journey are Phase 6 release
-requirements, not claims about the current Phase 0 baseline.
+Production smoke checks and the end-to-end demo journey remain later release
+requirements; they are not claims about the current local Phase 2 state.

@@ -110,3 +110,40 @@ def test_demo_logout_removes_the_session_cookie():
 
     assert response.status_code == 204
     assert demo_client.get("/demo/session").status_code == 401
+
+
+def test_analysis_run_is_persisted_in_workspace_quota():
+    demo_client = authenticated_client()
+
+    response = demo_client.post(
+        "/emissions/calculate",
+        json={
+            "weight_value": 1,
+            "distance_value": 100,
+            "transport_method": "truck",
+        },
+    )
+
+    assert response.status_code == 200
+    session = demo_client.get("/demo/session")
+    assert session.status_code == 200
+    assert session.json()["quotas"]["analysis_runs_per_day"] == {"used": 1, "limit": 10}
+
+
+def test_analysis_quota_rejects_the_eleventh_run():
+    demo_client = authenticated_client()
+    payload = {
+        "weight_value": 1,
+        "distance_value": 100,
+        "transport_method": "truck",
+    }
+
+    for _ in range(10):
+        assert demo_client.post("/emissions/calculate", json=payload).status_code == 200
+
+    response = demo_client.post("/emissions/calculate", json=payload)
+
+    assert response.status_code == 429
+    assert response.json()["detail"] == (
+        "The daily analysis quota for this workspace has been reached."
+    )

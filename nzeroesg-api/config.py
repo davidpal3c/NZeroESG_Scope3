@@ -33,6 +33,7 @@ class Settings:
     assistant_enabled: bool = _as_bool(os.getenv("ASSISTANT_ENABLED"))
     demo_session_secret: str = _demo_session_secret()
     demo_workspace_ttl_hours: int = int(os.getenv("DEMO_WORKSPACE_TTL_HOURS", "24"))
+    database_url: str | None = os.getenv("DATABASE_URL") or None
     session_cookie_secure: bool = os.getenv("APP_ENV", "development") == "production"
     session_cookie_samesite: str = "none" if session_cookie_secure else "lax"
     llm_provider: str = os.getenv("LLM_PROVIDER", "").strip().lower()

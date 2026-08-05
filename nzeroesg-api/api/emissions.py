@@ -1,17 +1,19 @@
 """Typed HTTP boundary for the deterministic emissions core."""
 
-from typing import Literal
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from api.workspaces import require_workspace_session
+from api.workspaces import require_workspace_session, workspace_repository
 from domain.emissions.calculator import (
     CalculationResult,
     ComparisonResult,
     calculate_emissions,
     compare_emissions,
 )
+from domain.workspaces.sessions import WorkspaceSession
+from persistence.workspaces import QuotaExceededError, WorkspaceNotFoundError
 
 TransportMethod = Literal[
     "plane",
@@ -100,7 +102,6 @@ class ComparisonResponse(BaseModel):
 emissions_router = APIRouter(
     prefix="/emissions",
     tags=["emissions"],
-    dependencies=[Depends(require_workspace_session)],
 )
 
 
@@ -113,7 +114,10 @@ def _raise_calculation_error(exc: ValueError) -> HTTPException:
 
 
 @emissions_router.post("/calculate", response_model=CalculationResponse)
-async def calculate(payload: EmissionsRequest) -> CalculationResponse:
+async def calculate(
+    payload: EmissionsRequest,
+    workspace: Annotated[WorkspaceSession, Depends(require_workspace_session)],
+) -> CalculationResponse:
     try:
         result = calculate_emissions(
             weight_value=payload.weight_value,
@@ -127,11 +131,15 @@ async def calculate(payload: EmissionsRequest) -> CalculationResponse:
         )
     except ValueError as exc:
         raise _raise_calculation_error(exc) from exc
+    _consume_analysis_run(workspace.workspace_id)
     return _calculation_response(result)
 
 
 @emissions_router.post("/compare", response_model=ComparisonResponse)
-async def compare(payload: ComparisonRequest) -> ComparisonResponse:
+async def compare(
+    payload: ComparisonRequest,
+    workspace: Annotated[WorkspaceSession, Depends(require_workspace_session)],
+) -> ComparisonResponse:
     try:
         result = compare_emissions(
             weight_value=payload.weight_value,
@@ -145,8 +153,24 @@ async def compare(payload: ComparisonRequest) -> ComparisonResponse:
         )
     except ValueError as exc:
         raise _raise_calculation_error(exc) from exc
+    _consume_analysis_run(workspace.workspace_id)
     return ComparisonResponse.model_validate(_comparison_payload(result))
 
 
 def _comparison_payload(result: ComparisonResult) -> dict[str, object]:
     return result.to_dict()
+
+
+def _consume_analysis_run(workspace_id: str) -> None:
+    try:
+        workspace_repository.consume_quota(workspace_id, "analysis_runs_per_day")
+    except WorkspaceNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="The workspace session is no longer active.",
+        ) from exc
+    except QuotaExceededError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="The daily analysis quota for this workspace has been reached.",
+        ) from exc

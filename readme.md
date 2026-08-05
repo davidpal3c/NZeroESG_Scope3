@@ -31,13 +31,14 @@ Implemented in the current baseline:
 - Signed, expiring demo sessions at `/demo/session`, with HTTP-only cookies,
   workspace-specific quota/retention claims, and a protected portal shell at
   `/login` and `/dashboard`.
+- PostgreSQL workspace persistence with migrations, server-side analysis
+  quotas, revocation, and expiry cleanup when `DATABASE_URL` is configured.
 - Offline freight-factor fallback calculations for the legacy assistant.
 - Optional OpenAI or OpenRouter assistant integration, disabled by default.
 - Reproducible Docker definitions and credential-free CI checks.
 
 Not implemented yet:
 
-- PostgreSQL persistence.
 - CSV and evidence-document ingestion.
 - Supplier evidence retrieval and citations.
 - Scenario dashboard, production charts, and report export.
@@ -47,10 +48,10 @@ The old synthetic supplier dataset, Chroma service, and dedicated embedding
 service were removed from `dev`; they were demonstration plumbing rather than a
 defensible supplier-evidence system.
 
-The current session slice is stateless by design: it provides the signed
-workspace boundary without process-global user memory. Durable workspace,
-quota-consumption, and retention cleanup records still require the planned
-PostgreSQL persistence phase.
+When `DATABASE_URL` is absent, native development uses an explicit in-memory
+adapter for convenience. Docker Compose and production use the PostgreSQL
+adapter, which applies checked-in migrations and stores workspace, quota,
+retention, and revocation records server-side.
 
 ## Local development
 
@@ -115,8 +116,8 @@ OPENAI_MODEL=...
 OpenRouter can be selected with `LLM_PROVIDER=openrouter` and the corresponding
 environment variables from `nzeroesg-api/.env.example`.
 
-Do not commit credentials. Assistant requests are intentionally stateless until
-workspace-scoped persistence is implemented.
+Do not commit credentials. Assistant requests remain stateless until the
+workspace-scoped assistant workflow is implemented.
 
 ## Quality checks
 

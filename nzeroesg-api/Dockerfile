@@ -14,6 +14,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY agent ./agent
 COPY api ./api
 COPY domain ./domain
+COPY persistence ./persistence
 COPY config.py main.py ./
 
 USER app
