@@ -229,6 +229,14 @@ Exit gate:
 > The calculator can be trusted and demonstrated without an LLM or external
 > emissions API.
 
+Exit-gate evidence:
+
+- Commit `072b61d` passed GitHub Actions run `31032999153` on August 5, 2026;
+  the `repository`, `backend`, and `frontend` jobs all succeeded.
+- The deterministic API contract tests demonstrate calculation and comparison
+  without provider credentials, including factor provenance, assumptions, and
+  straight-line distance warnings.
+
 ### Phase 2 — Add isolated demo workspaces and the portal
 
 Deliverables:
