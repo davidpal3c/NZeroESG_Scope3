@@ -72,3 +72,46 @@ jobs:
       - run: npm run format:check
       - run: npm run build
       - run: npm audit --omit=dev --audit-level=high
+
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16.9
+        env:
+          POSTGRES_DB: nzeroesg_test
+          POSTGRES_USER: nzeroesg
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U nzeroesg -d nzeroesg_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12.10"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "20.19.0"
+          cache: npm
+          cache-dependency-path: nzeroesg-client/package-lock.json
+      - name: Install backend dependencies
+        working-directory: nzeroesg-api
+        run: pip install -r requirements-dev.txt
+      - name: Install frontend dependencies
+        working-directory: nzeroesg-client
+        run: npm ci
+      - name: Install Chromium
+        working-directory: nzeroesg-client
+        run: npx playwright install --with-deps chromium
+      - name: Run browser smoke suite
+        working-directory: nzeroesg-client
+        env:
+          CI: true
+          E2E_PYTHON: python
+          E2E_DATABASE_URL: postgresql://nzeroesg@localhost:5432/nzeroesg_test
+        run: npm run test:e2e

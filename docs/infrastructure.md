@@ -60,6 +60,12 @@ The backend health check gates frontend startup in Compose.
 
 ## Target deployment
 
+The checked-in [`render.yaml`](../render.yaml) is the deployment handoff for
+the API. It intentionally uses the `dev` branch, waits for CI checks to pass,
+generates the session secret in Render, and references the managed database
+without embedding credentials. Create or review the Blueprint in the Render
+Dashboard; this repository does not contain a deploy hook or provider token.
+
 ### Frontend
 
 - Vercel free tier;
@@ -81,6 +87,13 @@ The backend health check gates frontend startup in Compose.
 - migrations are required for schema changes;
 - every user-owned record carries a workspace identifier;
 - demo workspaces and extracted evidence expire after 24 hours by default.
+
+The current Render pricing payload lists the durable `basic-1gb` Postgres tier
+at $19/month; paired with a free web service and the existing free Vercel
+frontend, the planned recurring baseline remains below $30/month. Render's
+free Postgres tier is intentionally not selected because it expires after 30
+days. Confirm the actual workspace invoice before treating this as a final
+cost gate.
 
 ## Data and upload limits
 
@@ -113,6 +126,19 @@ CI must remain credential-free and run:
 - backend lint, formatting, and tests;
 - frontend type checking, lint, formatting, and production build;
 - production dependency audit.
+- the local browser smoke suite against disposable PostgreSQL, covering the
+  primary demo journey and workspace isolation.
 
-Production smoke checks and the end-to-end demo journey remain later release
-requirements; they are not claims about the current local Phase 2 state.
+The browser suite is a local/CI gate; it does not substitute for the public
+deployment smoke check. The current Vercel URL still serves the historical
+`main` branch, and the Render backend service no longer exists, so online
+verification remains outstanding.
+
+Public verification snapshot from August 5, 2026:
+
+- `https://n-zero-esg-scope3.vercel.app/` responds with `200`.
+- `/login` responds with `404`, and the public-target Playwright suite cannot
+  find the current “Enter a private workspace” page.
+- The repository's current rebuilt portal and `render.yaml` are on `dev`; the
+  public domain has not yet been pointed at that branch or given a live API
+  origin.

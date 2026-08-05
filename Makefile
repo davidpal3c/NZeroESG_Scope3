@@ -1,4 +1,4 @@
-.PHONY: setup secrets backend-check frontend-check check dev
+.PHONY: setup secrets backend-check frontend-check e2e check dev
 
 PYTHON ?= python3.12
 
@@ -20,6 +20,9 @@ frontend-check:
 	cd nzeroesg-client && npm run lint
 	cd nzeroesg-client && npm run format:check
 	cd nzeroesg-client && npm run build
+
+e2e:
+	cd nzeroesg-client && npm run test:e2e
 
 check: secrets backend-check frontend-check
 

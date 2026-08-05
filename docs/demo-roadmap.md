@@ -406,6 +406,15 @@ Initial implementation evidence:
   formatting, and the Webpack production build pass locally.
 - Commit `b1cc7f1` passed GitHub Actions run `31039714610`; the repository,
   backend, and frontend jobs all succeeded.
+- A Playwright smoke suite now exercises the local/CI five-minute journey,
+  including session creation, shipment analysis, supplier citation retrieval,
+  scenario/report actions, print styling, and two-workspace isolation. It is
+  wired as a separate CI job against disposable PostgreSQL.
+- A non-secret `render.yaml` Blueprint now defines the intended public API
+  service on `dev` with CI-gated auto-deploy, a generated session secret, and a
+  durable Postgres reference. The current planned baseline is a free web
+  service plus Render's $19/month `basic-1gb` database, before confirming the
+  actual account invoice.
 
 Verification:
 
@@ -418,6 +427,12 @@ Remaining Phase 5 gate: verify the full interaction in a real browser,
 including keyboard navigation, responsive layout, workspace isolation, and
 the print/download actions. The in-app browser is not available in this
 environment, so this remains an external verification step.
+
+The local Chromium suite now passes those interaction checks, but the same
+suite targeted at `https://n-zero-esg-scope3.vercel.app` fails immediately at
+`/login` because the live Vercel project still serves the historical `main`
+branch. This is evidence for the public deployment gate, not a Phase 5 exit
+claim.
 
 Exit gate:
 

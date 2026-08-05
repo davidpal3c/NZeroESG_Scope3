@@ -23,6 +23,20 @@ def test_health_is_available_without_provider_credentials():
     }
 
 
+def test_cors_allows_frontend_workspace_logout():
+    response = client.options(
+        "/demo/session",
+        headers={
+            "Origin": "http://127.0.0.1:3000",
+            "Access-Control-Request-Method": "DELETE",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "http://127.0.0.1:3000"
+    assert "DELETE" in response.headers["access-control-allow-methods"]
+
+
 def test_disabled_assistant_has_an_explicit_response():
     response = client.post("/chat", json={"message": "Compare rail and air."})
 

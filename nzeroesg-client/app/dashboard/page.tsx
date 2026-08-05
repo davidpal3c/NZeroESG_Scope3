@@ -435,11 +435,14 @@ export default function UserPortalPage() {
   }
 
   async function leaveWorkspace() {
-    await fetch(`${getBackendUrl()}/demo/session`, {
-      method: "DELETE",
-      credentials: "include",
-    });
-    router.replace("/");
+    try {
+      await fetch(`${getBackendUrl()}/demo/session`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+    } finally {
+      router.replace("/");
+    }
   }
 
   const modeBreakdown = shipmentData

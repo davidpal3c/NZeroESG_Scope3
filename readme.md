@@ -43,6 +43,8 @@ Implemented in the current baseline:
   visual bars, printable report views, and authenticated CSV report export.
 - Offline freight-factor fallback calculations for the legacy assistant.
 - Optional OpenAI or OpenRouter assistant integration, disabled by default.
+- Playwright browser smoke coverage for the local five-minute workflow,
+  report download, logout, and workspace isolation.
 - Reproducible Docker definitions and credential-free CI checks.
 
 Not implemented yet:
@@ -145,6 +147,22 @@ npm run lint
 npm run format:check
 npm run build
 ```
+
+Browser smoke suite:
+
+```bash
+cd nzeroesg-client
+npx playwright install chromium
+npm run test:e2e
+```
+
+The suite starts the native API and frontend automatically. Set
+`E2E_DATABASE_URL` to exercise the PostgreSQL adapter instead of the native
+development fallback.
+
+The API deployment handoff is the checked-in [`render.yaml`](render.yaml)
+Blueprint. It contains no provider credentials; Render generates the session
+secret and supplies the database connection string.
 
 CI runs these checks without external provider credentials or network calls
 from tests. The local secret check scans tracked and non-ignored new files for
