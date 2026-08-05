@@ -263,6 +263,8 @@ Initial implementation evidence:
 - Backend tests cover signature tampering, expiry, unique workspace sessions,
   logout, direct API rejection, and two-client isolation. Frontend typecheck,
   lint, formatting, and the Webpack production build pass.
+- Commit `3fb8b49` passed GitHub Actions run `31034311577` on August 5, 2026;
+  the `repository`, `backend`, and `frontend` jobs all succeeded.
 
 Scope boundary for this slice:
 
