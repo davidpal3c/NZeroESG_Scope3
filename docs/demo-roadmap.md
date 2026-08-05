@@ -358,6 +358,9 @@ Initial implementation evidence:
 - The protected portal now supports evidence upload, missing-field display,
   supplier cards, and citation search. Tests cover TXT/PDF extraction,
   citation locations, retrieval, isolation, and the three-document quota.
+- Commit `c2bee8b` passed GitHub Actions run `31037902952`; the `repository`,
+  `backend`, and `frontend` jobs all succeeded with the disposable PostgreSQL
+  service.
 
 Verification:
 
