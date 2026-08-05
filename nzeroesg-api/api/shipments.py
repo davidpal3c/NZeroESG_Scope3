@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from pydantic import BaseModel
 
 from api.workspaces import require_workspace_session, workspace_repository
-from config import settings
+from config import database_url_for_runtime
 from domain.shipments.analysis import ShipmentAnalysis, analyze_shipments
 from domain.shipments.ingestion import (
     ALLOWED_CONTENT_TYPES,
@@ -19,7 +19,7 @@ from persistence.shipments import build_shipment_repository
 from persistence.workspaces import QuotaExceededError, WorkspaceNotFoundError
 
 shipments_router = APIRouter(prefix="/shipments", tags=["shipments"])
-shipment_repository = build_shipment_repository(settings.database_url)
+shipment_repository = build_shipment_repository(database_url_for_runtime())
 
 
 class ShipmentErrorResponse(BaseModel):

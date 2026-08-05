@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Upload
 from pydantic import BaseModel
 
 from api.workspaces import require_workspace_session, workspace_repository
-from config import settings
+from config import database_url_for_runtime
 from domain.evidence.ingestion import (
     EvidenceIngestionError,
     extract_evidence,
@@ -18,7 +18,7 @@ from persistence.evidence import build_evidence_repository
 from persistence.workspaces import QuotaExceededError, WorkspaceNotFoundError
 
 evidence_router = APIRouter(tags=["evidence"])
-evidence_repository = build_evidence_repository(settings.database_url)
+evidence_repository = build_evidence_repository(database_url_for_runtime())
 
 
 class SupplierResponse(BaseModel):

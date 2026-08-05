@@ -134,11 +134,12 @@ and protected portal shell, FastAPI health and optional chat endpoints, signed
 expiring demo workspace sessions, a migrated PostgreSQL workspace repository
 with server-side quota, revocation, and retention enforcement, workspace-scoped
 shipment CSV ingestion with bounded validation and deterministic baseline
-analysis, and supplier evidence ingestion with cited PostgreSQL full-text
-retrieval. The framework-independent deterministic freight-emissions core under
+analysis, supplier evidence ingestion with cited PostgreSQL full-text
+retrieval, deterministic mode scenarios, and typed report preview/CSV export.
+The framework-independent deterministic freight-emissions core under
 `domain/emissions` exposes normalized units, versioned illustrative factors,
-distance provenance, warnings, and stable result serialization. Scenarios and
-reports remain roadmap work and must not be represented as implemented.
+distance provenance, warnings, and stable result serialization. Public browser
+verification and deployment hardening remain roadmap work.
 
 The authoritative delivery sequence and acceptance gates are in
 [`demo-roadmap.md`](demo-roadmap.md).

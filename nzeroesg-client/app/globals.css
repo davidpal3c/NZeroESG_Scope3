@@ -70,6 +70,35 @@ body {
     color var(--default-transition-duration);
 }
 
+@media print {
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  aside,
+  button,
+  form,
+  input,
+  select,
+  textarea {
+    display: none !important;
+  }
+
+  section {
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  #scenarios {
+    break-before: page;
+  }
+}
+
 /* Additional utility classes for better dark mode support */
 @layer utilities {
   .theme-transition {

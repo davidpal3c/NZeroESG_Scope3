@@ -261,3 +261,60 @@ def test_evidence_upload_requires_a_workspace_session():
     )
 
     assert response.status_code == 401
+
+
+def _upload_demo_shipments(demo_client: TestClient) -> None:
+    csv_content = (
+        "shipment_id,origin,destination,weight_value,weight_unit,distance_value,"
+        "distance_unit,transport_method\n"
+        "S-001,Edmonton,Calgary,1,mt,100,km,truck\n"
+    )
+    response = demo_client.post(
+        "/shipments/upload",
+        files={"file": ("shipments.csv", csv_content, "text/csv")},
+    )
+    assert response.status_code == 200
+
+
+def test_scenario_comparison_reconciles_with_the_stored_shipment_analysis():
+    demo_client = authenticated_client()
+    _upload_demo_shipments(demo_client)
+
+    response = demo_client.post(
+        "/scenarios/compare",
+        json={"alternative_transport_method": "train"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["baseline_total_kg"] == 6.2
+    assert payload["alternative_total_kg"] == 2.2
+    assert payload["delta_kg"] == -4.0
+    assert payload["shipment_results"][0]["delta_kg"] == -4.0
+
+
+def test_report_preview_and_csv_export_share_current_workspace_state():
+    demo_client = authenticated_client()
+    _upload_demo_shipments(demo_client)
+
+    preview = demo_client.get("/reports/preview", params={"alternative_mode": "train"})
+    export = demo_client.get("/reports/export.csv", params={"alternative_mode": "train"})
+
+    assert preview.status_code == 200
+    assert preview.json()["shipment_analysis"]["total_emissions_kg"] == 6.2
+    assert preview.json()["scenario"]["alternative_total_kg"] == 2.2
+    assert export.status_code == 200
+    assert export.headers["content-type"].startswith("text/csv")
+    assert "shipment_analysis,total_emissions_kg,6.2" in export.text
+    assert "scenario,alternative_total_kg,2.2" in export.text
+
+
+def test_scenario_and_report_routes_require_a_workspace_session():
+    response = TestClient(app).post(
+        "/scenarios/compare",
+        json={"alternative_transport_method": "train"},
+    )
+    report = TestClient(app).get("/reports/preview")
+
+    assert response.status_code == 401
+    assert report.status_code == 401

@@ -3,7 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api.emissions import emissions_router
 from api.evidence import evidence_router
+from api.reports import reports_router
 from api.routes import chat_router
+from api.scenarios import scenarios_router
 from api.shipments import shipments_router
 from api.workspaces import workspace_router
 from config import settings
@@ -27,6 +29,8 @@ app.include_router(workspace_router)
 app.include_router(emissions_router)
 app.include_router(shipments_router)
 app.include_router(evidence_router)
+app.include_router(scenarios_router)
+app.include_router(reports_router)
 
 
 @app.get("/health")

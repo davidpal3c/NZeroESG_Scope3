@@ -5,7 +5,7 @@ from typing import Annotated
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
 from pydantic import BaseModel
 
-from config import settings
+from config import database_url_for_runtime, settings
 from domain.workspaces.sessions import SessionError, SessionSigner, WorkspaceSession
 from persistence.workspaces import build_workspace_repository
 
@@ -14,7 +14,7 @@ _signer = SessionSigner(
     settings.demo_session_secret,
     ttl_seconds=settings.demo_workspace_ttl_hours * 60 * 60,
 )
-workspace_repository = build_workspace_repository(settings.database_url)
+workspace_repository = build_workspace_repository(database_url_for_runtime())
 
 
 class WorkspaceSessionResponse(BaseModel):

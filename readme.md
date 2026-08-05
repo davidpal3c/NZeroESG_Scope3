@@ -39,13 +39,14 @@ Implemented in the current baseline:
 - Supplier evidence ingestion for UTF-8 TXT and text-based PDF files, structured
   supplier cards, PostgreSQL full-text search, and recoverable chunk/page
   citations.
+- Deterministic shipment-mode scenarios, accessible comparison tables and
+  visual bars, printable report views, and authenticated CSV report export.
 - Offline freight-factor fallback calculations for the legacy assistant.
 - Optional OpenAI or OpenRouter assistant integration, disabled by default.
 - Reproducible Docker definitions and credential-free CI checks.
 
 Not implemented yet:
 
-- Scenario dashboard, production charts, and report export.
 - A production-ready public demo.
 
 The old synthetic supplier dataset, Chroma service, and dedicated embedding
@@ -56,7 +57,7 @@ When `DATABASE_URL` is absent, native development uses an explicit in-memory
 adapter for convenience. Docker Compose and production use the PostgreSQL
 adapter, which applies checked-in migrations and stores workspace, quota,
 retention, revocation, supplier, document, and evidence-chunk records
-server-side.
+server-side. Production startup fails closed when `DATABASE_URL` is missing.
 
 ## Local development
 

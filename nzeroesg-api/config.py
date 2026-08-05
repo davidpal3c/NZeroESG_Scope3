@@ -49,3 +49,11 @@ class Settings:
 
 
 settings = Settings()
+
+
+def database_url_for_runtime() -> str | None:
+    """Require durable storage whenever the API is running in production."""
+
+    if settings.environment == "production" and not settings.database_url:
+        raise RuntimeError("DATABASE_URL is required when APP_ENV=production.")
+    return settings.database_url

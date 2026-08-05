@@ -82,12 +82,37 @@ type EvidenceMatch = {
   };
 };
 
+type ScenarioData = {
+  baseline_mode: string;
+  alternative_mode: string;
+  shipment_count: number;
+  baseline_total_kg: number;
+  alternative_total_kg: number;
+  baseline_total_tonnes: number;
+  alternative_total_tonnes: number;
+  delta_kg: number;
+  delta_percent: number | null;
+  shipment_results: Array<{
+    shipment_id: string;
+    origin: string;
+    destination: string;
+    baseline_mode: string;
+    alternative_mode: string;
+    baseline_emissions_kg: number;
+    alternative_emissions_kg: number;
+    delta_kg: number;
+  }>;
+  factor_source: string;
+  factor_version: string;
+  assumptions: string[];
+};
+
 const navigation = [
   { label: "Overview", status: "Ready", href: "#overview" },
   { label: "Shipments", status: "Ready", href: "#shipments" },
-  { label: "Suppliers / Evidence", status: "Next sprint", href: "#" },
-  { label: "Scenarios", status: "Planned", href: "#" },
-  { label: "Report", status: "Planned", href: "#" },
+  { label: "Suppliers / Evidence", status: "Ready", href: "#evidence" },
+  { label: "Scenarios", status: "Ready", href: "#scenarios" },
+  { label: "Report", status: "Ready", href: "#report" },
 ];
 
 function formatExpiry(timestamp: number) {
@@ -116,6 +141,11 @@ export default function UserPortalPage() {
   const [evidenceError, setEvidenceError] = useState<string | null>(null);
   const [isEvidenceUploading, setIsEvidenceUploading] = useState(false);
   const [isSearchingEvidence, setIsSearchingEvidence] = useState(false);
+  const [scenarioMode, setScenarioMode] = useState("train");
+  const [scenarioData, setScenarioData] = useState<ScenarioData | null>(null);
+  const [scenarioError, setScenarioError] = useState<string | null>(null);
+  const [isRunningScenario, setIsRunningScenario] = useState(false);
+  const [isExportingReport, setIsExportingReport] = useState(false);
 
   useEffect(() => {
     let isCurrent = true;
@@ -333,6 +363,77 @@ export default function UserPortalPage() {
     }
   }
 
+  async function runScenario(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setIsRunningScenario(true);
+    setScenarioError(null);
+    try {
+      const response = await fetch(`${getBackendUrl()}/scenarios/compare`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ alternative_transport_method: scenarioMode }),
+      });
+      if (!response.ok) {
+        const detail = (await response.json().catch(() => null)) as {
+          detail?: string;
+        } | null;
+        throw new Error(
+          detail?.detail ?? "Scenario comparison could not be completed.",
+        );
+      }
+      setScenarioData((await response.json()) as ScenarioData);
+      const workspaceResponse = await fetch(`${getBackendUrl()}/demo/session`, {
+        credentials: "include",
+      });
+      if (workspaceResponse.ok) {
+        setSession((await workspaceResponse.json()) as WorkspaceSession);
+      }
+    } catch (requestError) {
+      setScenarioError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Scenario comparison could not be completed.",
+      );
+    } finally {
+      setIsRunningScenario(false);
+    }
+  }
+
+  async function exportReport() {
+    setIsExportingReport(true);
+    setScenarioError(null);
+    try {
+      const query = scenarioData
+        ? `?alternative_mode=${encodeURIComponent(scenarioData.alternative_mode)}`
+        : "";
+      const response = await fetch(
+        `${getBackendUrl()}/reports/export.csv${query}`,
+        {
+          credentials: "include",
+        },
+      );
+      if (!response.ok) {
+        throw new Error("Report export could not be completed.");
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "nzeroesg-report.csv";
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (requestError) {
+      setScenarioError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Report export could not be completed.",
+      );
+    } finally {
+      setIsExportingReport(false);
+    }
+  }
+
   async function leaveWorkspace() {
     await fetch(`${getBackendUrl()}/demo/session`, {
       method: "DELETE",
@@ -340,6 +441,19 @@ export default function UserPortalPage() {
     });
     router.replace("/");
   }
+
+  const modeBreakdown = shipmentData
+    ? Object.entries(shipmentData.analysis.mode_breakdown)
+    : [];
+  const maxModeEmissions = Math.max(
+    ...modeBreakdown.map(([, breakdown]) => breakdown.emissions_kg),
+    0.000001,
+  );
+  const hotspotRows = shipmentData?.analysis.hotspots.slice(0, 5) ?? [];
+  const maxHotspotEmissions = Math.max(
+    ...hotspotRows.map((hotspot) => hotspot.emissions_kg),
+    0.000001,
+  );
 
   if (error) {
     return (
@@ -412,8 +526,8 @@ export default function UserPortalPage() {
               Overview
             </h1>
             <p className="mt-3 max-w-2xl leading-7 text-muted-foreground">
-              The protected portal is ready for shipment data, supplier
-              evidence, and decision reports to land in the next roadmap phases.
+              Review traceable shipment calculations, supplier evidence, and
+              decision-ready scenario reports in one isolated workspace.
             </p>
           </div>
           <code className="rounded-lg border border-border bg-muted px-3 py-2 text-xs text-primary">
@@ -563,37 +677,67 @@ export default function UserPortalPage() {
                   <h3 className="font-semibold text-primary">
                     Emissions by mode
                   </h3>
-                  <div className="mt-3 space-y-2">
-                    {Object.entries(shipmentData.analysis.mode_breakdown).map(
-                      ([mode, breakdown]) => (
-                        <div
-                          key={mode}
-                          className="flex items-center justify-between rounded-lg border border-border bg-background px-4 py-3 text-sm"
-                        >
+                  <div
+                    className="mt-3 space-y-3"
+                    aria-label="Emissions by freight mode"
+                  >
+                    {modeBreakdown.map(([mode, breakdown]) => (
+                      <div key={mode}>
+                        <div className="mb-1 flex justify-between text-sm text-muted-foreground">
                           <span className="font-semibold capitalize text-primary">
                             {mode}
                           </span>
-                          <span className="text-muted-foreground">
+                          <span>
                             {breakdown.emissions_kg.toFixed(2)} kg ·{" "}
                             {breakdown.shipment_count} shipments
                           </span>
                         </div>
-                      ),
-                    )}
+                        <div className="h-3 rounded-full bg-border">
+                          <div
+                            className="h-3 rounded-full bg-secondary"
+                            style={{
+                              width: `${Math.min(
+                                100,
+                                (breakdown.emissions_kg / maxModeEmissions) *
+                                  100,
+                              )}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))}
                   </div>
+                  <table className="sr-only">
+                    <caption>Emissions by freight mode</caption>
+                    <thead>
+                      <tr>
+                        <th>Mode</th>
+                        <th>Emissions kg</th>
+                        <th>Shipments</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {modeBreakdown.map(([mode, breakdown]) => (
+                        <tr key={mode}>
+                          <td>{mode}</td>
+                          <td>{breakdown.emissions_kg}</td>
+                          <td>{breakdown.shipment_count}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
                 <div>
                   <h3 className="font-semibold text-primary">
                     Top shipment hotspots
                   </h3>
-                  <div className="mt-3 space-y-2">
-                    {shipmentData.analysis.hotspots
-                      .slice(0, 5)
-                      .map((hotspot) => (
-                        <div
-                          key={hotspot.shipment_id}
-                          className="flex items-center justify-between rounded-lg border border-border bg-background px-4 py-3 text-sm"
-                        >
+                  <div
+                    className="mt-3 space-y-3"
+                    aria-label="Top shipment emissions hotspots"
+                  >
+                    {hotspotRows.map((hotspot) => (
+                      <div key={hotspot.shipment_id}>
+                        <div className="mb-1 flex justify-between gap-3 text-sm">
                           <span className="text-primary">
                             <strong>{hotspot.shipment_id}</strong>
                             <span className="ml-2 text-muted-foreground">
@@ -604,8 +748,42 @@ export default function UserPortalPage() {
                             {hotspot.emissions_kg.toFixed(2)} kg
                           </span>
                         </div>
-                      ))}
+                        <div className="h-3 rounded-full bg-border">
+                          <div
+                            className="h-3 rounded-full bg-accent"
+                            style={{
+                              width: `${Math.min(
+                                100,
+                                (hotspot.emissions_kg / maxHotspotEmissions) *
+                                  100,
+                              )}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))}
                   </div>
+                  <table className="sr-only">
+                    <caption>Top shipment emissions hotspots</caption>
+                    <thead>
+                      <tr>
+                        <th>Shipment</th>
+                        <th>Route</th>
+                        <th>Emissions kg</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {hotspotRows.map((hotspot) => (
+                        <tr key={hotspot.shipment_id}>
+                          <td>{hotspot.shipment_id}</td>
+                          <td>
+                            {hotspot.origin} → {hotspot.destination}
+                          </td>
+                          <td>{hotspot.emissions_kg}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
@@ -851,6 +1029,232 @@ export default function UserPortalPage() {
               ))}
             </div>
           ) : null}
+        </section>
+
+        <section
+          id="scenarios"
+          className="mt-8 rounded-xl border border-border bg-muted p-6"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-accent">
+                Phase 5
+              </p>
+              <h2 className="text-2xl font-semibold text-primary">
+                Scenario comparison
+              </h2>
+              <p className="mt-2 max-w-2xl leading-7 text-muted-foreground">
+                Compare the current shipment modes with one consistent
+                alternative while keeping the factor source and assumptions
+                visible.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="rounded-full border border-secondary px-4 py-2 text-sm font-semibold text-secondary transition hover:bg-secondary hover:text-white"
+            >
+              Print report
+            </button>
+          </div>
+
+          <form
+            onSubmit={runScenario}
+            className="mt-6 flex flex-wrap items-end gap-3"
+          >
+            <label className="flex min-w-56 flex-1 flex-col gap-2 text-sm font-semibold text-primary">
+              Alternative freight mode
+              <select
+                value={scenarioMode}
+                onChange={(event) => setScenarioMode(event.target.value)}
+                className="rounded-lg border border-border bg-background px-3 py-2 font-normal capitalize"
+              >
+                <option value="plane">Plane</option>
+                <option value="truck">Truck</option>
+                <option value="train">Train</option>
+                <option value="ship">Ship</option>
+              </select>
+            </label>
+            <button
+              type="submit"
+              disabled={
+                isRunningScenario || !shipmentData?.analysis.shipment_count
+              }
+              className="rounded-full bg-secondary px-5 py-3 font-semibold text-white transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isRunningScenario ? "Comparing…" : "Run scenario"}
+            </button>
+            <button
+              type="button"
+              onClick={exportReport}
+              disabled={isExportingReport}
+              className="rounded-full border border-secondary px-5 py-3 font-semibold text-secondary transition hover:bg-secondary hover:text-white disabled:cursor-wait disabled:opacity-60"
+            >
+              {isExportingReport ? "Exporting…" : "Export CSV report"}
+            </button>
+          </form>
+
+          {scenarioError ? (
+            <p className="mt-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
+              {scenarioError}
+            </p>
+          ) : null}
+
+          {scenarioData ? (
+            <>
+              <div className="mt-6 grid gap-4 md:grid-cols-3">
+                <article className="rounded-lg border border-border bg-background p-4">
+                  <p className="text-sm text-muted-foreground">
+                    Current baseline
+                  </p>
+                  <p className="mt-1 text-2xl font-bold text-primary">
+                    {scenarioData.baseline_total_kg.toFixed(2)} kg
+                  </p>
+                  <p className="mt-1 text-xs capitalize text-muted-foreground">
+                    {scenarioData.baseline_mode} / {scenarioData.shipment_count}{" "}
+                    shipments
+                  </p>
+                </article>
+                <article className="rounded-lg border border-border bg-background p-4">
+                  <p className="text-sm text-muted-foreground">Alternative</p>
+                  <p className="mt-1 text-2xl font-bold text-primary">
+                    {scenarioData.alternative_total_kg.toFixed(2)} kg
+                  </p>
+                  <p className="mt-1 text-xs capitalize text-muted-foreground">
+                    {scenarioData.alternative_mode} / same shipment inputs
+                  </p>
+                </article>
+                <article className="rounded-lg border border-border bg-background p-4">
+                  <p className="text-sm text-muted-foreground">Change</p>
+                  <p
+                    className={`mt-1 text-2xl font-bold ${
+                      scenarioData.delta_kg <= 0
+                        ? "text-emerald-700"
+                        : "text-red-700"
+                    }`}
+                  >
+                    {scenarioData.delta_kg > 0 ? "+" : ""}
+                    {scenarioData.delta_kg.toFixed(2)} kg
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {scenarioData.delta_percent === null
+                      ? "No baseline percentage"
+                      : `${scenarioData.delta_percent.toFixed(2)}% vs baseline`}
+                  </p>
+                </article>
+              </div>
+
+              <div className="mt-6 grid gap-6 lg:grid-cols-2">
+                <div>
+                  <h3 className="font-semibold text-primary">
+                    Totals at a glance
+                  </h3>
+                  <div
+                    className="mt-3 space-y-3"
+                    aria-label="Scenario emissions bars"
+                  >
+                    <div>
+                      <div className="mb-1 flex justify-between text-sm text-muted-foreground">
+                        <span>Baseline</span>
+                        <span>
+                          {scenarioData.baseline_total_kg.toFixed(2)} kg
+                        </span>
+                      </div>
+                      <div className="h-3 rounded-full bg-border">
+                        <div
+                          className="h-3 rounded-full bg-primary"
+                          style={{ width: "100%" }}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="mb-1 flex justify-between text-sm text-muted-foreground">
+                        <span className="capitalize">
+                          {scenarioData.alternative_mode}
+                        </span>
+                        <span>
+                          {scenarioData.alternative_total_kg.toFixed(2)} kg
+                        </span>
+                      </div>
+                      <div className="h-3 rounded-full bg-border">
+                        <div
+                          className="h-3 rounded-full bg-accent"
+                          style={{
+                            width: `${Math.min(
+                              100,
+                              (scenarioData.alternative_total_kg /
+                                Math.max(
+                                  scenarioData.baseline_total_kg,
+                                  0.000001,
+                                )) *
+                                100,
+                            )}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div id="report">
+                  <h3 className="font-semibold text-primary">
+                    Report preview · methodology
+                  </h3>
+                  <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                    {scenarioData.factor_source} · version{" "}
+                    {scenarioData.factor_version}. {scenarioData.assumptions[0]}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-6 overflow-x-auto rounded-lg border border-border bg-background">
+                <table className="min-w-full text-left text-sm">
+                  <caption className="sr-only">
+                    Scenario result by shipment
+                  </caption>
+                  <thead className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
+                    <tr>
+                      <th className="px-4 py-3">Shipment</th>
+                      <th className="px-4 py-3">Baseline kg</th>
+                      <th className="px-4 py-3">Alternative kg</th>
+                      <th className="px-4 py-3">Delta kg</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {scenarioData.shipment_results.map((result) => (
+                      <tr
+                        key={result.shipment_id}
+                        className="border-b border-border last:border-0"
+                      >
+                        <td className="px-4 py-3 font-semibold text-primary">
+                          {result.shipment_id}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {result.baseline_emissions_kg.toFixed(2)}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {result.alternative_emissions_kg.toFixed(2)}
+                        </td>
+                        <td
+                          className={`px-4 py-3 font-semibold ${
+                            result.delta_kg <= 0
+                              ? "text-emerald-700"
+                              : "text-red-700"
+                          }`}
+                        >
+                          {result.delta_kg > 0 ? "+" : ""}
+                          {result.delta_kg.toFixed(2)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          ) : (
+            <p className="mt-6 text-sm text-muted-foreground">
+              Upload shipments to compare an alternative freight mode.
+            </p>
+          )}
         </section>
       </section>
     </div>

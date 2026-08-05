@@ -387,12 +387,35 @@ Deliverables:
 - Support print-to-PDF and CSV export.
 - Show processing time and evidence completeness.
 
+Initial implementation evidence:
+
+- `domain/scenarios` compares every persisted shipment against a selected
+  alternative mode using the same versioned calculation factors as baseline
+  analysis, returning shipment-level deltas and methodology metadata.
+- `POST /scenarios/compare`, `GET /reports/preview`, and
+  `GET /reports/export.csv` are workspace-authenticated. CSV cells are guarded
+  against spreadsheet formula injection, and report data is rebuilt from the
+  current workspace state.
+- The protected portal now exposes scenario quick actions, accessible
+  shipment-level result tables, comparison bars, print-to-PDF styling, and
+  authenticated CSV export. Navigation labels now reflect the shipped
+  shipment, evidence, scenario, and report sections.
+- The backend suite has 59 passing tests locally and against disposable
+  PostgreSQL, including scenario reconciliation, report parity, session
+  rejection, and workspace persistence checks. Frontend typecheck, lint,
+  formatting, and the Webpack production build pass locally.
+
 Verification:
 
-- Scenario totals reconcile with the calculation engine.
-- Charts and report values come from the same typed result payload.
-- Exported data matches the displayed workspace state.
-- Keyboard and responsive checks pass for the primary workflow.
+- [x] Scenario totals reconcile with the calculation engine.
+- [x] Charts and report values come from the same typed result payload.
+- [x] Exported data matches the displayed workspace state.
+- [ ] Keyboard and responsive checks pass for the primary workflow.
+
+Remaining Phase 5 gate: verify the full interaction in a real browser,
+including keyboard navigation, responsive layout, workspace isolation, and
+the print/download actions. The in-app browser is not available in this
+environment, so this remains an external verification step.
 
 Exit gate:
 
