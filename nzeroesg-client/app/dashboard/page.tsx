@@ -441,7 +441,7 @@ export default function UserPortalPage() {
         credentials: "include",
       });
     } finally {
-      router.replace("/");
+      window.location.assign("/");
     }
   }
 

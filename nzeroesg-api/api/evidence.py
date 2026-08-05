@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from api.workspaces import require_workspace_session, workspace_repository
 from config import database_url_for_runtime
 from domain.evidence.ingestion import (
+    MAX_FILE_BYTES,
     EvidenceIngestionError,
     extract_evidence,
     normalize_supplier_metadata,
@@ -103,7 +104,7 @@ async def upload_evidence(
             certifications=certifications,
             transport_modes=transport_modes,
         )
-        content = await file.read()
+        content = await file.read(MAX_FILE_BYTES + 1)
         extraction = extract_evidence(
             content,
             filename=file.filename or "evidence",

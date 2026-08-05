@@ -162,7 +162,12 @@ development fallback.
 
 The API deployment handoff is the checked-in [`render.yaml`](render.yaml)
 Blueprint. It contains no provider credentials; Render generates the session
-secret and supplies the database connection string.
+secret, while `DATABASE_URL` is entered manually from the selected Neon
+PostgreSQL project.
+
+For production, the Vercel project must build `nzeroesg-client` and set
+`NEXT_PUBLIC_BACKEND_URL` to the deployed FastAPI origin. `/login` is a client
+route and does not call the API until the user clicks “Enter demo workspace”.
 
 CI runs these checks without external provider credentials or network calls
 from tests. The local secret check scans tracked and non-ignored new files for
@@ -178,7 +183,7 @@ Next.js
    │
 FastAPI
    │
-PostgreSQL
+Neon PostgreSQL
 ```
 
 GraphQL, NestJS, Redis, MongoDB, Chroma, a message broker, and a dedicated
@@ -187,10 +192,12 @@ embedding service are out of scope until measured requirements justify them.
 ## Security note
 
 Historical Render deploy hooks were committed in an earlier workflow. The
-workflow has been removed from `dev`; the affected Render service no longer
-exists and the user has confirmed the Render API key was rotated. Deployment
-automation remains disabled until a future backend service is intentionally
-configured with newly managed credentials.
+workflow has been removed from `dev`; the user has confirmed the Render API
+key was rotated and the historical hook references are disabled. The currently
+logging Render service is the old embedder-based API and is failing at startup;
+it must be re-pointed to the rebuilt `dev` service configuration. Deployment
+automation remains disabled until the backend is intentionally configured with
+newly managed credentials.
 
 ## License
 

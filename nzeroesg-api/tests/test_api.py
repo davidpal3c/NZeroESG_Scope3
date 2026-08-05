@@ -21,6 +21,26 @@ def test_health_is_available_without_provider_credentials():
         "environment": "development",
         "assistant_enabled": False,
     }
+    assert response.headers["x-content-type-options"] == "nosniff"
+    assert response.headers["x-frame-options"] == "DENY"
+    assert response.headers["referrer-policy"] == "no-referrer"
+
+
+def test_evidence_upload_rejects_oversized_content_before_extraction():
+    response = authenticated_client().post(
+        "/evidence/upload",
+        data={"supplier_name": "Supplier ABC"},
+        files={
+            "file": (
+                "supplier.txt",
+                b"x" * (10 * 1024 * 1024 + 1),
+                "text/plain",
+            )
+        },
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == "Evidence file exceeds the 10 MB limit."
 
 
 def test_cors_allows_frontend_workspace_logout():

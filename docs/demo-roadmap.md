@@ -154,11 +154,12 @@ Deliverables:
 
 Current external action:
 
-- On August 5, 2026, the user confirmed that the Render API key was rotated,
-  the affected Render service no longer exists, and the historical deploy-hook
-  references are disabled. No Render deployment workflow is present in `dev`.
-  Deployment automation must remain disabled until a future service is
-  intentionally configured with newly managed credentials.
+- On August 5, 2026, the user confirmed that the Render API key was rotated and
+  the historical deploy-hook references are disabled. A Render service is now
+  emitting logs, but it is the historical API and is down during startup
+  because it still waits for the removed embedder service. No Render
+  deployment workflow is present in `dev`; the service must be re-pointed to
+  the rebuilt branch and supplied with a Neon `DATABASE_URL`.
 - A repository-history pattern audit on June 19, 2026 found secret-shaped
   matches only in the historical `.github/workflows/deploy.yml`; no additional
   credential file or key pattern was identified.
@@ -411,10 +412,10 @@ Initial implementation evidence:
   scenario/report actions, print styling, and two-workspace isolation. It is
   wired as a separate CI job against disposable PostgreSQL.
 - A non-secret `render.yaml` Blueprint now defines the intended public API
-  service on `dev` with CI-gated auto-deploy, a generated session secret, and a
-  durable Postgres reference. The current planned baseline is a free web
-  service plus Render's $19/month `basic-1gb` database, before confirming the
-  actual account invoice.
+  service on `dev` with CI-gated auto-deploy and a generated session secret.
+  `DATABASE_URL` is deliberately a dashboard-supplied secret for a Neon
+  PostgreSQL project rather than a Render database resource. This keeps the
+  database at the current Neon Free-plan price of $0 for the bounded demo.
 - Commit `b5dc94f` passed GitHub Actions run `31042422923`; repository,
   backend, frontend, and PostgreSQL-backed browser jobs all succeeded.
 
@@ -433,8 +434,10 @@ environment, so this remains an external verification step.
 The local Chromium suite now passes those interaction checks, but the same
 suite targeted at `https://n-zero-esg-scope3.vercel.app` fails immediately at
 `/login` because the live Vercel project still serves the historical `main`
-branch. This is evidence for the public deployment gate, not a Phase 5 exit
-claim.
+branch, which has no client login route. The supplied Render logs likewise
+show the historical API starting its removed embedder hook; the rebuilt `dev`
+API does not contain that startup dependency. These are deployment evidence,
+not Phase 5 or Phase 6 exit claims.
 
 Exit gate:
 

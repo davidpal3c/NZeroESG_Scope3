@@ -1,5 +1,6 @@
 # NZeroESG public API blueprint.
-# The database uses Render's current basic-1gb tier; the web service is free.
+# The web service is free. The production database is an external Neon
+# PostgreSQL project; its connection string is entered in Render, never here.
 # No credentials or deploy hooks belong in this file.
 services:
   - type: web
@@ -22,14 +23,4 @@ services:
       - key: DEMO_SESSION_SECRET
         generateValue: true
       - key: DATABASE_URL
-        fromDatabase:
-          name: nzeroesg-db
-          property: connectionString
-
-databases:
-  - name: nzeroesg-db
-    plan: basic-1gb
-    region: oregon
-    postgresMajorVersion: "16"
-    databaseName: nzeroesg
-    user: nzeroesg
+        sync: false

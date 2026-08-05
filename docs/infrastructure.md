@@ -9,7 +9,7 @@ existing ChatGPT/Codex access:
 flowchart LR
     A[Browser] --> B[Next.js on Vercel free tier]
     B --> C[FastAPI on one Render web service]
-    C --> D[Small managed PostgreSQL database]
+    C --> D[Neon free PostgreSQL database]
     C -. optional .-> E[OpenAI or OpenRouter provider]
 ```
 
@@ -62,9 +62,10 @@ The backend health check gates frontend startup in Compose.
 
 The checked-in [`render.yaml`](../render.yaml) is the deployment handoff for
 the API. It intentionally uses the `dev` branch, waits for CI checks to pass,
-generates the session secret in Render, and references the managed database
-without embedding credentials. Create or review the Blueprint in the Render
-Dashboard; this repository does not contain a deploy hook or provider token.
+generates the session secret in Render, and declares `DATABASE_URL` as a
+dashboard-supplied secret. Create or review the Blueprint in the Render
+Dashboard, enter the Neon connection string, and deploy the current `dev`
+branch; this repository does not contain a deploy hook or provider token.
 
 ### Frontend
 
@@ -83,17 +84,18 @@ Dashboard; this repository does not contain a deploy hook or provider token.
 
 ### Database
 
-- one small managed PostgreSQL database, preferably colocated with the backend;
+- one small Neon PostgreSQL project using its Free plan for this bounded demo;
 - migrations are required for schema changes;
 - every user-owned record carries a workspace identifier;
 - demo workspaces and extracted evidence expire after 24 hours by default.
 
-The current Render pricing payload lists the durable `basic-1gb` Postgres tier
-at $19/month; paired with a free web service and the existing free Vercel
-frontend, the planned recurring baseline remains below $30/month. Render's
-free Postgres tier is intentionally not selected because it expires after 30
-days. Confirm the actual workspace invoice before treating this as a final
-cost gate.
+Neon is a better fit than Render Postgres for this prototype: the current Neon
+Free plan is $0, provides PostgreSQL with scale-to-zero, and is intended for
+small intermittent workloads. Its limits still require monitoring, especially
+compute-hours, storage, egress, and the public connection string. Render's free
+Postgres is not selected because it expires after 30 days; the durable Render
+`basic-1gb` tier is unnecessary for the demo and would consume most of the
+monthly ceiling.
 
 ## Data and upload limits
 
@@ -131,14 +133,16 @@ CI must remain credential-free and run:
 
 The browser suite is a local/CI gate; it does not substitute for the public
 deployment smoke check. The current Vercel URL still serves the historical
-`main` branch, and the Render backend service no longer exists, so online
-verification remains outstanding.
+`main` branch, and the Render logs supplied on August 5, 2026 show the
+historical API starting with its removed embedder hook. Online verification
+remains outstanding until both providers point at the rebuilt `dev` branch.
 
 Public verification snapshot from August 5, 2026:
 
 - `https://n-zero-esg-scope3.vercel.app/` responds with `200`.
-- `/login` responds with `404`, and the public-target Playwright suite cannot
-  find the current “Enter a private workspace” page.
-- The repository's current rebuilt portal and `render.yaml` are on `dev`; the
-  public domain has not yet been pointed at that branch or given a live API
-  origin.
+- `/login` responds with `404` because the public project is serving the
+  historical `main` branch, which has no `app/login/page.tsx`. The rebuilt
+  `dev` branch does contain that client route.
+- The public domain has not yet been pointed at the rebuilt client or given a
+  live API origin. The current Render log is not evidence against the rebuilt
+  API: it is the old service executing `rag.embed_if_empty.wait_for_embedder()`.

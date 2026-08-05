@@ -22,7 +22,7 @@ Render
     └── optional assistant adapter
              │
              ▼
-PostgreSQL
+Neon PostgreSQL
 ```
 
 This replaces the historical agent-first design. GraphQL, Redis, MongoDB,
@@ -120,12 +120,15 @@ The intended public deployment uses:
 
 - Vercel's free frontend tier;
 - one Render FastAPI service;
-- one small managed PostgreSQL database;
+- one small Neon PostgreSQL project on the Free plan;
 - no mandatory paid LLM API;
 - no always-on embedding or background-worker service.
 
 The complete recurring infrastructure must remain within the roadmap's
-$30 USD monthly ceiling.
+$30 USD monthly ceiling. MongoDB is intentionally not selected: the current
+repositories, migrations, foreign keys, quotas, and PostgreSQL full-text
+evidence search are already implemented against PostgreSQL. Switching would
+add migration and retrieval work without helping the five-minute demo.
 
 ## Current implementation status
 
