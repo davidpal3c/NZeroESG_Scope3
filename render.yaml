@@ -1,0 +1,26 @@
+# NZeroESG public API blueprint.
+# The web service is free. The production database is an external Neon
+# PostgreSQL project; its connection string is entered in Render, never here.
+# No credentials or deploy hooks belong in this file.
+services:
+  - type: web
+    name: nzeroesg-api
+    runtime: docker
+    plan: free
+    region: oregon
+    branch: dev
+    autoDeployTrigger: checksPass
+    dockerfilePath: nzeroesg-api/Dockerfile
+    dockerContext: nzeroesg-api
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: ASSISTANT_ENABLED
+        value: "false"
+      - key: CORS_ORIGINS
+        value: https://n-zero-esg-scope3.vercel.app,http://localhost:3000,http://127.0.0.1:3000
+      - key: DEMO_SESSION_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false

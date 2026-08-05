@@ -1,71 +1,57 @@
-from fastapi import FastAPI
-from api.routes import chat_router
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from rag.embed_if_empty import run_if_empty, wait_for_embedder
 
-app = FastAPI()
+from api.emissions import emissions_router
+from api.evidence import evidence_router
+from api.reports import reports_router
+from api.routes import chat_router
+from api.scenarios import scenarios_router
+from api.shipments import shipments_router
+from api.workspaces import workspace_router
+from config import settings
 
-
-
-# origins = [
-#     "http://localhost:3000",    
-#     "http://127.0.0.1:3000",
-#     "https://n-zero-esg-scope3.vercel.app",
-#     "https://nzeroesg-client.onrender.com",
-#     "http://nzeroesg-client.onrender.com",
-# ]
-
-app.add_middleware(
-    CORSMiddleware,                              
-    # allow_origins=origins,     
-    allow_origin_regex=r"https:\/\/.*\.vercel\.app|https:\/\/nzeroesg-client\.onrender\.com|http:\/\/localhost:3000",                           
-    allow_credentials=True,                             
-    allow_methods=["*"],                                
-    allow_headers=["*"],                                
+app = FastAPI(
+    title="NZeroESG API",
+    description="Scope 3 freight and supplier-evidence prototype API.",
+    version="0.2.0-dev",
 )
 
-@app.on_event("startup")
-async def startup_event():
-    wait_for_embedder()
-    run_if_empty()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=list(settings.cors_origins),
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "DELETE"],
+    allow_headers=["Content-Type"],
+)
+
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "no-referrer")
+    response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+    if settings.environment == "production":
+        response.headers.setdefault(
+            "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
+        )
+    return response
 
 
 app.include_router(chat_router, prefix="/chat", tags=["chat"])
+app.include_router(workspace_router)
+app.include_router(emissions_router)
+app.include_router(shipments_router)
+app.include_router(evidence_router)
+app.include_router(scenarios_router)
+app.include_router(reports_router)
+
 
 @app.get("/health")
-async def root():
-    return {"message": "Health check successful"}
-
-
-@app.get("/health/vectorstore")
-async def vectorstore_health():
-    from rag.vectorstore import load_supplier_db
-
-    try:
-        db = load_supplier_db()
-        test = db.similarity_search("test", k=1)
-        if test and db: 
-            return {
-                "status": "OK", 
-                "message": "Vector store is healthy", 
-                "collections": db.get().keys()
-            }
-        else:
-            return {"message": "Vector store is empty"}
-    except Exception as e:
-        return {"error": str(e)}
-    
-
-@app.get("/health/embedder")
-async def embedder_health():
-    from rag.embedder import get_supplier_embedder
-
-    try:
-        embedder = get_supplier_embedder()
-        test = embedder.embed_query("test")
-        if test:
-            return {"message": "Embedder is healthy"}
-        else:
-            return {"message": "Embedder returned empty result"}
-    except Exception as e:
-        return {"error": str(e)}
+async def health():
+    return {
+        "status": "ok",
+        "environment": settings.environment,
+        "assistant_enabled": settings.assistant_enabled,
+    }

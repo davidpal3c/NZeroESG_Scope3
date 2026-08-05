@@ -7,37 +7,36 @@
 }
 
 :root {
-  --background: #f5fcf9;              
+  --background: #f5fcf9;
   --foreground: #1a1c1d;
-  --secondary-bg: #ecfdf5;    
+  --secondary-bg: #ecfdf5;
   --secondary-fg: #334155;
   --card: #c7e6d4;
   --card-foreground: #1f2937;
-  --muted: #f0f9f7;                   
+  --muted: #f0f9f7;
   --muted-foreground: #64748b;
   --border: #d1e7dd;
-  --primary: #184235;                 
-  --secondary: #01682c;              
-  --tertiary: #b99100;              
-  --accent: #19a777;                
+  --primary: #184235;
+  --secondary: #01682c;
+  --tertiary: #b99100;
+  --accent: #19a777;
 }
 
 .dark {
-  --background: #0f251e;              
+  --background: #0f251e;
   --foreground: #04a949;
-  --secondary-bg: #1a2d25;    
+  --secondary-bg: #1a2d25;
   --secondary-fg: #e2e8f0;
   --card: #20342d;
   --card-foreground: #f8fafc;
   --muted: #1f3b34;
   --muted-foreground: #bfcad8;
   --border: #2f4f45;
-  --primary: #cdf7e1;               
-  --secondary: #04a949;              
-  --tertiary: #f6d45b;              
-  --accent: #05ad75;                 
+  --primary: #cdf7e1;
+  --secondary: #04a949;
+  --tertiary: #f6d45b;
+  --accent: #05ad75;
 }
-
 
 @theme {
   --color-background: var(--background);
@@ -66,15 +65,46 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
-  transition: background-color var(--default-transition-duration), color var(--default-transition-duration);
+  transition:
+    background-color var(--default-transition-duration),
+    color var(--default-transition-duration);
+}
+
+@media print {
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  aside,
+  button,
+  form,
+  input,
+  select,
+  textarea {
+    display: none !important;
+  }
+
+  section {
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  #scenarios {
+    break-before: page;
+  }
 }
 
 /* Additional utility classes for better dark mode support */
 @layer utilities {
   .theme-transition {
-    transition: background-color var(--default-transition-duration), 
-                color var(--default-transition-duration),
-                border-color var(--default-transition-duration);
+    transition:
+      background-color var(--default-transition-duration),
+      color var(--default-transition-duration),
+      border-color var(--default-transition-duration);
   }
 }
-

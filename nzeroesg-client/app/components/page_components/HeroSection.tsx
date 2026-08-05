@@ -1,31 +1,47 @@
 "use client";
+
 import { motion } from "framer-motion";
+
 import ParticlesContainer from "@/app/components/ParticlesContainer";
 
-export default function HeroSection({ onScrollToChat, onTryBtn }: { onScrollToChat: () => void, onTryBtn: () => void }) {
-    return(
-        <section className="relative h-[700px] pt-72 pb-32 bg-gradient-to-b from-background via-muted to-card overflow-hidden">
-            <div className="absolute inset-0 z-0 pointer-events-none">
-                <ParticlesContainer />
-            </div>
-            <motion.div 
-                className="relative z-10 max-w-4xl mx-auto px-6 text-center"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-                animate={{ opacity: 1, y: 0 }}
-            >
-              <h2 className="text-4xl text-primary font-extrabold tracking-tight leading-tight mb-4">
-                  Sustainable Sourcing Through <span className="text-accent">Agentic AI</span>
-              </h2>
-              <p className="text-lg text-primary max-w-2xl mx-auto">
-                  Track emissions, materials, and vendor compliance across your supply chain —
-                  interactively and in real time.
-              </p>
-              <button onClick={onTryBtn} className="mt-8 bg-accent dark:bg-muted hover:bg-secondary text-white px-6 py-3 rounded-lg shadow cursor-pointer transition-colors delay-100">
-                  Try our Carbon Assistant
-              </button>
-            </motion.div>
-        </section>
-    )
+interface HeroSectionProps {
+  onTry: () => void;
+}
+
+export default function HeroSection({ onTry }: HeroSectionProps) {
+  return (
+    <section className="relative flex min-h-[700px] items-center overflow-hidden bg-gradient-to-b from-background via-muted to-card px-6 pt-24">
+      <div className="pointer-events-none absolute inset-0 z-0">
+        <ParticlesContainer />
+      </div>
+      <motion.div
+        className="relative z-10 mx-auto max-w-4xl text-center"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.2 }}
+      >
+        <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-accent">
+          Scope 3 prototype rebuild
+        </p>
+        <h1 className="mb-6 text-4xl font-extrabold leading-tight tracking-tight text-primary md:text-6xl">
+          Traceable freight decisions,{" "}
+          <span className="text-accent">grounded in evidence</span>
+        </h1>
+        <p className="mx-auto max-w-2xl text-lg leading-8 text-primary">
+          NZeroESG is being rebuilt around deterministic calculations, shipment
+          data, supplier documents, and transparent sources—not an opaque
+          chatbot score.
+        </p>
+        <button
+          onClick={onTry}
+          className="mt-10 rounded-lg bg-accent px-6 py-3 font-semibold text-white shadow transition hover:bg-secondary"
+        >
+          Open the legacy assistant
+        </button>
+        <p className="mt-3 text-xs text-muted-foreground">
+          Optional and disabled by default during the rebuild.
+        </p>
+      </motion.div>
+    </section>
+  );
 }

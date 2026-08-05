@@ -1,62 +1,50 @@
 services:
+  database:
+    image: postgres:16.9-alpine
+    container_name: nzeroesg-database
+    environment:
+      POSTGRES_DB: nzeroesg
+      POSTGRES_USER: nzeroesg
+      POSTGRES_HOST_AUTH_METHOD: trust
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nzeroesg -d nzeroesg"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   backend:
-    build:
-      context: ./nzeroesg-api
-      dockerfile: Dockerfile
+    build: ./nzeroesg-api
     container_name: nzeroesg-backend
-    env_file:
-      - ./nzeroesg-api/.env
-    depends_on:
-      - chroma
-      - embedder
     ports:
       - "8000:8000"
-    # restart: always
-    restart: unless-stopped
-    environment: 
-      - EMBEDDER_URL=http://embedder:8002
-      # - CHROMA_URL=http://chroma:8001
-      # - HUGGINGFACEHUB_API_TOKEN=${HUGGINGFACEHUB_API_TOKEN} 
-    
-  embedder:
-    build: 
-      context: ./nzeroesg-embedder
-      dockerfile: Dockerfile
-    container_name: nzeroesg-embedder
-    ports:
-      - "8002:8002"                 
-    restart: unless-stopped
-
-  chroma: 
-    image: chromadb/chroma:latest
-    container_name: nzeroesg-chroma
-    ports:
-      - "8001:8000"                 # expose on 8001 externally, 8000 internally
-    volumes:
-      - ./vectordb:/chroma_storage
     environment:
-      - IS_PERSISTENT=TRUE 
+      APP_ENV: development
+      ASSISTANT_ENABLED: "false"
+      DATABASE_URL: postgresql://nzeroesg@database:5432/nzeroesg
+      CORS_ORIGINS: http://localhost:3000
+    depends_on:
+      database:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/heartbeat || exit 1"]
-      interval: 30s
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')",
+        ]
+      interval: 10s
       timeout: 3s
-      retries: 5
-    
-    # environment:
-    #   - CHROMA_DATABASE_DIR=/data    
-    #   - CHROMA_PERSISTENCE_DIR=/data.  
-    # volumes:
-    #   - chroma_data:/data
+      retries: 3
 
   frontend:
     build:
       context: ./nzeroesg-client
-      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_BACKEND_URL: http://localhost:8000
     container_name: nzeroesg-frontend
     ports:
-      - "3000:3000"   
-    env_file:
-      - ./nzeroesg-client/.env.local
-    restart: always
+      - "3000:3000"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy

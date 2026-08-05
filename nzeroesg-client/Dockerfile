@@ -1,5 +1,4 @@
-# build Stage
-FROM node:20-alpine AS builder
+FROM node:20.19.0-alpine AS builder
 
 WORKDIR /app
 
@@ -7,29 +6,24 @@ ARG NEXT_PUBLIC_BACKEND_URL
 ENV NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
 
 COPY package*.json ./
-RUN npm install
-
-
+RUN npm ci
 COPY . .
-COPY . .env.local 
 RUN npm run build
 
-# production Image
-FROM node:20-alpine
+FROM node:20.19.0-alpine AS runner
 
 WORKDIR /app
+ENV NODE_ENV=production \
+    PORT=3000 \
+    HOSTNAME=0.0.0.0
 
-COPY --from=builder /app ./
+RUN addgroup --system --gid 1001 nodejs \
+    && adduser --system --uid 1001 nextjs
 
-ENV PORT=3000
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+USER nextjs
 EXPOSE 3000
-
-# Using whatever port Render gives (default 10000), fallback 3000
-# ENV PORT=10000
-
-# EXPOSE 10000
-
-
-CMD ["npm", "run", "start"]
-# CMD ["sh", "-c", "PORT=${PORT:-3000} npm run start"]
+CMD ["node", "server.js"]

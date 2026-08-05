@@ -1,77 +1,31 @@
-import os
-from dotenv import load_dotenv
-# from pydantic import Field, SecretStr
-# from typing import Optional
-
 from langchain_openai import ChatOpenAI
-from langchain_community.llms import Ollama
-from agent.utils.openrouter_llm import ChatOpenRouter
-from openai import APIStatusError
-from config import LLM_PROVIDER, OPENAI_API_KEY, OPENROUTER_API_KEY, OPENROUTER_MODEL
+
+from config import settings
+
 
 def load_llm():
-    # print(ChatOpenRouter)
+    if not settings.assistant_enabled:
+        raise RuntimeError("The optional assistant is disabled.")
 
-    if LLM_PROVIDER == "openai":
-        if not OPENAI_API_KEY:
-            raise RuntimeError("Missing OPENAI_API_KEY")
-        print(f"Using OpenAI model: gpt-3.5-turbo via OpenAI")
-
+    if settings.llm_provider == "openai":
+        if not settings.openai_api_key or not settings.openai_model:
+            raise RuntimeError("OPENAI_API_KEY and OPENAI_MODEL are required.")
         return ChatOpenAI(
-            model_name="gpt-3.5-turbo",
-            temperature=0.3, 
-            openai_api_key=OPENAI_API_KEY,
-            max_tokens=500
+            model=settings.openai_model,
+            temperature=0.2,
+            api_key=settings.openai_api_key,
+            max_tokens=500,
         )
-    
-    elif LLM_PROVIDER == "openrouter":
-        if not OPENROUTER_API_KEY:
-            raise RuntimeError("Missing OPENROUTER_API_KEY")
-        if not OPENROUTER_MODEL:
-            raise RuntimeError("Missing OPENROUTER_MODEL")
 
-        print(f"Using LLM: {OPENROUTER_MODEL} via {LLM_PROVIDER}\n")
+    if settings.llm_provider == "openrouter":
+        if not settings.openrouter_api_key or not settings.openrouter_model:
+            raise RuntimeError("OPENROUTER_API_KEY and OPENROUTER_MODEL are required.")
+        return ChatOpenAI(
+            model=settings.openrouter_model,
+            temperature=0.2,
+            api_key=settings.openrouter_api_key,
+            base_url="https://openrouter.ai/api/v1",
+            max_tokens=500,
+        )
 
-        try:
-            return ChatOpenRouter(
-                model_name=OPENROUTER_MODEL,
-                openai_api_key=OPENROUTER_API_KEY,
-                openai_api_base="https://openrouter.ai/v1",
-                max_tokens=256,
-                temperature=0.2, 
-            )
-        except APIStatusError as e:
-            # if e.status_code == 402:
-            #     return ChatOpenAI(
-            #     model_name="openai/gpt-3.5-turbo-0125",
-            #     temperature=0.2,
-            #     openai_api_base="https://openrouter.ai/api/v1",
-            #     openai_api_key=OPENROUTER_API_KEY,
-            #     max_tokens=250,
-            # )
-            raise RuntimeError(f"Failed to initialize OpenRouter LLM: {e}")
-
-
-    elif LLM_PROVIDER == "ollama":
-        return f"Ollama model: {OLLAMA_MODEL} via {LLM_PROVIDER}\n"
-
-    # Extend for other providers (or local models) as needed
-    raise ValueError(f"Unsupported provider: {LLM_PROVIDER}")
-
-
-# class ChatOpenRouter(ChatOpenAI):
-#     openai_api_key: Optional[SecretStr] = Field(
-#         alias="api_key", default_factory=secret_from_env("OPENROUTER_API_KEY", default=None)
-#     )
-
-#     @property
-#     def lc_secrets(self) -> dict[str, str]:
-#         return {"openai_api_key": "OPENROUTER_API_KEY"}
-
-#     def __init__(self, openai_api_key: Optional[str] = None, **kwargs):
-#         openai_api_key = openai_api_key or os.environ.get("OPENROUTER_API_KEY")
-#         super().__init__(
-#             base_url="https://openrouter.ai/api/v1",
-#             openai_api_key=openai_api_key,
-#             **kwargs
-#         )
+    raise RuntimeError("LLM_PROVIDER must be 'openai' or 'openrouter'.")

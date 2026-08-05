@@ -1,79 +1,82 @@
-
-import ContentPasteSearchRoundedIcon from '@mui/icons-material/ContentPasteSearchRounded';
-import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
-import LocalPoliceRoundedIcon from '@mui/icons-material/LocalPoliceRounded';
-import CompostRoundedIcon from '@mui/icons-material/CompostRounded';
-import WebhookRoundedIcon from '@mui/icons-material/WebhookRounded';
-import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
+import {
+  BarChart3,
+  Calculator,
+  Database,
+  FileInput,
+  FileSearch,
+  FileText,
+  Users,
+  Wrench,
+} from "lucide-react";
 
 export const featuresData = [
-    {
-        "id": 1,
-        "title": "Shipping Emissions",
-        "icon": "",
-        "description": "Estimate, and visualize CO₂ impact of shipping goods across modes (air, ship, train, truck).",
-    },
-    {
-        "id": 2, 
-        "title": "Supplier Comparison",
-        "icon": "",
-        "description": "Compare transport modes or regional vendors by their carbon footprint, helping you make informed decisions.",
-    },
-    {
-        "id": 3,
-        "title": "Conversational Carbon AI",
-        "icon": "",
-        "description": "Ask natural questions like: “What’s the carbon emission of shipping 300kg from Madrid to Berlin by train? What’s the best vendor if I want the lowest carbon + cost within 5 days delivery?",
-    }
-]
-
-
+  {
+    id: 1,
+    title: "Offline-safe API",
+    icon: Wrench,
+    description:
+      "Health checks, validation, and tests run without LLM credentials or live provider calls.",
+  },
+  {
+    id: 2,
+    title: "Legacy factor calculator",
+    icon: Calculator,
+    description:
+      "A temporary deterministic fallback exposes normalized units, factors, provenance, and warnings.",
+  },
+  {
+    id: 3,
+    title: "Lean architecture",
+    icon: Database,
+    description:
+      "The rebuild removes speculative services and prepares for one FastAPI application backed by PostgreSQL.",
+  },
+];
 
 export const comingSoonData = [
-    {
-        "id": 1,
-        "title": "Procurement Simulation Tool",
-        // "icon": "📑",
-        "icon": ContentPasteSearchRoundedIcon,
-        "description": "Balance cost, emissions, and delivery time to simulate supplier decisions.",
-    },
-    {
-        "id": 2,
-        "title": "Upload POs or CSVs",
-        // "icon": "📎",
-        "icon": AttachFileRoundedIcon,
-        "description": "Drop in your purchase orders and get a full emissions breakdown instantly.",
-    },
-    {
-        "id": 3,
-        "title": "ESG Policy Integration",
-        // "icon": "📚",
-        "icon": LocalPoliceRoundedIcon,
-        "description": "Use vector search to ground agent answers in your company’s ESG policies.",
-    },
-    {
-        "id": 4,
-        "title": "Vendor Compliance Checker",
-        // "icon": "🧠",
-        "icon": CompostRoundedIcon,
-        "description": "Match supplier data against sustainability criteria using automated AI compliance checks.",
-    },
-    {
-        id: 5,
-        title: "API for Embeddable Assistant Interface",
-        // icon: "🔌",
-        icon: WebhookRoundedIcon,
-        description: "Enable 3rd-party integration of the carbon assistant with secure API keys."
-    },
-    {
-        id: 6,
-        title: "User Dashboard & ESG Document Portal",
-        // icon: "📂",
-        icon: DashboardRoundedIcon,
-        description: "Manage documents, policies, and emissions reports in one ESG-aware interface."
-    }
-]
-
+  {
+    id: 1,
+    title: "Calculation core",
+    icon: Calculator,
+    description:
+      "Versioned factors, explicit assumptions, regression tests, and stable result schemas.",
+  },
+  {
+    id: 2,
+    title: "Shipment CSV ingestion",
+    icon: FileInput,
+    description:
+      "Validated uploads, normalized rows, baseline totals, hotspots, and quality warnings.",
+  },
+  {
+    id: 3,
+    title: "Supplier evidence",
+    icon: FileSearch,
+    description:
+      "Text-based documents, structured supplier facts, full-text retrieval, and recoverable citations.",
+  },
+  {
+    id: 4,
+    title: "Isolated demo workspaces",
+    icon: Users,
+    description:
+      "Signed sessions, tenant-scoped records, quotas, and automatic expiry.",
+  },
+  {
+    id: 5,
+    title: "Scenarios and charts",
+    icon: BarChart3,
+    description:
+      "Compare alternatives using a small set of decision-useful visualizations.",
+  },
+  {
+    id: 6,
+    title: "Decision report",
+    icon: FileText,
+    description:
+      "Export inputs, methodology, sources, results, deltas, and caveats.",
+  },
+];
 
 // export const featuresData = {
 //     "nzeroesg": {
