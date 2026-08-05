@@ -36,13 +36,15 @@ Implemented in the current baseline:
 - Shipment CSV ingestion with bounded validation, row-level errors,
   workspace-scoped normalized records, totals, mode breakdowns, hotspots, and
   factor/data-quality warnings. See [the CSV schema](docs/shipment-csv.md).
+- Supplier evidence ingestion for UTF-8 TXT and text-based PDF files, structured
+  supplier cards, PostgreSQL full-text search, and recoverable chunk/page
+  citations.
 - Offline freight-factor fallback calculations for the legacy assistant.
 - Optional OpenAI or OpenRouter assistant integration, disabled by default.
 - Reproducible Docker definitions and credential-free CI checks.
 
 Not implemented yet:
 
-- Supplier evidence retrieval and citations.
 - Scenario dashboard, production charts, and report export.
 - A production-ready public demo.
 
@@ -53,7 +55,8 @@ defensible supplier-evidence system.
 When `DATABASE_URL` is absent, native development uses an explicit in-memory
 adapter for convenience. Docker Compose and production use the PostgreSQL
 adapter, which applies checked-in migrations and stores workspace, quota,
-retention, and revocation records server-side.
+retention, revocation, supplier, document, and evidence-chunk records
+server-side.
 
 ## Local development
 

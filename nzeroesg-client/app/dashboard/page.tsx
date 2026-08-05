@@ -60,6 +60,28 @@ type ShipmentData = {
   analysis: ShipmentAnalysis;
 };
 
+type SupplierCard = {
+  supplier_id: string;
+  name: string;
+  region: string | null;
+  certifications: string[];
+  transport_modes: string[];
+  document_count: number;
+  missing_fields: string[];
+};
+
+type EvidenceMatch = {
+  supplier_name: string;
+  filename: string;
+  excerpt: string;
+  citation: {
+    page_number: number | null;
+    chunk_index: number;
+    document_sha256: string;
+    filename: string;
+  };
+};
+
 const navigation = [
   { label: "Overview", status: "Ready", href: "#overview" },
   { label: "Shipments", status: "Ready", href: "#shipments" },
@@ -83,6 +105,17 @@ export default function UserPortalPage() {
   const [shipmentError, setShipmentError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [suppliers, setSuppliers] = useState<SupplierCard[]>([]);
+  const [evidenceMatches, setEvidenceMatches] = useState<EvidenceMatch[]>([]);
+  const [supplierName, setSupplierName] = useState("");
+  const [supplierRegion, setSupplierRegion] = useState("");
+  const [certifications, setCertifications] = useState("");
+  const [transportModes, setTransportModes] = useState("");
+  const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
+  const [evidenceQuery, setEvidenceQuery] = useState("");
+  const [evidenceError, setEvidenceError] = useState<string | null>(null);
+  const [isEvidenceUploading, setIsEvidenceUploading] = useState(false);
+  const [isSearchingEvidence, setIsSearchingEvidence] = useState(false);
 
   useEffect(() => {
     let isCurrent = true;
@@ -145,6 +178,23 @@ export default function UserPortalPage() {
     };
   }, [session]);
 
+  useEffect(() => {
+    if (!session) {
+      return;
+    }
+    fetch(`${getBackendUrl()}/suppliers`, { credentials: "include" })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error("Supplier evidence could not be loaded.");
+        }
+        return (await response.json()) as { suppliers: SupplierCard[] };
+      })
+      .then((payload) => setSuppliers(payload.suppliers))
+      .catch(() =>
+        setEvidenceError("Supplier evidence could not be loaded from the API."),
+      );
+  }, [session]);
+
   function selectShipmentFile(event: ChangeEvent<HTMLInputElement>) {
     setSelectedFile(event.target.files?.[0] ?? null);
     setShipmentError(null);
@@ -191,6 +241,95 @@ export default function UserPortalPage() {
       );
     } finally {
       setIsUploading(false);
+    }
+  }
+
+  function selectEvidenceFile(event: ChangeEvent<HTMLInputElement>) {
+    setEvidenceFile(event.target.files?.[0] ?? null);
+    setEvidenceError(null);
+  }
+
+  async function uploadEvidence(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!evidenceFile || !supplierName.trim()) {
+      setEvidenceError("Choose a TXT/PDF file and provide the supplier name.");
+      return;
+    }
+    setIsEvidenceUploading(true);
+    setEvidenceError(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", evidenceFile);
+      formData.append("supplier_name", supplierName);
+      formData.append("supplier_region", supplierRegion);
+      formData.append("certifications", certifications);
+      formData.append("transport_modes", transportModes);
+      const response = await fetch(`${getBackendUrl()}/evidence/upload`, {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      if (!response.ok) {
+        const detail = (await response.json().catch(() => null)) as {
+          detail?: string;
+        } | null;
+        throw new Error(detail?.detail ?? "Evidence could not be uploaded.");
+      }
+      const suppliersResponse = await fetch(`${getBackendUrl()}/suppliers`, {
+        credentials: "include",
+      });
+      if (suppliersResponse.ok) {
+        const payload = (await suppliersResponse.json()) as {
+          suppliers: SupplierCard[];
+        };
+        setSuppliers(payload.suppliers);
+      }
+      setEvidenceFile(null);
+      setSupplierName("");
+      setEvidenceError(null);
+      const workspaceResponse = await fetch(`${getBackendUrl()}/demo/session`, {
+        credentials: "include",
+      });
+      if (workspaceResponse.ok) {
+        setSession((await workspaceResponse.json()) as WorkspaceSession);
+      }
+    } catch (requestError) {
+      setEvidenceError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Evidence could not be uploaded.",
+      );
+    } finally {
+      setIsEvidenceUploading(false);
+    }
+  }
+
+  async function searchEvidence(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (evidenceQuery.trim().length < 2) {
+      setEvidenceError("Enter at least two characters to search evidence.");
+      return;
+    }
+    setIsSearchingEvidence(true);
+    setEvidenceError(null);
+    try {
+      const response = await fetch(
+        `${getBackendUrl()}/evidence/search?query=${encodeURIComponent(evidenceQuery.trim())}`,
+        { credentials: "include" },
+      );
+      if (!response.ok) {
+        throw new Error("Evidence search could not be completed.");
+      }
+      const payload = (await response.json()) as { matches: EvidenceMatch[] };
+      setEvidenceMatches(payload.matches);
+    } catch (requestError) {
+      setEvidenceError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Evidence search could not be completed.",
+      );
+    } finally {
+      setIsSearchingEvidence(false);
     }
   }
 
@@ -517,6 +656,200 @@ export default function UserPortalPage() {
                 {shipmentData.analysis.factor_applicability}
               </p>
             </>
+          ) : null}
+        </section>
+
+        <section
+          id="evidence"
+          className="mt-8 rounded-xl border border-border bg-muted p-6"
+        >
+          <div>
+            <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-accent">
+              Phase 4
+            </p>
+            <h2 className="text-2xl font-semibold text-primary">
+              Supplier evidence
+            </h2>
+            <p className="mt-2 max-w-2xl leading-7 text-muted-foreground">
+              Upload a text-based supplier document, record the structured facts
+              you know, and search the extracted text with recoverable
+              citations.
+            </p>
+          </div>
+
+          <form
+            onSubmit={uploadEvidence}
+            className="mt-6 grid gap-4 rounded-lg border border-border bg-background p-4 md:grid-cols-2"
+          >
+            <label className="flex flex-col gap-2 text-sm font-semibold text-primary">
+              Supplier name
+              <input
+                value={supplierName}
+                onChange={(event) => setSupplierName(event.target.value)}
+                placeholder="Supplier ABC"
+                className="rounded-lg border border-border bg-muted px-3 py-2 font-normal"
+              />
+            </label>
+            <label className="flex flex-col gap-2 text-sm font-semibold text-primary">
+              Region (optional)
+              <input
+                value={supplierRegion}
+                onChange={(event) => setSupplierRegion(event.target.value)}
+                placeholder="Canada"
+                className="rounded-lg border border-border bg-muted px-3 py-2 font-normal"
+              />
+            </label>
+            <label className="flex flex-col gap-2 text-sm font-semibold text-primary">
+              Certifications (comma separated)
+              <input
+                value={certifications}
+                onChange={(event) => setCertifications(event.target.value)}
+                placeholder="ISO 14001"
+                className="rounded-lg border border-border bg-muted px-3 py-2 font-normal"
+              />
+            </label>
+            <label className="flex flex-col gap-2 text-sm font-semibold text-primary">
+              Transport modes (comma separated)
+              <input
+                value={transportModes}
+                onChange={(event) => setTransportModes(event.target.value)}
+                placeholder="rail, truck"
+                className="rounded-lg border border-border bg-muted px-3 py-2 font-normal"
+              />
+            </label>
+            <label className="flex flex-col gap-2 text-sm font-semibold text-primary md:col-span-2">
+              Evidence document (TXT or text-based PDF)
+              <input
+                type="file"
+                accept=".txt,.pdf,text/plain,application/pdf"
+                onChange={selectEvidenceFile}
+                className="rounded-lg border border-border bg-muted px-3 py-2 text-sm font-normal text-primary file:mr-3 file:rounded file:border-0 file:bg-secondary file:px-3 file:py-2 file:text-white"
+              />
+            </label>
+            <div className="md:col-span-2">
+              <button
+                type="submit"
+                disabled={isEvidenceUploading}
+                className="rounded-full bg-secondary px-5 py-3 font-semibold text-white transition hover:bg-accent disabled:cursor-wait disabled:opacity-60"
+              >
+                {isEvidenceUploading ? "Extracting…" : "Upload evidence"}
+              </button>
+              <span className="ml-3 text-xs text-muted-foreground">
+                Max 3 documents per workspace · 10 MB each
+              </span>
+            </div>
+          </form>
+
+          {evidenceError ? (
+            <p className="mt-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
+              {evidenceError}
+            </p>
+          ) : null}
+
+          <div className="mt-6">
+            <h3 className="font-semibold text-primary">Supplier cards</h3>
+            {suppliers.length === 0 ? (
+              <p className="mt-3 text-sm text-muted-foreground">
+                No supplier evidence has been uploaded in this workspace.
+              </p>
+            ) : (
+              <div className="mt-3 grid gap-4 lg:grid-cols-2">
+                {suppliers.map((supplier) => (
+                  <article
+                    key={supplier.supplier_id}
+                    className="rounded-lg border border-border bg-background p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h4 className="font-semibold text-primary">
+                          {supplier.name}
+                        </h4>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {supplier.region ?? "Region not provided"}
+                        </p>
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {supplier.document_count} document
+                        {supplier.document_count === 1 ? "" : "s"}
+                      </span>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2 text-xs">
+                      {supplier.certifications.map((certification) => (
+                        <span
+                          key={certification}
+                          className="rounded-full bg-secondary/10 px-2 py-1 text-primary"
+                        >
+                          {certification}
+                        </span>
+                      ))}
+                      {supplier.transport_modes.map((mode) => (
+                        <span
+                          key={mode}
+                          className="rounded-full bg-accent/10 px-2 py-1 capitalize text-primary"
+                        >
+                          {mode}
+                        </span>
+                      ))}
+                    </div>
+                    {supplier.missing_fields.length > 0 ? (
+                      <p className="mt-4 text-xs text-amber-800">
+                        Missing metadata: {supplier.missing_fields.join(", ")}
+                      </p>
+                    ) : (
+                      <p className="mt-4 text-xs text-emerald-800">
+                        Structured metadata is complete.
+                      </p>
+                    )}
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <form onSubmit={searchEvidence} className="mt-8">
+            <label className="flex flex-col gap-2 text-sm font-semibold text-primary">
+              Search document evidence
+              <div className="flex flex-wrap gap-3">
+                <input
+                  value={evidenceQuery}
+                  onChange={(event) => setEvidenceQuery(event.target.value)}
+                  placeholder="ISO 14001"
+                  className="min-w-64 flex-1 rounded-lg border border-border bg-background px-3 py-2 font-normal"
+                />
+                <button
+                  type="submit"
+                  disabled={isSearchingEvidence}
+                  className="rounded-full border border-secondary px-5 py-2 font-semibold text-secondary transition hover:bg-secondary hover:text-white disabled:cursor-wait disabled:opacity-60"
+                >
+                  {isSearchingEvidence ? "Searching…" : "Search citations"}
+                </button>
+              </div>
+            </label>
+          </form>
+
+          {evidenceMatches.length > 0 ? (
+            <div className="mt-5 space-y-3">
+              {evidenceMatches.map((match) => (
+                <article
+                  key={`${match.citation.document_sha256}-${match.citation.chunk_index}`}
+                  className="rounded-lg border border-border bg-background p-4"
+                >
+                  <p className="text-sm font-semibold text-primary">
+                    {match.supplier_name} · {match.filename}
+                  </p>
+                  <blockquote className="mt-2 border-l-2 border-accent pl-3 text-sm leading-6 text-muted-foreground">
+                    {match.excerpt}
+                  </blockquote>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Citation: {match.citation.filename}, chunk{" "}
+                    {match.citation.chunk_index}
+                    {match.citation.page_number
+                      ? `, page ${match.citation.page_number}`
+                      : ""}
+                  </p>
+                </article>
+              ))}
+            </div>
           ) : null}
         </section>
       </section>

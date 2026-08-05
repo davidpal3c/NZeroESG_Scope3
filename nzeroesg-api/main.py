@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.emissions import emissions_router
+from api.evidence import evidence_router
 from api.routes import chat_router
 from api.shipments import shipments_router
 from api.workspaces import workspace_router
@@ -25,6 +26,7 @@ app.include_router(chat_router, prefix="/chat", tags=["chat"])
 app.include_router(workspace_router)
 app.include_router(emissions_router)
 app.include_router(shipments_router)
+app.include_router(evidence_router)
 
 
 @app.get("/health")

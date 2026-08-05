@@ -345,6 +345,20 @@ Deliverables:
 - Render supplier cards and evidence excerpts with citations.
 - Rank only on explicit, visible criteria; preserve missing values.
 
+Initial implementation evidence:
+
+- `domain/evidence` accepts bounded UTF-8 TXT and text-based PDF uploads,
+  extracts normalized chunks with page numbers where available, rejects
+  encrypted/empty/oversized content, and normalizes structured supplier fields.
+- Migration `003_evidence.sql` stores workspace-scoped suppliers, documents,
+  chunks, hashes, metadata, and a PostgreSQL `tsvector` full-text index.
+- `POST /evidence/upload`, `GET /suppliers`, and `GET /evidence/search` expose
+  structured supplier cards and cited excerpts containing filename, document
+  hash, chunk index, and PDF page location when available.
+- The protected portal now supports evidence upload, missing-field display,
+  supplier cards, and citation search. Tests cover TXT/PDF extraction,
+  citation locations, retrieval, isolation, and the three-document quota.
+
 Verification:
 
 - Ingestion fixtures produce stable chunks and recoverable citations.

@@ -3,9 +3,9 @@
 ## Status
 
 This document replaces the historical Chroma and agent-first RAG design.
-NZeroESG does not currently implement supplier-document retrieval. The initial
-retrieval system will use structured PostgreSQL queries and PostgreSQL full-text
-search after the deterministic calculation and workspace phases are complete.
+NZeroESG now uses structured PostgreSQL supplier records and PostgreSQL
+full-text search for the evidence slice. The optional assistant remains
+separate from this deterministic retrieval path.
 
 LangChain is limited to the optional legacy assistant during the rebuild. It is
 not part of the calculation core, ingestion pipeline, citation model, or report

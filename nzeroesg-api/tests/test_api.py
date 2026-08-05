@@ -198,3 +198,66 @@ def test_shipment_upload_requires_a_workspace_session():
     )
 
     assert response.status_code == 401
+
+
+def test_evidence_upload_and_search_return_recoverable_citation():
+    demo_client = authenticated_client()
+    evidence = b"Supplier ABC holds ISO 14001 certification and operates rail routes."
+
+    upload = demo_client.post(
+        "/evidence/upload",
+        data={
+            "supplier_name": "Supplier ABC",
+            "supplier_region": "Canada",
+            "certifications": "ISO 14001",
+            "transport_modes": "rail, truck",
+        },
+        files={"file": ("supplier.txt", evidence, "text/plain")},
+    )
+
+    assert upload.status_code == 200
+    assert upload.json()["supplier"]["missing_fields"] == []
+    assert upload.json()["chunk_count"] == 1
+
+    search = demo_client.get("/evidence/search", params={"query": "ISO 14001"})
+
+    assert search.status_code == 200
+    match = search.json()["matches"][0]
+    assert match["supplier_name"] == "Supplier ABC"
+    assert match["citation"]["filename"] == "supplier.txt"
+    assert match["citation"]["chunk_index"] == 0
+    assert "ISO 14001" in match["excerpt"]
+
+
+def test_evidence_documents_are_workspace_isolated_and_quota_limited():
+    first_client = authenticated_client()
+    second_client = authenticated_client()
+    evidence = b"Supplier ABC holds ISO 14001 certification."
+
+    for index in range(3):
+        response = first_client.post(
+            "/evidence/upload",
+            data={"supplier_name": f"Supplier {index}"},
+            files={"file": (f"supplier-{index}.txt", evidence + str(index).encode(), "text/plain")},
+        )
+        assert response.status_code == 200
+
+    exceeded = first_client.post(
+        "/evidence/upload",
+        data={"supplier_name": "Supplier 4"},
+        files={"file": ("supplier-4.txt", evidence, "text/plain")},
+    )
+
+    assert exceeded.status_code == 429
+    assert first_client.get("/suppliers").json()["suppliers"]
+    assert second_client.get("/suppliers").json()["suppliers"] == []
+
+
+def test_evidence_upload_requires_a_workspace_session():
+    response = TestClient(app).post(
+        "/evidence/upload",
+        data={"supplier_name": "Supplier ABC"},
+        files={"file": ("supplier.txt", b"ISO 14001", "text/plain")},
+    )
+
+    assert response.status_code == 401

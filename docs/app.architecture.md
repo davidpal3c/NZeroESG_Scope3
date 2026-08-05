@@ -132,13 +132,13 @@ $30 USD monthly ceiling.
 The current implementation includes the Next.js marketing interface, `/login`
 and protected portal shell, FastAPI health and optional chat endpoints, signed
 expiring demo workspace sessions, a migrated PostgreSQL workspace repository
-with server-side quota, revocation, and retention enforcement, and a
-workspace-scoped shipment CSV ingestion with bounded validation and deterministic
-baseline analysis, and a framework-independent deterministic freight-emissions core under
-`domain/emissions`. The core exposes normalized units, versioned illustrative
-factors, distance provenance, warnings, and stable result serialization.
-Shipment ingestion, evidence retrieval, scenarios, and reports remain roadmap
-work and must not be represented as implemented.
+with server-side quota, revocation, and retention enforcement, workspace-scoped
+shipment CSV ingestion with bounded validation and deterministic baseline
+analysis, and supplier evidence ingestion with cited PostgreSQL full-text
+retrieval. The framework-independent deterministic freight-emissions core under
+`domain/emissions` exposes normalized units, versioned illustrative factors,
+distance provenance, warnings, and stable result serialization. Scenarios and
+reports remain roadmap work and must not be represented as implemented.
 
 The authoritative delivery sequence and acceptance gates are in
 [`demo-roadmap.md`](demo-roadmap.md).
