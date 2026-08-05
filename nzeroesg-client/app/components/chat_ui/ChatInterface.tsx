@@ -27,7 +27,7 @@ export default function ChatInterface({
 }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: (Date.now() + 1).toString(),
+      id: "legacy-assistant-introduction",
       content:
         "This optional legacy assistant can estimate and compare freight emissions when a model provider is configured. Shipment uploads, supplier evidence, citations, scenarios, and reports are not implemented yet.",
       role: "agent" as const,
@@ -36,7 +36,7 @@ export default function ChatInterface({
   ]);
 
   const [isLoading, setIsLoading] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(initialOpen);
   const [assistantStatus, setAssistantStatus] =
     useState<AssistantStatus>("checking");
   const chatRef = useRef<HTMLDivElement>(null);
@@ -112,10 +112,6 @@ export default function ChatInterface({
     setIsOpen(newState);
     onOpenChange?.(newState);
   };
-
-  useEffect(() => {
-    setIsOpen(initialOpen);
-  }, [initialOpen]);
 
   useEffect(() => {
     const controller = new AbortController();

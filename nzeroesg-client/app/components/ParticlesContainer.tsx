@@ -10,7 +10,11 @@ import { loadSlim } from "@tsparticles/slim";
 
 export default function ParticlesContainer() {
   const [init, setInit] = useState(false);
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(
+    () =>
+      typeof document !== "undefined" &&
+      document.documentElement.classList.contains("dark"),
+  );
 
   useEffect(() => {
     initParticlesEngine(async (engine) => {
@@ -28,8 +32,6 @@ export default function ParticlesContainer() {
       attributes: true,
       attributeFilter: ["class"],
     });
-
-    setIsDark(document.documentElement.classList.contains("dark"));
 
     return () => observer.disconnect();
   }, []);

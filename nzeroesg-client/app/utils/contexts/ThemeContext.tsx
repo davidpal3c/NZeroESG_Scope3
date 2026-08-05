@@ -1,6 +1,11 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useSyncExternalStore,
+} from "react";
 
 type Theme = "light" | "dark";
 
@@ -12,42 +17,86 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+const themeListeners = new Set<() => void>();
+
+function subscribeToTheme(listener: () => void) {
+  themeListeners.add(listener);
+  return () => themeListeners.delete(listener);
+}
+
+function getClientTheme(): Theme {
+  if (typeof document === "undefined") {
+    return "light";
+  }
+
+  if (document.documentElement.classList.contains("dark")) {
+    return "dark";
+  }
+
+  try {
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "light" || savedTheme === "dark") {
+      return savedTheme;
+    }
+  } catch {
+    // Fall back to the system preference when storage is unavailable.
+  }
+
+  try {
+    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      return "dark";
+    }
+  } catch {
+    // Fall back to light mode when media queries are unavailable.
+  }
+
+  return "light";
+}
+
+function getServerTheme(): Theme {
+  return "light";
+}
+
+function applyTheme(theme: Theme) {
+  if (typeof document === "undefined") {
+    return;
+  }
+
+  document.documentElement.classList.toggle("dark", theme === "dark");
+  try {
+    localStorage.setItem("theme", theme);
+  } catch {
+    // Theme persistence is optional when storage is unavailable.
+  }
+}
+
+function updateTheme(theme: Theme) {
+  applyTheme(theme);
+  themeListeners.forEach((listener) => listener());
+}
+
+const subscribeToMount = () => () => {};
+const getMountedSnapshot = () => true;
+const getServerMountedSnapshot = () => false;
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("light");
-  const [mounted, setMounted] = useState(false);
+  const theme = useSyncExternalStore(
+    subscribeToTheme,
+    getClientTheme,
+    getServerTheme,
+  );
+  const mounted = useSyncExternalStore(
+    subscribeToMount,
+    getMountedSnapshot,
+    getServerMountedSnapshot,
+  );
 
   useEffect(() => {
-    let initialTheme: Theme = "light";
-    try {
-      const savedTheme = localStorage.getItem("theme");
-      if (savedTheme === "light" || savedTheme === "dark") {
-        initialTheme = savedTheme;
-      } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-        initialTheme = "dark";
-      }
-    } catch {
-      initialTheme = "light";
-    }
-
-    setTheme(initialTheme);
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) {
-      return;
-    }
-
-    document.documentElement.classList.toggle("dark", theme === "dark");
-    try {
-      localStorage.setItem("theme", theme);
-    } catch {
-      // Theme persistence is optional when storage is unavailable.
-    }
-  }, [mounted, theme]);
+    applyTheme(theme);
+  }, [theme]);
 
   const toggleTheme = () => {
-    setTheme((current) => (current === "dark" ? "light" : "dark"));
+    updateTheme(theme === "dark" ? "light" : "dark");
   };
 
   return (
