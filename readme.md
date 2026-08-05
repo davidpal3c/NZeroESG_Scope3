@@ -27,6 +27,7 @@ Implemented in the current baseline:
 - FastAPI health and chat endpoints.
 - Framework-independent deterministic freight-emissions core with versioned
   factor provenance and explicit distance warnings.
+- Typed `/emissions/calculate` and `/emissions/compare` API endpoints.
 - Offline freight-factor fallback calculations for the legacy assistant.
 - Optional OpenAI or OpenRouter assistant integration, disabled by default.
 - Reproducible Docker definitions and credential-free CI checks.

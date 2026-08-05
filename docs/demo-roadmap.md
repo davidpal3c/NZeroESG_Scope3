@@ -207,9 +207,12 @@ Initial implementation evidence:
   with canonical modes, unit normalization, versioned factor records, route
   versus straight-line distance provenance, stable result serialization, and
   deterministic comparison ordering.
-- The backend suite now has 25 passing tests, including golden formulas,
+- The backend suite now has 27 passing tests, including golden formulas,
   invalid inputs, factor metadata, fallback warnings, repeated calculations,
   and unit-identity collision coverage.
+- Commit `a70bdf0` exposes typed `/emissions/calculate` and
+  `/emissions/compare` endpoints that return the same provenance-rich schema
+  without invoking the optional assistant.
 - The factor schedule is explicitly illustrative and carries a warning to
   replace it with an authoritative licensed source before public carbon
   accounting use.
