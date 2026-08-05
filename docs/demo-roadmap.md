@@ -415,6 +415,8 @@ Initial implementation evidence:
   durable Postgres reference. The current planned baseline is a free web
   service plus Render's $19/month `basic-1gb` database, before confirming the
   actual account invoice.
+- Commit `b5dc94f` passed GitHub Actions run `31042422923`; repository,
+  backend, frontend, and PostgreSQL-backed browser jobs all succeeded.
 
 Verification:
 
