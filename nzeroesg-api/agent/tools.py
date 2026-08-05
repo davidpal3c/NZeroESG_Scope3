@@ -7,18 +7,21 @@ from langchain.tools import StructuredTool
 from pydantic import BaseModel, Field
 
 from config import settings
+from domain.emissions.calculator import calculate_emissions as deterministic_calculate
+from domain.emissions.distance import DistanceMethod
+from domain.emissions.factors import FACTOR_CATALOG
+from domain.emissions.units import (
+    normalize_distance_km as deterministic_distance_km,
+)
+from domain.emissions.units import (
+    normalize_weight_kg as deterministic_weight_kg,
+)
 
 TransportMode = Literal["plane", "air", "truck", "train", "ship", "ocean container"]
 
-# kg CO2e per tonne-kilometre. These legacy prototype factors will be replaced
-# by versioned factor records during Phase 1.
+# Compatibility map derived from the versioned deterministic factor catalog.
 FALLBACK_EMISSION_FACTORS: dict[str, float] = {
-    "plane": 0.602,
-    "air": 0.602,
-    "truck": 0.062,
-    "train": 0.022,
-    "ship": 0.008,
-    "ocean container": 0.008,
+    factor.mode.value: factor.value for factor in FACTOR_CATALOG
 }
 
 
@@ -46,19 +49,11 @@ class CompareInput(BaseModel):
 
 
 def normalize_weight_kg(value: float, unit: str) -> float:
-    conversions = {"g": 0.001, "kg": 1.0, "lb": 0.453592, "mt": 1_000.0}
-    try:
-        return value * conversions[unit]
-    except KeyError as exc:
-        raise ValueError(f"Unsupported weight unit: {unit}") from exc
+    return deterministic_weight_kg(value, unit)
 
 
 def normalize_distance_km(value: float, unit: str) -> float:
-    conversions = {"m": 0.001, "km": 1.0, "mi": 1.60934}
-    try:
-        return value * conversions[unit]
-    except KeyError as exc:
-        raise ValueError(f"Unsupported distance unit: {unit}") from exc
+    return deterministic_distance_km(value, unit)
 
 
 def fallback_emission_estimate(
@@ -67,27 +62,16 @@ def fallback_emission_estimate(
     method: str,
     weight_unit: str = "kg",
     distance_unit: str = "km",
-) -> dict[str, float | str]:
-    normalized_method = method.lower()
-    factor = FALLBACK_EMISSION_FACTORS.get(normalized_method)
-    if factor is None:
-        raise ValueError(f"Unsupported transport method: {method}")
-
-    weight_kg = normalize_weight_kg(weight, weight_unit)
-    distance_km = normalize_distance_km(distance, distance_unit)
-    emissions_kg = (weight_kg / 1_000) * distance_km * factor
-
-    return {
-        "method": normalized_method,
-        "emissions_kg": round(emissions_kg, 3),
-        "emissions_tonnes": round(emissions_kg / 1_000, 6),
-        "weight_kg": round(weight_kg, 3),
-        "distance_km": round(distance_km, 3),
-        "factor_kg_co2e_per_tonne_km": factor,
-        "source": "Legacy prototype fallback factor",
-        "data_quality": "estimated",
-        "note": "Replace with a versioned, cited factor before public release.",
-    }
+    distance_method: DistanceMethod = DistanceMethod.ROUTE,
+) -> dict[str, object]:
+    return deterministic_calculate(
+        weight_value=weight,
+        weight_unit=weight_unit,
+        distance_value=distance,
+        distance_unit=distance_unit,
+        mode=method,
+        distance_method=distance_method,
+    ).to_dict()
 
 
 def resolve_distance(origin: str, destination: str) -> dict[str, float | str]:
@@ -117,13 +101,15 @@ def calculate_shipping_emissions(
     transport_method: str,
     weight_unit: str = "kg",
     distance_unit: str = "km",
-) -> dict[str, float | str]:
+    distance_method: DistanceMethod = DistanceMethod.ROUTE,
+) -> dict[str, object]:
     fallback = fallback_emission_estimate(
         weight=weight_value,
         distance=distance_value,
         method=transport_method,
         weight_unit=weight_unit,
         distance_unit=distance_unit,
+        distance_method=distance_method,
     )
 
     if not settings.carbon_interface_api_key:
@@ -174,9 +160,11 @@ def compare_emissions(
     destination: str | None = None,
 ) -> dict[str, object]:
     resolved_distance = distance_value
+    resolved_distance_method = DistanceMethod.ROUTE
     if resolved_distance is None and origin and destination:
         resolved_distance = float(resolve_distance(origin, destination)["distance_km"])
         distance_unit = "km"
+        resolved_distance_method = DistanceMethod.STRAIGHT_LINE
     if resolved_distance is None:
         raise ValueError("Provide a distance or both origin and destination.")
 
@@ -187,6 +175,7 @@ def compare_emissions(
             transport_method=method,
             weight_unit=weight_unit,
             distance_unit=distance_unit,
+            distance_method=resolved_distance_method,
         )
         for method in transport_method
     }

@@ -46,14 +46,16 @@ def test_fallback_result_exposes_formula_inputs_and_provenance():
     assert result["distance_km"] == 100
     assert result["factor_kg_co2e_per_tonne_km"] == 0.022
     assert result["data_quality"] == "estimated"
-    assert "versioned" in result["note"]
+    assert result["source_version"] == "prototype-2026.1"
+    assert "authoritative" in result["applicability"]
 
 
 def test_calculator_works_without_a_paid_provider():
     result = calculate_shipping_emissions(500, 1_000, "ship")
 
     assert result["emissions_kg"] == 4
-    assert result["source"] == "Legacy prototype fallback factor"
+    assert result["source"] == "NZeroESG prototype factor schedule"
+    assert result["source_version"] == "prototype-2026.1"
 
 
 def test_comparison_orders_modes_by_calculated_emissions():
