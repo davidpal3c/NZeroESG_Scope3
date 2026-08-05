@@ -1,5 +1,8 @@
+from dataclasses import replace
+
 import pytest
 
+import agent.tools as tools
 from agent.tools import (
     calculate_shipping_emissions,
     compare_emissions,
@@ -7,6 +10,16 @@ from agent.tools import (
     normalize_distance_km,
     normalize_weight_kg,
 )
+
+
+@pytest.fixture(autouse=True)
+def disable_optional_provider(monkeypatch):
+    """Keep calculator unit tests deterministic and network-free."""
+    monkeypatch.setattr(
+        tools,
+        "settings",
+        replace(tools.settings, carbon_interface_api_key=None),
+    )
 
 
 @pytest.mark.parametrize(
