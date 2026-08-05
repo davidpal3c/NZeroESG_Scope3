@@ -129,10 +129,13 @@ $30 USD monthly ceiling.
 
 ## Current implementation status
 
-The Phase 0 baseline currently includes the Next.js marketing interface,
-FastAPI health and optional chat endpoints, and a legacy freight-factor
-calculator. PostgreSQL, workspaces, ingestion, evidence retrieval, scenarios,
-and reports are roadmap work and must not be represented as implemented.
+The current baseline includes the Next.js marketing interface, FastAPI health
+and optional chat endpoints, and a framework-independent deterministic
+freight-emissions core under `domain/emissions`. The core exposes normalized
+units, versioned illustrative factors, distance provenance, warnings, and
+stable result serialization. PostgreSQL, workspaces, ingestion, evidence
+retrieval, scenarios, and reports remain roadmap work and must not be
+represented as implemented.
 
 The authoritative delivery sequence and acceptance gates are in
 [`demo-roadmap.md`](demo-roadmap.md).

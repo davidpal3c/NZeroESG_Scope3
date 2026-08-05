@@ -201,6 +201,19 @@ Deliverables:
 - Build fixture-based tests for conversions, factors, fallbacks, repeated
   calculations, and comparison ordering.
 
+Initial implementation evidence:
+
+- Commit `8f71073` adds the framework-independent `domain/emissions` package
+  with canonical modes, unit normalization, versioned factor records, route
+  versus straight-line distance provenance, stable result serialization, and
+  deterministic comparison ordering.
+- The backend suite now has 25 passing tests, including golden formulas,
+  invalid inputs, factor metadata, fallback warnings, repeated calculations,
+  and unit-identity collision coverage.
+- The factor schedule is explicitly illustrative and carries a warning to
+  replace it with an authoritative licensed source before public carbon
+  accounting use.
+
 Verification:
 
 - No calculation unit test calls a network.

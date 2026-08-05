@@ -25,6 +25,8 @@ Implemented in the current baseline:
 
 - Next.js marketing interface and optional chat UI.
 - FastAPI health and chat endpoints.
+- Framework-independent deterministic freight-emissions core with versioned
+  factor provenance and explicit distance warnings.
 - Offline freight-factor fallback calculations for the legacy assistant.
 - Optional OpenAI or OpenRouter assistant integration, disabled by default.
 - Reproducible Docker definitions and credential-free CI checks.
