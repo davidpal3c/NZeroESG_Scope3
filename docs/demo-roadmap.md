@@ -418,6 +418,10 @@ Initial implementation evidence:
   database at the current Neon Free-plan price of $0 for the bounded demo.
 - Commit `b5dc94f` passed GitHub Actions run `31042422923`; repository,
   backend, frontend, and PostgreSQL-backed browser jobs all succeeded.
+- Commit `37007c7` passed GitHub Actions run `31045133417`; repository,
+  backend, frontend, and PostgreSQL-backed browser jobs all succeeded after
+  bounded evidence reads, security headers, deterministic logout navigation,
+  and the Neon deployment handoff were added.
 
 Verification:
 
