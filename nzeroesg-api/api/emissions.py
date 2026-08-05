@@ -2,9 +2,10 @@
 
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
+from api.workspaces import require_workspace_session
 from domain.emissions.calculator import (
     CalculationResult,
     ComparisonResult,
@@ -96,7 +97,11 @@ class ComparisonResponse(BaseModel):
     details: dict[str, CalculationResponse]
 
 
-emissions_router = APIRouter(prefix="/emissions", tags=["emissions"])
+emissions_router = APIRouter(
+    prefix="/emissions",
+    tags=["emissions"],
+    dependencies=[Depends(require_workspace_session)],
+)
 
 
 def _calculation_response(result: CalculationResult) -> CalculationResponse:

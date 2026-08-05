@@ -129,11 +129,12 @@ $30 USD monthly ceiling.
 
 ## Current implementation status
 
-The current baseline includes the Next.js marketing interface, FastAPI health
-and optional chat endpoints, and a framework-independent deterministic
+The current implementation includes the Next.js marketing interface, `/login`
+and protected portal shell, FastAPI health and optional chat endpoints, signed
+expiring demo workspace sessions, and a framework-independent deterministic
 freight-emissions core under `domain/emissions`. The core exposes normalized
 units, versioned illustrative factors, distance provenance, warnings, and
-stable result serialization. PostgreSQL, workspaces, ingestion, evidence
+stable result serialization. Durable PostgreSQL records, ingestion, evidence
 retrieval, scenarios, and reports remain roadmap work and must not be
 represented as implemented.
 

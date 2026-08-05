@@ -248,6 +248,29 @@ Deliverables:
 - Add quota and retention records.
 - Remove global LangChain memory and global user-specific caches.
 
+Initial implementation evidence:
+
+- The signed session module under `domain/workspaces` issues a unique
+  workspace id, expiry, retention policy, and bounded quota records in an
+  HMAC-protected claim. It has no process-global conversation memory or
+  user-specific cache.
+- `POST /demo/session`, `GET /demo/session`, and `DELETE /demo/session` manage
+  the HTTP-only session cookie. `/emissions/*` now requires the workspace
+  dependency, so direct calls without a valid session fail with `401`.
+- The Next.js `/login` page creates a demo session and `/dashboard` verifies the
+  cookie before rendering the portal navigation and current quota/retention
+  claims.
+- Backend tests cover signature tampering, expiry, unique workspace sessions,
+  logout, direct API rejection, and two-client isolation. Frontend typecheck,
+  lint, formatting, and the Webpack production build pass.
+
+Scope boundary for this slice:
+
+- The claims are intentionally stateless while the PostgreSQL repository is
+  still roadmap work. Quota consumption, revocation, and cleanup of persisted
+  workspace data are not yet complete and remain required before the Phase 2
+  exit gate.
+
 Verification:
 
 - Two browser sessions cannot read or mutate each other's records.

@@ -28,13 +28,15 @@ Implemented in the current baseline:
 - Framework-independent deterministic freight-emissions core with versioned
   factor provenance and explicit distance warnings.
 - Typed `/emissions/calculate` and `/emissions/compare` API endpoints.
+- Signed, expiring demo sessions at `/demo/session`, with HTTP-only cookies,
+  workspace-specific quota/retention claims, and a protected portal shell at
+  `/login` and `/dashboard`.
 - Offline freight-factor fallback calculations for the legacy assistant.
 - Optional OpenAI or OpenRouter assistant integration, disabled by default.
 - Reproducible Docker definitions and credential-free CI checks.
 
 Not implemented yet:
 
-- Demo authentication and workspace isolation.
 - PostgreSQL persistence.
 - CSV and evidence-document ingestion.
 - Supplier evidence retrieval and citations.
@@ -44,6 +46,11 @@ Not implemented yet:
 The old synthetic supplier dataset, Chroma service, and dedicated embedding
 service were removed from `dev`; they were demonstration plumbing rather than a
 defensible supplier-evidence system.
+
+The current session slice is stateless by design: it provides the signed
+workspace boundary without process-global user memory. Durable workspace,
+quota-consumption, and retention cleanup records still require the planned
+PostgreSQL persistence phase.
 
 ## Local development
 

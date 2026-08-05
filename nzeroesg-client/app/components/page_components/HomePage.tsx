@@ -37,10 +37,10 @@ export default function HomePage() {
               </a>
             ))}
             <button
-              onClick={() => router.push("/dashboard")}
+              onClick={() => router.push("/login")}
               className="text-primary transition hover:text-accent"
             >
-              Portal status
+              Enter demo workspace
             </button>
             <ThemeToggle />
           </div>
