@@ -271,6 +271,8 @@ Initial implementation evidence:
   both the development fallback and a temporary PostgreSQL server.
 - Commit `3fb8b49` passed GitHub Actions run `31034311577` on August 5, 2026;
   the `repository`, `backend`, and `frontend` jobs all succeeded.
+- Commit `93e2c17` passed GitHub Actions run `31035536633` with the disposable
+  PostgreSQL backend service; all three jobs succeeded.
 
 Scope boundary for this slice:
 
@@ -316,6 +318,8 @@ Initial implementation evidence:
 - Backend fixtures cover valid, partial, invalid, oversized, hostile, and
   workspace-isolated uploads; both the development fallback and PostgreSQL
   repository suites pass.
+- Commit `ced95a1` passed GitHub Actions run `31036783647`; the `repository`,
+  `backend`, and `frontend` jobs all succeeded.
 
 Verification:
 
