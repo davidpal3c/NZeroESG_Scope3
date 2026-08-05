@@ -404,6 +404,8 @@ Initial implementation evidence:
   PostgreSQL, including scenario reconciliation, report parity, session
   rejection, and workspace persistence checks. Frontend typecheck, lint,
   formatting, and the Webpack production build pass locally.
+- Commit `b1cc7f1` passed GitHub Actions run `31039714610`; the repository,
+  backend, and frontend jobs all succeeded.
 
 Verification:
 
