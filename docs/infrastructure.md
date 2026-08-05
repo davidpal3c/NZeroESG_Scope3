@@ -86,11 +86,11 @@ The backend health check gates frontend startup in Compose.
 
 The backend must enforce the public limits from the roadmap:
 
-- 500 shipment rows per CSV;
+- 500 shipment rows per CSV (enforced by the upload parser);
 - 3 evidence documents per workspace;
-- 10 MB per file;
+- 10 MB per file (enforced before parsing);
 - text-based evidence only;
-- 10 analysis or scenario runs per workspace per day;
+- 10 analysis or scenario runs per workspace per day (enforced server-side);
 - 3 assistant requests per workspace per day when enabled.
 
 Original evidence files should be temporary in the initial bounded demo.

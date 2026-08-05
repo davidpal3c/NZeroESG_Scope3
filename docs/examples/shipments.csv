@@ -1,0 +1,5 @@
+shipment_id,origin,destination,weight_value,weight_unit,distance_value,distance_unit,transport_method
+SHIP-001,Edmonton,Calgary,1,mt,300,km,truck
+SHIP-002,Montreal,New York,750,kg,560,km,plane
+SHIP-003,Vancouver,Toronto,2,mt,4400,km,train
+SHIP-004,Halifax,Rotterdam,1.5,mt,5200,km,ship

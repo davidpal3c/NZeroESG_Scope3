@@ -147,3 +147,54 @@ def test_analysis_quota_rejects_the_eleventh_run():
     assert response.json()["detail"] == (
         "The daily analysis quota for this workspace has been reached."
     )
+
+
+def test_shipment_upload_returns_valid_rows_errors_and_analysis():
+    demo_client = authenticated_client()
+    csv_content = (
+        "shipment_id,origin,destination,weight_value,weight_unit,distance_value,"
+        "distance_unit,transport_method\n"
+        "S-001,Edmonton,Calgary,1,mt,100,km,truck\n"
+        "S-002,,Vancouver,-2,kg,not-a-distance,km,submarine\n"
+    )
+
+    response = demo_client.post(
+        "/shipments/upload",
+        files={"file": ("shipments.csv", csv_content.encode(), "text/csv")},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["accepted_rows"] == 1
+    assert payload["rows"][0]["shipment_id"] == "S-001"
+    assert payload["analysis"]["total_emissions_kg"] == 6.2
+    assert payload["errors"][0]["row_number"] == 3
+    assert payload["warnings"]
+
+
+def test_shipment_records_are_workspace_isolated():
+    first_client = authenticated_client()
+    second_client = authenticated_client()
+    csv_content = (
+        "shipment_id,origin,destination,weight_value,weight_unit,distance_value,"
+        "distance_unit,transport_method\n"
+        "S-001,Edmonton,Calgary,1,mt,100,km,truck\n"
+    )
+
+    upload = first_client.post(
+        "/shipments/upload",
+        files={"file": ("shipments.csv", csv_content, "text/csv")},
+    )
+
+    assert upload.status_code == 200
+    assert first_client.get("/shipments").json()["accepted_rows"] == 1
+    assert second_client.get("/shipments").json()["accepted_rows"] == 0
+
+
+def test_shipment_upload_requires_a_workspace_session():
+    response = TestClient(app).post(
+        "/shipments/upload",
+        files={"file": ("shipments.csv", b"shipment_id\nS-001\n", "text/csv")},
+    )
+
+    assert response.status_code == 401

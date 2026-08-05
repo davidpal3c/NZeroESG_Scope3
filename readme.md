@@ -33,13 +33,15 @@ Implemented in the current baseline:
   `/login` and `/dashboard`.
 - PostgreSQL workspace persistence with migrations, server-side analysis
   quotas, revocation, and expiry cleanup when `DATABASE_URL` is configured.
+- Shipment CSV ingestion with bounded validation, row-level errors,
+  workspace-scoped normalized records, totals, mode breakdowns, hotspots, and
+  factor/data-quality warnings. See [the CSV schema](docs/shipment-csv.md).
 - Offline freight-factor fallback calculations for the legacy assistant.
 - Optional OpenAI or OpenRouter assistant integration, disabled by default.
 - Reproducible Docker definitions and credential-free CI checks.
 
 Not implemented yet:
 
-- CSV and evidence-document ingestion.
 - Supplier evidence retrieval and citations.
 - Scenario dashboard, production charts, and report export.
 - A production-ready public demo.

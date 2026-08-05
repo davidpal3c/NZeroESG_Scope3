@@ -4,5 +4,6 @@ langchain==0.3.26
 langchain-openai==0.3.21
 psycopg[binary]==3.2.9
 python-dotenv==1.1.0
+python-multipart==0.0.20
 requests==2.32.3
 uvicorn[standard]==0.34.3

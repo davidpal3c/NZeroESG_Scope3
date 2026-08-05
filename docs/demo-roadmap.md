@@ -301,6 +301,22 @@ Deliverables:
 - Normalize accepted rows and calculate a baseline analysis.
 - Show a shipment table, totals, mode breakdown, hotspots, and quality warnings.
 
+Initial implementation evidence:
+
+- `domain/shipments` implements bounded UTF-8 CSV parsing, schema/header checks,
+  MIME and filename checks, row limits, finite positive numeric validation,
+  unit/mode normalization, hostile-content rejection, and row-level errors.
+- `POST /shipments/upload` stores accepted normalized rows under the active
+  workspace and returns deterministic totals, mode breakdowns, hotspots, factor
+  metadata, assumptions, and warnings. `GET /shipments` reads only that
+  workspace's rows.
+- The protected portal now provides the CSV upload, normalized table, totals,
+  mode breakdown, hotspots, and data-quality issue display. The template and
+  schema are documented in `docs/shipment-csv.md`.
+- Backend fixtures cover valid, partial, invalid, oversized, hostile, and
+  workspace-isolated uploads; both the development fallback and PostgreSQL
+  repository suites pass.
+
 Verification:
 
 - Fixture tests cover valid, partially valid, invalid, oversized, and hostile
