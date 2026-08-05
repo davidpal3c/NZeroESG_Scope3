@@ -144,7 +144,7 @@ deployment design must be simplified before adding features.
 Deliverables:
 
 - [x] Remove abandoned migration artifacts and zero-byte placeholders.
-- [ ] Rotate exposed deploy hooks and audit secrets.
+- [x] Rotate exposed deploy hooks and audit secrets.
 - [x] Reduce and pin dependencies.
 - [x] Make local startup reproducible from documented commands.
 - [x] Define environment variables with checked-in example files.
@@ -154,9 +154,11 @@ Deliverables:
 
 Current external action:
 
-- Rotate the historical Render deploy hooks before deployment is restored.
-  Removing the workflow prevents future use but cannot invalidate credentials
-  already present in public Git history.
+- On August 5, 2026, the user confirmed that the Render API key was rotated,
+  the affected Render service no longer exists, and the historical deploy-hook
+  references are disabled. No Render deployment workflow is present in `dev`.
+  Deployment automation must remain disabled until a future service is
+  intentionally configured with newly managed credentials.
 - A repository-history pattern audit on June 19, 2026 found secret-shaped
   matches only in the historical `.github/workflows/deploy.yml`; no additional
   credential file or key pattern was identified.

@@ -90,10 +90,13 @@ expiry.
 
 ## Deployment safety
 
-Historical Render deploy hooks were committed in an earlier workflow. They must
-be rotated in Render before deployment automation is restored. New deployment
-configuration must use repository or provider-managed secrets and must not
-contain deploy-hook credentials in tracked files.
+Historical Render deploy hooks were committed in an earlier workflow. On
+August 5, 2026, the user confirmed that the Render API key was rotated, the
+affected Render service no longer exists, and the historical hook references
+are disabled. No Render deployment workflow is currently tracked. If a future
+backend service is created, deployment configuration must use newly managed
+repository or provider-managed secrets and must not restore historical hook
+credentials.
 
 CI must remain credential-free and run:
 

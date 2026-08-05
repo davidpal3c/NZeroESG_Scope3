@@ -152,8 +152,10 @@ embedding service are out of scope until measured requirements justify them.
 ## Security note
 
 Historical Render deploy hooks were committed in an earlier workflow. The
-workflow has been removed from `dev`, but those hooks must be rotated in Render
-before deployment is restored because Git history remains public.
+workflow has been removed from `dev`; the affected Render service no longer
+exists and the user has confirmed the Render API key was rotated. Deployment
+automation remains disabled until a future backend service is intentionally
+configured with newly managed credentials.
 
 ## License
 
