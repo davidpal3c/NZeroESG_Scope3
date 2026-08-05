@@ -178,6 +178,10 @@ Verified baseline evidence:
 - A clean local clone of the same baseline built and started through Docker
   Compose without local environment override files; frontend, dashboard, and
   backend health requests returned successfully.
+- Commit `0b72100` passed GitHub Actions run `31031689176` on August 5, 2026;
+  the `repository`, `backend`, and `frontend` jobs all succeeded. The frontend
+  production dependency audit reported zero vulnerabilities after the audited
+  Axios, Next.js, PostCSS, and Sharp upgrades.
 
 Exit gate:
 
