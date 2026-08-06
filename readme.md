@@ -1,97 +1,133 @@
-# NZeroESG Scope 3
+# 🌱 NZeroESG — Scope 3
 
-NZeroESG is being rebuilt as a lean, portfolio-ready prototype for traceable
-freight-emissions analysis and supplier evidence.
+### A practical, traceable way to understand freight emissions and supplier evidence.
 
-The intended demo workflow is:
+Procurement and logistics account for a large share of Scope 3 emissions, but the
+information needed to act is often scattered across spreadsheets, shipment
+files, supplier PDFs, and disconnected tools. I started NZeroESG to make that
+work feel a little more concrete: bring the evidence together, show the
+calculation, and make the trade-offs easier to discuss.
+
+The original idea was an agentic AI assistant that could answer questions such
+as:
+
+- “What is the carbon footprint of a 100 kg shipment from Toronto to Vancouver by air?”
+- “How would the result change if I used rail or truck instead?”
+- “What supplier evidence supports this sustainability claim?”
+
+The current public version takes a deliberately dependable first step. Its core
+workflow is data-first and deterministic, so it remains useful without an LLM
+or a paid API call. The optional assistant is still available for development,
+but it is disabled in the public environment by default.
+
+## Try the demo
+
+The live demo is here:
+
+<https://n-zero-esg-scope3.vercel.app/>
+
+The intended path is short:
 
 1. Enter an isolated, expiring demo workspace.
-2. Upload shipment CSV data.
-3. Upload real supplier or compliance evidence.
-4. Review deterministic emissions calculations and source-backed supplier
-   facts.
-5. Compare scenarios, inspect charts, and export a decision report.
+2. Upload shipment data, or start with the example in
+   [`docs/examples/shipments.csv`](docs/examples/shipments.csv).
+3. Add supplier or compliance evidence.
+4. Review the emissions totals, modes, hotspots, warnings, and source-backed
+   supplier facts.
+5. Compare scenarios and export a report you can actually share.
 
-The finish line and phased acceptance criteria are documented in
-[docs/demo-roadmap.md](docs/demo-roadmap.md). Human and agent contributors must
-also follow [AGENTS.md](AGENTS.md).
+The API is running separately on Render:
 
-## Current status
+- <https://nzeroesg-api.onrender.com/health>
 
-The `dev` branch is an active rebuild from the historical pre-GraphQL prototype
-at commit `4eed03c`.
+The phased finish line and acceptance criteria live in
+[`docs/demo-roadmap.md`](docs/demo-roadmap.md). Contributors should also read
+[`AGENTS.md`](AGENTS.md).
 
-Implemented in the current baseline:
+## What is working today
 
-- Next.js marketing interface and optional chat UI.
-- FastAPI health and chat endpoints.
-- Framework-independent deterministic freight-emissions core with versioned
-  factor provenance and explicit distance warnings.
-- Typed `/emissions/calculate` and `/emissions/compare` API endpoints.
-- Signed, expiring demo sessions at `/demo/session`, with HTTP-only cookies,
-  workspace-specific quota/retention claims, and a protected portal shell at
-  `/login` and `/dashboard`.
-- PostgreSQL workspace persistence with migrations, server-side analysis
-  quotas, revocation, and expiry cleanup when `DATABASE_URL` is configured.
-- Shipment CSV ingestion with bounded validation, row-level errors,
-  workspace-scoped normalized records, totals, mode breakdowns, hotspots, and
-  factor/data-quality warnings. See [the CSV schema](docs/shipment-csv.md).
-- Supplier evidence ingestion for UTF-8 TXT and text-based PDF files, structured
-  supplier cards, PostgreSQL full-text search, and recoverable chunk/page
+The rebuilt demo includes:
+
+- A deterministic freight-emissions core with versioned factor provenance,
+  explicit distance warnings, and typed calculation and comparison endpoints.
+- Signed, expiring demo sessions with HTTP-only cookies, workspace-specific
+  quotas, retention, revocation, and a protected `/login` and `/dashboard`
+  portal.
+- PostgreSQL persistence with checked-in migrations. Production uses the Neon
+  PostgreSQL database configured through `DATABASE_URL`.
+- Shipment CSV ingestion with bounded validation, row-level errors, normalized
+  records, totals, mode breakdowns, hotspots, and data-quality warnings. The
+  [CSV schema is documented here](docs/shipment-csv.md).
+- Supplier evidence ingestion for UTF-8 text and text-based PDFs, structured
+  supplier cards, PostgreSQL full-text search, and recoverable page/chunk
   citations.
-- Deterministic shipment-mode scenarios, accessible comparison tables and
-  visual bars, printable report views, and authenticated CSV report export.
-- Offline freight-factor fallback calculations for the legacy assistant.
-- Optional OpenAI or OpenRouter assistant integration, disabled by default.
-- Playwright browser smoke coverage for the local five-minute workflow,
-  report download, logout, and workspace isolation.
-- Reproducible Docker definitions and credential-free CI checks.
+- Scenario comparisons, accessible tables and visual bars, printable report
+  views, and authenticated CSV report export.
+- A public Vercel client, a Render API, security headers, exact-origin CORS,
+  and credential-free CI checks.
 
-Not implemented yet:
+## A note about the original agent idea
 
-- A production-ready public demo.
+The first version of NZeroESG explored LangChain’s ReAct pattern, Chroma,
+retrieval-augmented supplier search, and several external emissions services.
+That was a useful exploration, but it also made the demo harder to defend and
+more expensive to operate.
 
-The old synthetic supplier dataset, Chroma service, and dedicated embedding
-service were removed from `dev`; they were demonstration plumbing rather than a
-defensible supplier-evidence system.
+For the current baseline, I kept the parts that make the product trustworthy:
+bounded inputs, explicit calculations, provenance, evidence citations, and
+workspace isolation. The optional OpenAI/OpenRouter assistant can be enabled
+intentionally for development, but it is not required for the core product and
+does not run in the public demo.
 
-When `DATABASE_URL` is absent, native development uses an explicit in-memory
-adapter for convenience. Docker Compose and production use the PostgreSQL
-adapter, which applies checked-in migrations and stores workspace, quota,
-retention, revocation, supplier, document, and evidence-chunk records
-server-side. Production startup fails closed when `DATABASE_URL` is missing.
+## The stack, in plain language
 
-## Local development
+| Part                      | Role                                                                 |
+| ------------------------- | -------------------------------------------------------------------- |
+| Next.js and React         | The public interface, portal, charts, and report views               |
+| FastAPI                   | The API for sessions, shipments, evidence, calculations, and reports |
+| Neon PostgreSQL           | Workspace, shipment, evidence, quota, and retention data             |
+| Vercel                    | Public client deployment from `main`                                 |
+| Render                    | API deployment, currently configured from the `dev` branch           |
+| Docker and GitHub Actions | Reproducible local setup and automated checks                        |
+
+The architecture is intentionally a modular monolith:
+
+```text
+Next.js → FastAPI → Neon PostgreSQL
+```
+
+GraphQL, Redis, MongoDB, Chroma, a message broker, and a dedicated embedding
+service are not part of the current production path. They can be reconsidered
+when measured requirements justify the additional operational cost.
+
+## Run it locally
+
+You will need Python 3.12.10, Node.js 20.19.0 or newer, npm, and Docker if you
+want to run the full stack.
 
 ### Docker
-
-The default stack has no paid API dependency:
 
 ```bash
 docker compose up --build
 ```
 
+Then open:
+
 - Frontend: <http://localhost:3000>
 - API health: <http://localhost:8000/health>
 - API documentation: <http://localhost:8000/docs>
 
-The optional assistant is disabled in this configuration. The health endpoint
-and future deterministic product workflows do not require provider credentials.
+The default stack does not need a paid provider credential. The optional
+assistant is disabled.
 
 ### Native tools
-
-Requirements:
-
-- Python 3.12.10
-- Node.js 20.19.0
-- npm
 
 ```bash
 make setup
 make check
 ```
 
-Run the services separately:
+Run the API and client in separate terminals:
 
 ```bash
 cd nzeroesg-api
@@ -103,16 +139,19 @@ cd nzeroesg-client
 npm run dev
 ```
 
-Copy the checked-in examples when local environment overrides are needed:
+If you need local environment overrides, copy the examples first:
 
 ```bash
 cp nzeroesg-api/.env.example nzeroesg-api/.env
 cp nzeroesg-client/.env.example nzeroesg-client/.env.local
 ```
 
+Those files are ignored by Git. Do not commit credentials.
+
 ## Optional assistant
 
-The assistant is not required for the core product. To test it, set:
+The assistant is intentionally off in production. To experiment with it
+locally, set the appropriate values in `nzeroesg-api/.env`:
 
 ```dotenv
 ASSISTANT_ENABLED=true
@@ -121,15 +160,12 @@ OPENAI_API_KEY=...
 OPENAI_MODEL=...
 ```
 
-OpenRouter can be selected with `LLM_PROVIDER=openrouter` and the corresponding
-environment variables from `nzeroesg-api/.env.example`.
-
-Do not commit credentials. Assistant requests remain stateless until the
-workspace-scoped assistant workflow is implemented.
+OpenRouter is also supported with `LLM_PROVIDER=openrouter`; see
+`nzeroesg-api/.env.example` for the provider-specific variables.
 
 ## Quality checks
 
-Backend:
+Backend checks:
 
 ```bash
 cd nzeroesg-api
@@ -138,7 +174,7 @@ cd nzeroesg-api
 ../.venv/bin/pytest
 ```
 
-Frontend:
+Frontend checks:
 
 ```bash
 cd nzeroesg-client
@@ -146,59 +182,28 @@ npm run typecheck
 npm run lint
 npm run format:check
 npm run build
-```
-
-Browser smoke suite:
-
-```bash
-cd nzeroesg-client
-npx playwright install chromium
 npm run test:e2e
 ```
 
-The suite starts the native API and frontend automatically. Set
-`E2E_DATABASE_URL` to exercise the PostgreSQL adapter instead of the native
+The browser suite starts the native API and frontend automatically. Set
+`E2E_DATABASE_URL` when you want to exercise PostgreSQL instead of the native
 development fallback.
 
-The API deployment handoff is the checked-in [`render.yaml`](render.yaml)
-Blueprint. It contains no provider credentials; Render generates the session
-secret, while `DATABASE_URL` is entered manually from the selected Neon
-PostgreSQL project.
+## Where I would take it next
 
-For production, the Vercel project must build `nzeroesg-client` and set
-`NEXT_PUBLIC_BACKEND_URL` to the deployed FastAPI origin. `/login` is a client
-route and does not call the API until the user clicks “Enter demo workspace”.
+- Let users opt into the assistant explicitly, with clear cost and data-use
+  boundaries.
+- Add more evidence formats and stronger supplier-level review workflows.
+- Extend scenario comparisons toward cost, delivery time, and emissions
+  trade-offs.
+- Add richer audit history and organization-level access controls once the
+  demo’s workflow has been validated.
 
-CI runs these checks without external provider credentials or network calls
-from tests. The local secret check scans tracked and non-ignored new files for
-common credential and deploy-hook patterns; CI also audits production npm
-dependencies.
+NZeroESG is still a prototype, but the goal is practical: make carbon-aware
+procurement decisions easier to explain, easier to verify, and easier to act on.
 
-## Architecture direction
-
-The target is a modular monolith:
-
-```text
-Next.js
-   │
-FastAPI
-   │
-Neon PostgreSQL
-```
-
-GraphQL, NestJS, Redis, MongoDB, Chroma, a message broker, and a dedicated
-embedding service are out of scope until measured requirements justify them.
-
-## Security note
-
-Historical Render deploy hooks were committed in an earlier workflow. The
-workflow has been removed from `dev`; the user has confirmed the Render API
-key was rotated and the historical hook references are disabled. The currently
-logging Render service is the old embedder-based API and is failing at startup;
-it must be re-pointed to the rebuilt `dev` service configuration. Deployment
-automation remains disabled until the backend is intentionally configured with
-newly managed credentials.
+Built by David P.
 
 ## License
 
-See [LICENSE.md](LICENSE.md).
+See [`LICENSE.md`](LICENSE.md).
