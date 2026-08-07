@@ -32,7 +32,7 @@ class EmissionFactor:
         }
 
 
-_FACTOR_SOURCE = "NZeroESG prototype factor schedule"
+_FACTOR_SOURCE = "CarbonSage prototype factor schedule"
 _FACTOR_VERSION = "prototype-2026.1"
 _FACTOR_APPLICABILITY = (
     "Screening estimate for the prototype; replace with an authoritative, "

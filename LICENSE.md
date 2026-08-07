@@ -1,6 +1,6 @@
 Polyform Noncommercial License 1.0.0
 
-Copyright (c) [2025] NZeroESG Contributors
+Copyright (c) [2025] CarbonSage Contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to use, copy, modify, and distribute the Software, subject to the following conditions:
 
@@ -17,4 +17,3 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
    The Software is provided “as is”, without warranty of any kind, express or implied, including but not limited to warranties of merchantability, fitness for a particular purpose, or noninfringement.
 
 For more information, visit: https://polyformproject.org/licenses/noncommercial/1.0.0/
-

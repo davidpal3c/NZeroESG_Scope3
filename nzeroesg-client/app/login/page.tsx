@@ -45,7 +45,7 @@ export default function LoginPage() {
           Enter a private workspace
         </h1>
         <p className="mb-8 max-w-lg leading-7 text-muted-foreground">
-          NZeroESG creates a short-lived workspace for this demo. Your session
+          CarbonSage creates a short-lived workspace for this demo. Your session
           is signed by the API, stored in an HTTP-only cookie, and isolated from
           other visitors.
         </p>

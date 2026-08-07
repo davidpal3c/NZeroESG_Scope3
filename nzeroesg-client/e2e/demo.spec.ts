@@ -65,7 +65,7 @@ test("completes the five-minute demo workflow and exports a report", async ({
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "Export CSV report" }).click();
   const download = await downloadPromise;
-  expect(download.suggestedFilename()).toBe("nzeroesg-report.csv");
+  expect(download.suggestedFilename()).toBe("carbonsage-report.csv");
 
   await page.emulateMedia({ media: "print" });
   await expect(page.locator("#scenarios")).toBeVisible();

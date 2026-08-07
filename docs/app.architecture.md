@@ -1,148 +1,271 @@
-# NZeroESG Application Architecture
+# CarbonSage Application Architecture
+
+## Initial product decision
+
+CarbonSage is an embeddable ESG decision agent, not a general carbon-accounting
+SaaS and not a general-purpose chatbot.
+
+Its initial thesis is:
+
+> An embeddable ESG decision agent demonstrating hybrid RAG, semantic
+> retrieval, typed tool orchestration, cited responses, and interactive data
+> visualizations.
+
+The already-deployed shipment, evidence, scenario, and report workflow remains
+the trusted deterministic baseline. The next track adds enough product surface
+to prove the AI system in practice: a workspace artifact catalog, an agent
+playground, one secure embed path, and one external file-import integration.
 
 ## Architecture decision
 
-NZeroESG is a lean modular monolith:
+CarbonSage remains one lean modular monolith:
 
 ```text
-Vercel
-└── Next.js frontend
-    ├── marketing page
-    ├── demo access
-    └── workspace portal
-             │
-             ▼
-Render
-└── FastAPI backend
-    ├── workspace and session module
-    ├── shipment ingestion module
-    ├── emissions domain
-    ├── supplier and evidence module
-    ├── scenario and report module
-    └── optional assistant adapter
-             │
-             ▼
+Vercel / Next.js
+├── demo access
+├── control plane
+│   ├── artifact catalog
+│   ├── connector management
+│   ├── agent playground
+│   └── embed-client configuration
+└── isolated `/embed` experience
+        │
+        ├── dashboard: signed workspace cookie
+        └── embed: short-lived scoped bearer credential
+                 │
+                 ▼
+Render / FastAPI
+├── workspace principal and quota boundary
+├── artifact and ingestion services
+├── hybrid evidence retrieval
+├── typed deterministic application tools
+├── conversation and structured-response service
+└── optional model-provider adapter
+                 │
+                 ▼
 Neon PostgreSQL
+├── workspaces, quotas, and retention
+├── artifacts and domain records
+├── documents, chunks, and citations
+├── lexical and evaluated vector indexes
+└── conversations and validated response envelopes
 ```
 
-This replaces the historical agent-first design. GraphQL, Redis, MongoDB,
-Chroma, a message broker, and a dedicated embedding service are not part of the
-demo architecture.
+No Redis, MongoDB, GraphQL gateway, message broker, dedicated vector database,
+background worker, or agent microservice is required for the initial finish
+line. pgvector is the required semantic-search implementation inside the
+existing PostgreSQL evidence repository. Retrieval evaluation determines
+fusion, weighting, and query routing; it does not determine whether the vector
+capability exists.
+
+## Product surfaces
+
+### Control plane
+
+The dashboard is where a demo workspace manages source material and tests the
+agent. Its bounded responsibilities are:
+
+- create, inspect, rename, and delete workspace artifacts;
+- upload shipment datasets and supplier evidence;
+- import an explicitly selected Google Drive file;
+- test the agent against the same workspace context used by an embed;
+- create and revoke embed clients with exact allowed origins;
+- inspect quotas, evidence completeness, and concise tool activity.
+
+It is not an organization-admin, billing, SSO, or enterprise-RBAC console.
+
+### Agent runtime
+
+The agent runtime accepts an authenticated workspace principal, retrieves only
+that workspace's evidence, invokes typed application tools, and returns a
+versioned response envelope. It may explain deterministic results but cannot
+become the authority for a calculation, citation, supplier fact, or report.
+
+The current `/chat` endpoint is a transitional estimator. The target runtime
+will use conversation resources and one common principal abstraction for the
+dashboard cookie and embed bearer credential.
+
+### Embedded experience
+
+The first integration is a framework-independent JavaScript loader that mounts
+an iframe hosted by CarbonSage. The iframe is the deliberate first choice:
+
+- it isolates CSS, React, charting, and runtime dependencies from the host;
+- it works in vanilla JavaScript, React, Vue, Angular, and existing portals;
+- it keeps API calls on the CarbonSage frontend origin;
+- it provides a small, testable `postMessage` contract for resize, readiness,
+  token refresh, artifact links, and action requests.
+
+The parent and iframe must validate exact origins and message shapes. The
+dashboard and other application routes retain frame denial; only the embed
+route receives a client-specific `frame-ancestors` policy.
+
+The host must not contain a permanent API secret. A trusted host backend issues
+or exchanges a short-lived credential with workspace, subject, audience,
+client, scope, origin, expiry, and token-id claims. The loader passes it to the
+iframe in memory, never as a persistent URL query parameter.
+
+## Artifact boundary
+
+An artifact is a workspace-owned source or generated decision asset. Initial
+kinds are:
+
+- shipment dataset;
+- supplier evidence document;
+- report snapshot.
+
+An artifact records title, kind, status, source type, source reference, media
+type, content hash, version, metadata, authorship, timestamps, and soft-deletion
+state. Existing shipment rows, suppliers, evidence chunks, calculations, and
+scenario results remain normalized domain records linked to their source
+artifact. Suppliers remain first-class domain entities rather than untyped
+artifact metadata.
+
+Raw uploaded files remain temporary unless a measured requirement changes the
+retention policy. The artifact catalog retains provenance and normalized
+results, not an unbounded file store.
 
 ## Source-of-truth boundaries
 
 Deterministic application code owns:
 
-- unit normalization and emissions calculations;
-- factor selection, formulas, assumptions, and warnings;
-- shipment validation and normalization;
-- supplier filters and ranking inputs;
-- document extraction, retrieval, and citations;
-- scenario totals, charts, and report payloads.
+- input limits, validation, and normalization;
+- unit conversion, factors, formulas, calculations, and warnings;
+- supplier filters and retrieval constraints;
+- source identifiers and citation locations;
+- scenario values, chart rows, and report payloads;
+- authorization, workspace isolation, quotas, and retention.
 
-The optional assistant may explain results or invoke stable application
-commands. It is never the source of truth for an emissions value, supplier
-claim, citation, or report.
+The model may:
 
-## Backend module direction
+- interpret a user's question;
+- select from approved typed tools;
+- summarize validated tool results;
+- suggest server-defined next actions;
+- explain uncertainty, missing evidence, and data-quality limitations.
 
-The FastAPI application will remain one deployable service while keeping domain
-boundaries explicit:
+The model may not invent factor values, silently rank suppliers, emit arbitrary
+executable chart code, create unsupported claims, or perform a mutation without
+explicit user confirmation.
 
-```text
-nzeroesg-api/
-├── api/             # HTTP schemas, routes, and session dependencies
-├── domain/
-│   ├── emissions/   # Units, modes, factors, distance, calculations
-│   ├── shipments/   # Normalized shipment records and analysis
-│   ├── suppliers/   # Structured supplier attributes
-│   └── reports/     # Scenarios and report snapshots
-├── persistence/     # Database models, repositories, and migrations
-├── ingestion/       # Bounded CSV and text-document parsing
-└── assistant/       # Optional adapter over typed application commands
-```
+## Typed tool boundary
 
-The exact folders may evolve while the phase gates are implemented, but domain
-logic must not depend on FastAPI, LangChain, a database session, or a model
-provider.
-
-## Primary request flows
-
-### Shipment analysis
+The target tool set is intentionally small:
 
 ```text
-CSV upload
-  → server-side limits and schema validation
-  → row-level validation and unit normalization
-  → deterministic calculation core
-  → workspace-scoped persistence
-  → typed totals, breakdowns, hotspots, and warnings
-  → dashboard and report
+list_workspace_artifacts
+search_supplier_evidence
+get_citation_context
+calculate_freight_emissions
+compare_transport_scenarios
+summarize_data_quality
+build_decision_report
 ```
 
-### Supplier evidence
+Each tool accepts and returns validated domain schemas. Domain logic must not
+depend on FastAPI, LangChain, a model provider, or a future MCP adapter.
+LangChain can orchestrate these commands, but it does not own them.
+
+## Structured response protocol
+
+The dashboard and iframe share one renderer over a versioned response envelope:
+
+```json
+{
+  "schema_version": "1.0",
+  "conversation_id": "uuid",
+  "message_id": "uuid",
+  "summary": "Road freight is the largest source in this workspace.",
+  "blocks": [
+    {
+      "type": "metric",
+      "label": "Baseline emissions",
+      "value": 12450,
+      "unit": "kg CO2e"
+    },
+    {
+      "type": "chart",
+      "chart_type": "bar",
+      "title": "Emissions by freight mode",
+      "rows": [
+        { "mode": "truck", "emissions_kg": 7200 },
+        { "mode": "ship", "emissions_kg": 3100 }
+      ]
+    },
+    {
+      "type": "citation",
+      "artifact_id": "uuid",
+      "label": "Supplier sustainability report, page 8"
+    }
+  ],
+  "suggested_actions": [],
+  "processing_time_ms": 842
+}
+```
+
+Initial blocks are text, metric, table, chart, citation, artifact reference,
+warning, and action. Charts use a constrained declarative schema and always
+have an accessible table equivalent. Unknown block types degrade to safe
+fallback text. Mutating actions reference server-defined action identifiers
+and require confirmation.
+
+## Retrieval architecture
+
+PostgreSQL full-text search remains the lexical baseline. Semantic retrieval is
+introduced as an evaluated extension, not an architectural fashion choice:
 
 ```text
-Text-based document upload
-  → server-side file and content limits
-  → bounded text extraction with page/section locations
-  → normalized chunks and document metadata
-  → PostgreSQL full-text search plus structured supplier filters
-  → recoverable evidence citations
-  → supplier cards and report
+bounded document ingestion
+  → normalized chunks with source locations
+  → lexical retrieval with PostgreSQL full-text search
+  → semantic retrieval with PostgreSQL vector search
+  → deterministic hybrid candidate fusion
+  → recoverable citations
+  → grounded answer and structured blocks
 ```
 
-Vector retrieval may be evaluated after the public demo is complete, but only
-against a retrieval test set that demonstrates a material improvement.
+A representative retrieval set compares lexical-only, semantic-only, and
+hybrid results. The pgvector schema and query path are implemented regardless
+of which mode wins a particular evaluation. CarbonSage should claim semantic
+or hybrid improvement only when recall-at-k, citation coverage, and answer
+support demonstrate it.
 
-### Optional assistant
+### Former ChromaDB path
 
-```text
-Workspace-scoped question
-  → quota and session checks
-  → typed application command or cited retrieval
-  → optional LLM explanation
-  → stable response envelope with sources and processing time
-```
+The earlier NZeroESG prototype used ChromaDB as a standalone vector database.
+CarbonSage replaces that deployment boundary with pgvector so lexical records,
+embeddings, workspace ownership, retention, and citation metadata remain in
+the same PostgreSQL system. ChromaDB remains documented as architecture
+history, not an active dependency.
 
-The primary workflow must remain fully usable when this path is disabled.
+## Connector boundary
 
-## Workspace isolation
+Google Drive is the only connector required for the initial finish line. It
+imports explicitly selected, supported files through the same bounded
+ingestion pipeline as local uploads and records provider provenance on the
+artifact. Broad-drive access, folder sync, background polling, and indefinite
+token retention are out of scope.
 
-Every user-owned database record must include a workspace identifier. A signed,
-HTTP-only session selects one expiring demo workspace, and every repository
-query must enforce that workspace boundary. Process-global conversation memory
-and user-specific caches are prohibited.
+Dropbox is deferred until the provider-neutral import interface has proved
+useful. One connector demonstrates the architecture.
 
-## Deployment and cost boundary
+## MCP and Ceiba extension points
 
-The intended public deployment uses:
+After typed tools and workspace authorization are stable, a read-only MCP
+server may expose artifact listing, evidence search, citation retrieval,
+calculation, and scenario comparison. It must be a thin protocol adapter over
+the same application commands, not a second tool implementation.
 
-- Vercel's free frontend tier;
-- one Render FastAPI service;
-- one small Neon PostgreSQL project on the Free plan;
-- no mandatory paid LLM API;
-- no always-on embedding or background-worker service.
+CarbonSage may later dogfood Ceiba for execution, observability, evaluation, or
+tool registration. CarbonSage must remain independently deployable until
+Ceiba's production boundary is explicitly reviewed and selected.
 
-The complete recurring infrastructure must remain within the roadmap's
-$30 USD monthly ceiling. MongoDB is intentionally not selected: the current
-repositories, migrations, foreign keys, quotas, and PostgreSQL full-text
-evidence search are already implemented against PostgreSQL. Switching would
-add migration and retrieval work without helping the five-minute demo.
+## Compatibility boundary
 
-## Current implementation status
+CarbonSage is the public product identity. Historical `nzeroesg-*` directories,
+service names, environment variables, cookie names, and deployed URLs remain
+unchanged for now so the verified deployment is not disrupted by the rebrand.
 
-The current implementation includes the Next.js marketing interface, `/login`
-and protected portal shell, FastAPI health and optional chat endpoints, signed
-expiring demo workspace sessions, a migrated PostgreSQL workspace repository
-with server-side quota, revocation, and retention enforcement, workspace-scoped
-shipment CSV ingestion with bounded validation and deterministic baseline
-analysis, supplier evidence ingestion with cited PostgreSQL full-text
-retrieval, deterministic mode scenarios, and typed report preview/CSV export.
-The framework-independent deterministic freight-emissions core under
-`domain/emissions` exposes normalized units, versioned illustrative factors,
-distance provenance, warnings, and stable result serialization. Public browser
-verification and deployment hardening remain roadmap work.
-
-The authoritative delivery sequence and acceptance gates are in
-[`demo-roadmap.md`](demo-roadmap.md).
+The authoritative sequence and acceptance gates are in
+[`demo-roadmap.md`](demo-roadmap.md). The retrieval and orchestration evaluation
+plan is in [`langchain.rag.workflow.md`](langchain.rag.workflow.md).

@@ -107,5 +107,5 @@ async def report_csv(
     return Response(
         content=output.getvalue(),
         media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=nzeroesg-report.csv"},
+        headers={"Content-Disposition": "attachment; filename=carbonsage-report.csv"},
     )

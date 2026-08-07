@@ -1,109 +1,138 @@
-# 🌱 NZeroESG — Scope 3
+# 🌱 CarbonSage (formerly NZeroESG)
 
-### A practical, traceable way to understand freight emissions and supplier evidence.
+### Evidence-grounded Scope 3 intelligence, wherever decisions happen.
 
-Procurement and logistics account for a large share of Scope 3 emissions, but the
-information needed to act is often scattered across spreadsheets, shipment
-files, supplier PDFs, and disconnected tools. I started NZeroESG to make that
-work feel a little more concrete: bring the evidence together, show the
-calculation, and make the trade-offs easier to discuss.
+CarbonSage is an embeddable ESG decision agent for freight and supplier
+workflows. It brings shipment data, supplier evidence, deterministic emissions
+tools, and conversational analysis into one traceable experience.
 
-The original idea was an agentic AI assistant that could answer questions such
-as:
+The initial thesis is deliberately specific:
 
-- “What is the carbon footprint of a 100 kg shipment from Toronto to Vancouver by air?”
-- “How would the result change if I used rail or truck instead?”
-- “What supplier evidence supports this sustainability claim?”
+> An embeddable ESG decision agent demonstrating hybrid RAG, semantic
+> retrieval, typed tool orchestration, cited responses, and interactive data visualizations.
 
-The current public version takes a deliberately dependable first step. Its core
-workflow is data-first and deterministic, so it remains useful without an LLM
-or a paid API call. The optional assistant is still available for development,
-but it is disabled in the public environment by default.
+The goal is not to build an entire carbon-accounting SaaS. CarbonSage uses just
+enough product structure—isolated workspaces, artifact management, an agent
+playground, and a secure embed surface—to prove that the AI system works in a
+credible application.
 
-## Try the demo
+## Why this project exists
 
-The live demo is here:
+Procurement and logistics teams often have the information they need, but it is
+scattered across shipment files, supplier PDFs, spreadsheets, and existing
+operational systems. CarbonSage explores a practical question: can an agent
+retrieve the right evidence, invoke trusted calculation tools, explain the
+trade-off, and return a decision-ready result without becoming the source of
+truth itself?
+
+That means deterministic code still owns calculations, scenario data, source
+locations, and report values. The agent is responsible for finding context,
+choosing typed tools, and explaining validated results.
+
+## Try the current demo
+
+The trusted deterministic baseline is live at:
 
 <https://n-zero-esg-scope3.vercel.app/>
 
 The intended path is short:
 
 1. Enter an isolated, expiring demo workspace.
-2. Upload shipment data, or start with the example in
+2. Upload shipment data, or use
    [`docs/examples/shipments.csv`](docs/examples/shipments.csv).
 3. Add supplier or compliance evidence.
-4. Review the emissions totals, modes, hotspots, warnings, and source-backed
-   supplier facts.
-5. Compare scenarios and export a report you can actually share.
+4. Review totals, freight modes, hotspots, warnings, and cited supplier facts.
+5. Compare a lower-emission scenario and export the report.
 
-The API is running separately on Render:
+The API health endpoint is:
 
 - <https://nzeroesg-api.onrender.com/health>
 
-The phased finish line and acceptance criteria live in
-[`docs/demo-roadmap.md`](docs/demo-roadmap.md). Contributors should also read
-[`AGENTS.md`](AGENTS.md).
+The current public workflow does not require an LLM. The existing assistant is
+disabled in production while it is replaced by the workspace-scoped,
+evidence-grounded CarbonSage agent described in the roadmap.
 
-## What is working today
+## What works today
 
-The rebuilt demo includes:
-
-- A deterministic freight-emissions core with versioned factor provenance,
-  explicit distance warnings, and typed calculation and comparison endpoints.
-- Signed, expiring demo sessions with HTTP-only cookies, workspace-specific
-  quotas, retention, revocation, and a protected `/login` and `/dashboard`
-  portal.
-- PostgreSQL persistence with checked-in migrations. Production uses the Neon
-  PostgreSQL database configured through `DATABASE_URL`.
+- Deterministic freight-emissions calculations with versioned factor
+  provenance, assumptions, and distance warnings.
+- Signed, expiring demo workspaces with HTTP-only sessions, quotas, retention,
+  revocation, and workspace-isolated persistence.
 - Shipment CSV ingestion with bounded validation, row-level errors, normalized
-  records, totals, mode breakdowns, hotspots, and data-quality warnings. The
-  [CSV schema is documented here](docs/shipment-csv.md).
-- Supplier evidence ingestion for UTF-8 text and text-based PDFs, structured
-  supplier cards, PostgreSQL full-text search, and recoverable page/chunk
-  citations.
-- Scenario comparisons, accessible tables and visual bars, printable report
-  views, and authenticated CSV report export.
-- A public Vercel client, a Render API, security headers, exact-origin CORS,
-  and credential-free CI checks.
+  records, mode breakdowns, hotspots, and quality warnings.
+- Text and text-based PDF evidence ingestion with structured supplier records,
+  PostgreSQL full-text retrieval, and recoverable page/chunk citations.
+- Scenario comparisons, accessible chart alternatives, printable report
+  previews, and authenticated CSV export.
+- A Vercel client, Render API, Neon PostgreSQL database, and credential-free CI
+  and browser checks.
 
-## A note about the original agent idea
+## Upcoming changes:
 
-The first version of NZeroESG explored LangChain’s ReAct pattern, Chroma,
-retrieval-augmented supplier search, and several external emissions services.
-That was a useful exploration, but it also made the demo harder to defend and
-more expensive to operate.
+CarbonSage will build on that baseline in a controlled order:
 
-For the current baseline, I kept the parts that make the product trustworthy:
-bounded inputs, explicit calculations, provenance, evidence citations, and
-workspace isolation. The optional OpenAI/OpenRouter assistant can be enabled
-intentionally for development, but it is not required for the core product and
-does not run in the public demo.
+1. A small workspace artifact catalog with CRUD and provenance.
+2. Hybrid retrieval combining PostgreSQL full-text search with pgvector-backed
+   semantic search. Evaluation will tune fusion and query routing, not decide
+   whether vector search is implemented.
+3. Typed, workspace-scoped tools for evidence search, emissions calculations,
+   scenario comparison, and reports.
+4. A versioned response protocol for text, metrics, tables, charts, citations,
+   warnings, artifact references, and confirmed actions.
+5. A dashboard agent playground using the same runtime and renderer as the
+   embedded experience.
+6. A framework-independent JavaScript loader and authenticated iframe.
+7. One explicit, read-only Google Drive selected-file import.
+8. Optionally, a read-only MCP adapter over the same stable application tools.
 
-## The stack, in plain language
+Dropbox, billing, organization administration, background synchronization,
+enterprise RBAC, and a family of framework-specific SDKs are intentionally
+deferred for now. One excellent vertical slice is more valuable here than broad SaaS
+surface area.
 
-| Part                      | Role                                                                 |
-| ------------------------- | -------------------------------------------------------------------- |
-| Next.js and React         | The public interface, portal, charts, and report views               |
-| FastAPI                   | The API for sessions, shipments, evidence, calculations, and reports |
-| Neon PostgreSQL           | Workspace, shipment, evidence, quota, and retention data             |
-| Vercel                    | Public client deployment from `main`                                 |
-| Render                    | API deployment, currently configured from the `dev` branch           |
-| Docker and GitHub Actions | Reproducible local setup and automated checks                        |
+## Architecture
 
-The architecture is intentionally a modular monolith:
+CarbonSage remains a lean modular monolith:
 
 ```text
-Next.js → FastAPI → Neon PostgreSQL
+Control plane / dashboard ── workspace session ──┐
+JavaScript host ── loader + iframe ── embed token ──┼─→ FastAPI agent runtime
+Google Drive ── selected-file import ── artifact ──┘          │
+                                                        ├─→ typed tools
+                                                        ├─→ hybrid retrieval
+                                                        └─→ Neon PostgreSQL
 ```
 
-GraphQL, Redis, MongoDB, Chroma, a message broker, and a dedicated embedding
-service are not part of the current production path. They can be reconsidered
-when measured requirements justify the additional operational cost.
+No Redis, message broker, dedicated vector database, background worker, or
+agent microservice is required. pgvector is the required semantic-search layer
+inside the existing PostgreSQL retrieval path, not a new service.
 
-## Run it locally
+The former NZeroESG retrieval prototype used ChromaDB as its standalone vector
+database. CarbonSage retains that history while consolidating lexical records,
+embeddings, workspace isolation, and citations in PostgreSQL.
 
-You will need Python 3.12.10, Node.js 20.19.0 or newer, npm, and Docker if you
-want to run the full stack.
+The detailed decisions and delivery gates live in:
+
+- [`docs/demo-roadmap.md`](docs/demo-roadmap.md)
+- [`docs/app.architecture.md`](docs/app.architecture.md)
+- [`docs/langchain.rag.workflow.md`](docs/langchain.rag.workflow.md)
+
+## Stack
+
+| Part | Role |
+| --- | --- |
+| Next.js and React | Public site, control plane, agent playground, embed UI, and structured renderers |
+| FastAPI | Sessions, artifacts, retrieval, typed tools, conversations, and reports |
+| Neon PostgreSQL | Workspace data, evidence, full-text search, and evaluated vector retrieval |
+| LangChain | Optional orchestration adapter, not domain logic or source of truth |
+| Vercel | Public client deployment from `main` |
+| Render | FastAPI deployment using the existing service configuration |
+| Docker and GitHub Actions | Reproducible local setup and automated checks |
+
+## Run locally
+
+You will need Python 3.12.10, Node.js 20.19.0 or newer, npm, and Docker for the
+full local stack.
 
 ### Docker
 
@@ -116,9 +145,6 @@ Then open:
 - Frontend: <http://localhost:3000>
 - API health: <http://localhost:8000/health>
 - API documentation: <http://localhost:8000/docs>
-
-The default stack does not need a paid provider credential. The optional
-assistant is disabled.
 
 ### Native tools
 
@@ -139,19 +165,20 @@ cd nzeroesg-client
 npm run dev
 ```
 
-If you need local environment overrides, copy the examples first:
+For local environment overrides:
 
 ```bash
 cp nzeroesg-api/.env.example nzeroesg-api/.env
 cp nzeroesg-client/.env.example nzeroesg-client/.env.local
 ```
 
-Those files are ignored by Git. Do not commit credentials.
+The historical directory, service, environment-variable, and public URL names
+remain unchanged so the working deployment is not broken by the public rebrand.
 
-## Optional assistant
+## Optional model provider
 
-The assistant is intentionally off in production. To experiment with it
-locally, set the appropriate values in `nzeroesg-api/.env`:
+The current assistant path is intentionally off in production. Local provider
+experiments can be enabled in `nzeroesg-api/.env`:
 
 ```dotenv
 ASSISTANT_ENABLED=true
@@ -160,12 +187,12 @@ OPENAI_API_KEY=...
 OPENAI_MODEL=...
 ```
 
-OpenRouter is also supported with `LLM_PROVIDER=openrouter`; see
-`nzeroesg-api/.env.example` for the provider-specific variables.
+OpenRouter is also supported. No provider credential is required for the
+deterministic workflow, CI, or the primary public demo.
 
 ## Quality checks
 
-Backend checks:
+Backend:
 
 ```bash
 cd nzeroesg-api
@@ -174,7 +201,7 @@ cd nzeroesg-api
 ../.venv/bin/pytest
 ```
 
-Frontend checks:
+Frontend:
 
 ```bash
 cd nzeroesg-client
@@ -185,22 +212,9 @@ npm run build
 npm run test:e2e
 ```
 
-The browser suite starts the native API and frontend automatically. Set
-`E2E_DATABASE_URL` when you want to exercise PostgreSQL instead of the native
-development fallback.
-
-## Where I would take it next
-
-- Let users opt into the assistant explicitly, with clear cost and data-use
-  boundaries.
-- Add more evidence formats and stronger supplier-level review workflows.
-- Extend scenario comparisons toward cost, delivery time, and emissions
-  trade-offs.
-- Add richer audit history and organization-level access controls once the
-  demo’s workflow has been validated.
-
-NZeroESG is still a prototype, but the goal is practical: make carbon-aware
-procurement decisions easier to explain, easier to verify, and easier to act on.
+CarbonSage is still a prototype, but it has a clear standard: AI-generated
+guidance should be useful, inspectable, grounded in workspace evidence, and
+easy to carry into the software where a decision is already being made.
 
 Built by David P.
 

@@ -25,7 +25,7 @@ async def chat(payload: ChatRequest) -> ChatResponse:
     if not settings.assistant_enabled:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="The optional assistant is disabled in this environment.",
+            detail="The CarbonSage agent preview is disabled in this environment.",
         )
 
     started_at = perf_counter()

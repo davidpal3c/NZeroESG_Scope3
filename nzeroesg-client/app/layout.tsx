@@ -4,8 +4,9 @@ import Providers from "./providers";
 import TemporaryBanner from "./components/temporary-banner";
 
 export const metadata: Metadata = {
-  title: "NZeroESG Scope 3",
-  description: "Traceable freight-emissions and supplier-evidence prototype.",
+  title: "CarbonSage | Evidence-grounded ESG intelligence",
+  description:
+    "An embeddable ESG decision agent for cited evidence, trusted tools, and interactive Scope 3 analysis.",
 };
 
 export default function RootLayout({

@@ -48,7 +48,7 @@ def test_calculation_matches_golden_formula_and_exposes_provenance():
     assert result.to_dict()["formula"] == (
         "(weight_kg / 1,000) * distance_km * factor_kg_co2e_per_tonne_km"
     )
-    assert result.to_dict()["source"] == "NZeroESG prototype factor schedule"
+    assert result.to_dict()["source"] == "CarbonSage prototype factor schedule"
     assert result.to_dict()["assumptions"]
     assert result.to_dict()["warnings"] == []
 

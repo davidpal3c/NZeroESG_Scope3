@@ -420,7 +420,7 @@ export default function UserPortalPage() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = "nzeroesg-report.csv";
+      link.download = "carbonsage-report.csv";
       link.click();
       URL.revokeObjectURL(url);
     } catch (requestError) {
@@ -484,10 +484,10 @@ export default function UserPortalPage() {
             href="/"
             className="text-xl font-bold tracking-tight text-primary"
           >
-            🌱 NZeroESG
+            🌱 CarbonSage
           </Link>
           <p className="mt-2 text-sm text-muted-foreground">
-            Scope 3 demo portal
+            ESG agent control plane
           </p>
         </div>
         <nav aria-label="Workspace navigation" className="space-y-2">
