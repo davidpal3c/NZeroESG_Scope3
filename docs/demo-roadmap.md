@@ -467,8 +467,8 @@ Initial implementation evidence:
   including session creation, shipment analysis, supplier citation retrieval,
   scenario/report actions, print styling, and two-workspace isolation. It is
   wired as a separate CI job against disposable PostgreSQL.
-- A non-secret `render.yaml` Blueprint now defines the intended public API
-  service on `dev` with CI-gated auto-deploy and a generated session secret.
+- A non-secret `render.yaml` Blueprint defines the public API service on
+  production `main` with CI-gated auto-deploy and a generated session secret.
   `DATABASE_URL` is deliberately a dashboard-supplied secret for a Neon
   PostgreSQL project rather than a Render database resource. This keeps the
   database at the current Neon Free-plan price of $0 for the bounded demo.
