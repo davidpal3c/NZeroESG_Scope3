@@ -1,6 +1,6 @@
 export const metadata = {
-  title: "User Portal",
-  description: "User Portal for NZeroes ESG",
+  title: "CarbonSage Control Plane",
+  description: "Manage workspace evidence and test CarbonSage decisions.",
 };
 
 import { ReactNode } from "react";

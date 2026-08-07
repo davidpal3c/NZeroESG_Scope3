@@ -5,27 +5,27 @@ import { motion } from "framer-motion";
 
 const principles = [
   {
-    title: "Deterministic first",
+    title: "Grounded by design",
     description:
-      "Unit conversion, factors, calculations, filters, and report data remain inspectable and testable without an LLM.",
+      "Answers preserve artifact, document, page, and chunk provenance instead of turning generated prose into a supplier fact.",
     icon: Route,
   },
   {
-    title: "Evidence over claims",
+    title: "Evaluated retrieval",
     description:
-      "Supplier facts will link back to uploaded documents and recoverable source locations.",
+      "Lexical, pgvector semantic, and hybrid search are compared against representative questions to tune routing and ranking.",
     icon: FileCheck2,
   },
   {
-    title: "Decision-ready output",
+    title: "Tools own the numbers",
     description:
-      "The target workflow ends with scenarios, useful charts, caveats, and an exportable report.",
+      "Typed deterministic services own calculations, scenarios, citations, and chart data while the agent retrieves and explains.",
     icon: BarChart3,
   },
   {
-    title: "Lean by design",
+    title: "Product-shaped, not SaaS-sized",
     description:
-      "One modular application, a strict cost ceiling, and infrastructure added only when measured needs justify it.",
+      "A small control plane, one embed path, and one connector prove the product thesis without billing, RBAC, or integration sprawl.",
     icon: Wrench,
   },
 ];
@@ -41,12 +41,12 @@ export default function AboutSection() {
           viewport={{ once: true }}
         >
           <h2 className="mb-5 text-3xl font-extrabold text-primary">
-            What this project is becoming
+            What CarbonSage is proving
           </h2>
           <p className="leading-7 text-muted-foreground">
-            The historical prototype proved that freight tools and
-            conversational interaction could be connected. The rebuild focuses
-            on making the result credible, maintainable, and genuinely demoable.
+            A useful agent needs more than a chat box. CarbonSage combines
+            recoverable evidence, evaluated retrieval, deterministic tools, and
+            structured interaction inside a focused Scope 3 workflow.
           </p>
         </motion.div>
 

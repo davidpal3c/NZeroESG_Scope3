@@ -1,80 +1,204 @@
-# Optional Assistant and Evidence-Retrieval Workflow
+# CarbonSage RAG, Semantic Retrieval, and Agent Workflow
 
-## Status
+## Purpose
 
-This document replaces the historical Chroma and agent-first RAG design.
-NZeroESG now uses structured PostgreSQL supplier records and PostgreSQL
-full-text search for the evidence slice. The optional assistant remains
-separate from this deterministic retrieval path.
+CarbonSage uses retrieval and agent orchestration to answer workspace questions
+with recoverable evidence and trusted calculations. The initial product claim
+is:
 
-LangChain is limited to the optional legacy assistant during the rebuild. It is
-not part of the calculation core, ingestion pipeline, citation model, or report
-generation.
+> An embeddable ESG decision agent demonstrating hybrid RAG, semantic
+> retrieval, typed tool orchestration, cited responses, and interactive data
+> visualizations.
 
-## Planned evidence workflow
+This document turns that claim into an implementation and evaluation boundary.
+The former NZeroESG retrieval prototype used ChromaDB as its standalone vector
+database. CarbonSage replaces that active dependency with PostgreSQL full-text
+search plus pgvector while retaining ChromaDB here as architecture history. It
+also replaces the transitional legacy assistant.
 
-```mermaid
-flowchart TD
-    A[Workspace-scoped document upload] --> B[Validate type, size, and quota]
-    B --> C[Extract bounded text with page or section locations]
-    C --> D[Store document metadata and normalized chunks]
-    D --> E[PostgreSQL full-text index]
-    F[Structured supplier filters] --> G[Deterministic retrieval service]
-    E --> G
-    G --> H[Ranked excerpts with recoverable citations]
-    H --> I[Supplier cards, comparisons, and report]
-```
+## What RAG means in CarbonSage
 
-Claims shown to a user must identify whether they are:
+RAG is not merely attaching document excerpts to a prompt. A CarbonSage answer
+is grounded only when the system can show:
 
-- structured supplier data;
-- document-backed evidence;
-- user-provided data; or
-- missing.
+- which workspace artifact supplied the evidence;
+- which page, section, or chunk supports the claim;
+- which retrieval method selected it;
+- which deterministic tool produced a numeric result;
+- which displayed sentence or visualization is supported by those inputs;
+- when available evidence is insufficient to answer safely.
 
-Retrieval results must preserve the document identifier and a recoverable
-page, section, or chunk location. The system must not turn generated prose into
-an uncited supplier fact.
+Generated prose never becomes a supplier fact or calculation source.
 
-## Optional assistant workflow
-
-The assistant is added only over stable, typed application commands:
+## Ingestion and indexing
 
 ```mermaid
 flowchart TD
-    A[Workspace-scoped user question] --> B[Session and quota checks]
-    B --> C{Typed command needed?}
-    C -- Calculation or scenario --> D[Deterministic application service]
-    C -- Supplier evidence --> E[Structured filters and full-text retrieval]
-    D --> F[Typed result with provenance and warnings]
-    E --> G[Cited evidence excerpts]
-    F --> H[Optional LLM explanation]
-    G --> H
-    H --> I[Stable API response with sources and processing time]
+    A[Local upload or selected Drive file] --> B[Validate type, size, and quota]
+    B --> C[Create source artifact with provenance]
+    C --> D[Extract bounded text with page or section locations]
+    D --> E[Normalize and hash chunks]
+    E --> F[PostgreSQL full-text index]
+    E --> G[Embedding provider adapter]
+    G --> H[PostgreSQL vector index]
+    F --> I[Hybrid retrieval service]
+    H --> I
+    I --> J[Ranked excerpts with recoverable citations]
 ```
 
-The LLM may explain or navigate results. It may not invent factor values,
-change deterministic totals, silently rank suppliers, or provide claims without
-recoverable evidence.
+The existing full-text index remains the credential-free lexical baseline.
+Embeddings are generated through a provider-neutral adapter and stored in
+PostgreSQL with pgvector. The extension, schema, and vector query path are
+required capabilities in local, CI, and deployed PostgreSQL environments;
+CarbonSage does not add a standalone vector database.
 
-## Disabled-provider behavior
+Credential-free tests use deterministic fixture embeddings to verify vector
+storage, workspace filtering, distance ordering, and hybrid fusion without
+calling an external embedding provider.
 
-The public workflow must operate without an LLM provider. When the assistant is
-disabled or unavailable:
+Embedding records must include model identifier, dimensions, content hash, and
+creation time so an index can be rebuilt or compared without silently mixing
+incompatible vectors.
 
-- health, workspace, ingestion, calculation, retrieval, scenario, and report
-  routes continue to work;
-- the UI clearly labels the assistant as unavailable;
-- assistant input is disabled rather than presented as online;
-- no provider credential is required by CI or the primary demo journey.
+## Retrieval modes
 
-## Vector-search decision
+The evaluation compares three explicit modes:
 
-Vector search is a post-finish experiment, not an assumed dependency. It may be
-introduced only if an evaluation against representative supplier questions
-shows a material retrieval improvement that justifies its cost and operational
-complexity.
+1. **Lexical** — current PostgreSQL full-text search.
+2. **Semantic** — vector similarity over the same normalized chunks.
+3. **Hybrid** — deterministic fusion of lexical and semantic candidates.
 
-The authoritative architecture and phase gates are documented in
-[`app.architecture.md`](app.architecture.md) and
-[`demo-roadmap.md`](demo-roadmap.md).
+Structured supplier filters and the workspace identifier are applied before or
+during retrieval, never left to the model. Candidate fusion should use a stable
+method such as reciprocal-rank fusion rather than model-generated ranking for
+the first implementation.
+
+## Retrieval evaluation
+
+A checked-in evaluation set should contain approximately 25–40 representative
+questions spanning:
+
+- exact certification names and policy phrases;
+- paraphrased supplier commitments;
+- region, mode, and structured supplier filters;
+- questions requiring a page-level citation;
+- questions with related but unsupported language;
+- questions that should return insufficient evidence.
+
+Each case records expected artifact identifiers or relevant chunks. The gate
+compares:
+
+- recall at k;
+- mean reciprocal rank or reciprocal-rank position;
+- citation coverage;
+- answer-support rate;
+- unsupported-answer rate;
+- processing time and provider cost.
+
+The pgvector-backed semantic path is implemented regardless of the comparison
+result. Evaluation determines fusion weights, query routing, and when lexical,
+semantic, or hybrid ranking should lead. Product claims about improvement are
+made only when the measured results support them.
+
+## Agent workflow
+
+```mermaid
+flowchart TD
+    A[Authenticated workspace question] --> B[Session or embed principal]
+    B --> C[Quota and conversation checks]
+    C --> D[Agent selects approved typed tools]
+    D --> E[Artifact and evidence retrieval]
+    D --> F[Deterministic calculation or scenario]
+    D --> G[Report and data-quality services]
+    E --> H[Cited excerpts]
+    F --> I[Typed results with provenance and warnings]
+    G --> I
+    H --> J[Validated response composer]
+    I --> J
+    J --> K[Versioned blocks: text, metrics, tables, charts, citations, actions]
+    K --> L[Shared dashboard and iframe renderer]
+```
+
+The initial approved tools are:
+
+- `list_workspace_artifacts`;
+- `search_supplier_evidence`;
+- `get_citation_context`;
+- `calculate_freight_emissions`;
+- `compare_transport_scenarios`;
+- `summarize_data_quality`;
+- `build_decision_report`.
+
+Every tool owns a Pydantic input and output schema. The orchestration framework
+may choose a tool, but the application service validates authorization,
+workspace scope, input constraints, and output provenance.
+
+## Structured response composition
+
+Tool results are converted into a server-validated response envelope before
+they reach a renderer. The model may write a concise explanation around those
+results, but it does not emit arbitrary HTML, JavaScript, SQL, or chart code.
+
+Chart blocks contain constrained rows, labels, units, series definitions, and a
+table fallback. Citation blocks reference stored artifact and chunk identifiers
+rather than generated footnote text. Unknown block types render safe fallback
+content so protocol evolution does not break older clients.
+
+## Observable orchestration
+
+The UI may show a concise activity trace such as:
+
+```text
+Searched 3 evidence artifacts
+Retrieved 5 cited passages
+Calculated 2 transport scenarios
+Built 1 comparison chart
+```
+
+This is tool and retrieval observability, not private chain-of-thought. Stored
+events should contain tool names, timings, artifact identifiers, result counts,
+and sanitized errors without raw uploaded content or model reasoning.
+
+## Conversation and memory boundary
+
+Conversation state is workspace-scoped and persisted only as needed for the
+demo retention window. The runtime stores user messages, validated response
+envelopes, citations, and concise tool events. It must not use process-global
+memory or treat prior model prose as authoritative evidence.
+
+The dashboard cookie and embed bearer credential resolve to the same internal
+workspace principal. A conversation can never override the workspace selected
+by that principal.
+
+## Provider-disabled behavior
+
+When the model or embedding provider is disabled or unavailable:
+
+- artifact CRUD, ingestion, calculations, scenarios, reports, and lexical
+  evidence search continue to work;
+- the UI reports the agent or semantic mode as unavailable;
+- no provider credential is required by CI;
+- deterministic contract fixtures still test every structured renderer;
+- provider failure never removes source provenance from existing results.
+
+## MCP extension
+
+After the typed tools are stable, a read-only MCP server can expose the same
+artifact, evidence, citation, calculation, and scenario commands to external
+agents. The MCP layer must call the application services through the same
+workspace authorization and quota boundaries. It is an interoperability proof,
+not a second agent runtime.
+
+## Explicit non-goals
+
+- A decorative multi-agent swarm.
+- Autonomous supplier or procurement decisions.
+- Unmeasured selection of semantic or hybrid ranking behavior.
+- Model-generated emissions factors or citations.
+- A dedicated embedding service or vector database.
+- Fine-tuning before retrieval and orchestration evaluation establish a need.
+- Using LangChain abstractions inside deterministic domain modules.
+
+The overall architecture is documented in
+[`app.architecture.md`](app.architecture.md), and delivery gates are documented
+in [`demo-roadmap.md`](demo-roadmap.md).

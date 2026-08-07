@@ -27,9 +27,9 @@ export default function ChatInterface({
 }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: "legacy-assistant-introduction",
+      id: "agent-preview-introduction",
       content:
-        "This optional legacy assistant can estimate and compare freight emissions when a model provider is configured. Shipment uploads, supplier evidence, citations, scenarios, and reports are not implemented yet.",
+        "This preview can estimate and compare freight emissions when a model provider is configured. The workspace already supports shipment data, supplier evidence, citations, scenarios, and reports; the next CarbonSage agent will connect those capabilities through grounded retrieval and typed tools.",
       role: "agent" as const,
       timestamp: new Date(),
     },
@@ -93,7 +93,7 @@ export default function ChatInterface({
         id: (Date.now() + Math.random()).toString(),
         content:
           detail ??
-          "The optional assistant is unavailable. The deterministic product workflow does not depend on it.",
+          "The agent preview is unavailable. CarbonSage's deterministic workspace and evidence workflow does not depend on it.",
         role: "agent",
         timestamp: new Date(),
         isError: true,
@@ -148,7 +148,7 @@ export default function ChatInterface({
       ? "Checking assistant availability..."
       : assistantStatus === "available"
         ? "Ask about a freight estimate..."
-        : "Optional assistant is not available";
+        : "Agent preview is not available";
 
   return (
     <div>
@@ -161,10 +161,10 @@ export default function ChatInterface({
             <div className="flex items-center justify-between">
               <div className="justify-items-start">
                 <h3 className="text-primary font-semibold text-lg">
-                  Optional legacy assistant
+                  CarbonSage agent preview
                 </h3>
                 <p className="text-primary text-sm">
-                  Estimate and compare freight modes only
+                  Current estimator · grounded workspace agent next
                 </p>
               </div>
               <div className="flex items-center justify-between gap-3">

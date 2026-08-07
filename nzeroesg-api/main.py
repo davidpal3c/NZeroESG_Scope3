@@ -11,8 +11,8 @@ from api.workspaces import workspace_router
 from config import settings
 
 app = FastAPI(
-    title="NZeroESG API",
-    description="Scope 3 freight and supplier-evidence prototype API.",
+    title="CarbonSage API",
+    description="Evidence-grounded Scope 3 intelligence and deterministic decision tools.",
     version="0.2.0-dev",
 )
 

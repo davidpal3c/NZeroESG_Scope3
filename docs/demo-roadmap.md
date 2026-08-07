@@ -1,9 +1,14 @@
-# NZeroESG Demo-Readiness Roadmap
+# CarbonSage initial Product Roadmap
 
 ## Decision summary
 
-NZeroESG will be rebuilt from commit `4eed03c` as a lean modular monolith, not
-continued as a GraphQL or microservice migration.
+CarbonSage is the public identity of the project formerly presented as
+NZeroESG. Historical directory names, service names, environment variables,
+and deployed URLs remain unchanged until a separate compatibility-safe
+migration is justified.
+
+The project remains a lean modular monolith, not a GraphQL or microservice
+migration.
 
 The product will demonstrate one defensible workflow:
 
@@ -11,14 +16,16 @@ The product will demonstrate one defensible workflow:
 > receives traceable freight-emissions and supplier analysis, compares
 > alternatives, and exports a decision-ready report.
 
-The assistant may help explain and navigate the workflow, but deterministic
-code owns calculations, filtering, ranking inputs, citations, and report data.
+The agent may retrieve, orchestrate, explain, and navigate the workflow, but
+deterministic code owns calculations, filtering, ranking inputs, citations,
+authorization, and report data.
 
-## Persistent objective
+## Trusted baseline objective — complete
 
-Turn NZeroESG into a lean, portfolio-ready, publicly demoable Scope 3 freight
-and supplier-evidence prototype that stays maintainable by one human and costs
-no more than $30 USD per month beyond existing ChatGPT/Codex access.
+Turn the original prototype into a lean, publicly demoable
+Scope 3 freight and supplier-evidence workflow that stays maintainable by one
+human and costs no more than $30 USD per month beyond existing ChatGPT/Codex
+access.
 
 The objective is complete when a new demo user can:
 
@@ -52,11 +59,41 @@ The deployment correction is recorded in commits `3d14052` and `e20c476`:
   workspace isolation, keyboard entry, and narrow-viewport checks.
 
 The next work should be hardening and measured product improvements, not a
-return to the abandoned GraphQL, Chroma, or embedder branches.
+return to the abandoned GraphQL or embedder branches. ChromaDB, the standalone
+vector database used by the former retrieval prototype, is replaced by
+pgvector in the existing PostgreSQL deployment.
+
+## CarbonSage initial objective
+
+> An embeddable ESG decision agent demonstrating hybrid RAG, semantic
+> retrieval, typed tool orchestration, cited responses, and interactive data visualizations.
+
+The objective is to prove practical AI engineering inside a believable
+vertical product, not to build a full carbon-accounting SaaS. The dashboard is
+a bounded control plane for workspace artifacts, connector configuration,
+agent testing, and embed setup. The primary product value is the authenticated
+agent that can be embedded into an existing JavaScript application.
+
+The new objective is complete when a reviewer can:
+
+1. Manage a small set of workspace artifacts with provenance and isolation.
+2. Compare lexical, semantic, and hybrid retrieval against a checked-in
+   evaluation set.
+3. Ask a workspace-scoped question that retrieves cited evidence and invokes
+   deterministic typed tools.
+4. Receive a validated response containing text, metrics, tables, charts,
+   citations, warnings, and safe suggested actions.
+5. Test the same agent and renderer in the dashboard control plane.
+6. Embed the agent into a vanilla JavaScript host with short-lived scoped
+   authentication and exact-origin enforcement.
+7. Import one explicitly selected Google Drive file through the same bounded
+   artifact-ingestion pipeline.
+8. Complete the deployed workflow while the original five-minute demo and its
+   automated gates remain green.
 
 ## Primary demo journey
 
-The portfolio demo should take roughly five minutes:
+The workspace demo should take roughly five minutes:
 
 1. Open the site and choose **Enter demo workspace**.
 2. Upload a sample or local shipment CSV.
@@ -70,7 +107,7 @@ The portfolio demo should take roughly five minutes:
 
 The demo must still work when the optional LLM feature is disabled.
 
-## Scope decisions
+## Trusted baseline scope decisions
 
 | Candidate                    | Decision for the prototype                                                                                                                                                                                 |
 | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -85,12 +122,12 @@ The demo must still work when the optional LLM feature is disabled.
 | Confidence/source/time       | Always show sources and processing time. Replace uncalibrated “confidence” with evidence completeness and data-quality status.                                                                             |
 | Memory isolation             | Required. Remove process-global user memory. Store only workspace-scoped conversation/context needed for the demo and expire it.                                                                           |
 | Calculation correctness      | First implementation milestone and a release blocker.                                                                                                                                                      |
-| Supplier/RAG                 | Use structured supplier records plus cited document retrieval. Start with PostgreSQL full-text search; add vectors only if evaluation proves a material benefit.                                           |
+| Supplier/RAG                 | Use structured supplier records plus cited document retrieval. Keep PostgreSQL full-text search and implement pgvector semantic retrieval; evaluation tunes deterministic hybrid ranking and query routing.           |
 | Google Drive                 | Not part of the initial public finish line. It may be used to source test documents during development. A later read-only “import selected file” experiment is acceptable after local ingestion is stable. |
 | GraphQL/NestJS/microservices | Explicitly out of scope.                                                                                                                                                                                   |
 | Billing                      | Out of scope. Protect costs with quotas, rate limits, retention limits, and a demo access gate.                                                                                                            |
 
-## Target architecture
+## Trusted baseline architecture
 
 ```text
 Vercel
@@ -118,7 +155,7 @@ PostgreSQL
 └── scenarios and report snapshots
 ```
 
-No Redis, message broker, dedicated embedder, Chroma service, MongoDB, GraphQL
+No Redis, message broker, dedicated embedder, former ChromaDB service, MongoDB, GraphQL
 gateway, or auth microservice is required for the prototype.
 
 For initial document retrieval:
@@ -128,7 +165,8 @@ For initial document retrieval:
 - use PostgreSQL full-text search and structured filters;
 - retain the original file only temporarily unless a later requirement proves
   it is necessary;
-- keep an optional retrieval interface so vector search can be evaluated later.
+- keep a retrieval interface that supports the required pgvector semantic path
+  and deterministic hybrid evaluation.
 
 ## Cost and usage envelope
 
@@ -456,7 +494,7 @@ the current public services use the rebuilt client and API.
 
 Exit gate:
 
-> The prototype produces a decision artifact suitable for a portfolio
+> The prototype produces a decision artifact suitable for a demo
 > walkthrough, not merely a chatbot transcript.
 
 ### Phase 6 — Optional assistant, deployment, and demo hardening
@@ -498,18 +536,193 @@ Exit gate:
 > sources and assumptions, export the result, and understand the project's
 > technical decisions without developer intervention.
 
-## Optional post-finish experiments
+## CarbonSage initial track
 
-Only after Phase 6:
+The completed six-phase demo remains a release baseline. The following phases
+form a new track and must not rewrite or weaken the evidence above.
 
-- Read-only Google Drive import of explicitly selected files.
-- Vector retrieval evaluated against the full-text retrieval test set.
-- Production OAuth or passwordless identity.
-- Longer-lived organizations and user accounts.
-- Background ingestion jobs for larger documents.
-- Additional Scope 3 categories.
+### Phase 7 — Product contracts and artifact foundation
 
-These are experiments, not implied commitments.
+Deliverables:
+
+- Adopt CarbonSage as the public product identity and record the compatibility
+  boundary for historical deployment identifiers.
+- Define a workspace artifact catalog for shipment datasets, evidence
+  documents, and report snapshots.
+- Add create/import, list, detail, rename, and soft-delete operations with
+  source provenance and workspace isolation.
+- Link existing normalized shipment and evidence records to their source
+  artifacts without replacing their domain schemas with generic JSON.
+- Define a common internal workspace principal for the existing dashboard
+  session and future embed credentials.
+
+Verification:
+
+- Existing upload and report workflows continue to pass.
+- Two workspaces cannot read, mutate, or infer each other's artifacts.
+- Deleting an artifact has deterministic, tested behavior for derived records.
+- Raw file retention remains bounded and documented.
+
+Exit gate:
+
+> The control plane manages a small, coherent artifact catalog without
+> becoming an organization-administration SaaS.
+
+### Phase 8 — Evaluated hybrid retrieval
+
+Deliverables:
+
+- Keep PostgreSQL full-text search as the credential-free lexical baseline.
+- Add a provider-neutral embedding adapter and versioned embedding metadata.
+- Provision pgvector through checked-in migrations in the existing PostgreSQL
+  deployment; do not add a dedicated vector database.
+- Implement lexical-only, semantic-only, and deterministic hybrid retrieval.
+- Check in approximately 25–40 representative questions with expected
+  artifacts or chunks.
+- Report recall at k, reciprocal-rank position, citation coverage,
+  answer-support rate, unsupported-answer rate, latency, and provider cost.
+
+Verification:
+
+- Every candidate is filtered by workspace before it can be returned.
+- Every retrieved passage preserves artifact, document, page/section, and
+  chunk identity.
+- CI verifies lexical and vector storage/query behavior with deterministic
+  fixture embeddings and no paid provider credential.
+- Evaluation tunes fusion weights and query routing while the pgvector-backed
+  semantic capability remains available.
+
+Exit gate:
+
+> CarbonSage can defend its semantic and hybrid RAG claims with measured
+> retrieval evidence rather than architecture alone.
+
+### Phase 9 — Typed agent runtime and structured responses
+
+Deliverables:
+
+- Replace the transitional `/chat` implementation with authenticated,
+  workspace-scoped conversation and message resources.
+- Remove runtime prompt downloads and check in the versioned agent policy.
+- Expose approved typed tools for artifact listing, evidence search, citation
+  context, emissions calculations, scenario comparison, data quality, and
+  report data.
+- Enforce assistant quotas and persist only bounded conversation state,
+  validated responses, citations, and concise tool events.
+- Define a versioned response envelope with text, metric, table, chart,
+  citation, artifact-reference, warning, and action blocks.
+- Build one accessible renderer with safe unknown-block fallbacks and table
+  equivalents for charts.
+
+Verification:
+
+- The agent cannot access another workspace or bypass deterministic tool
+  validation.
+- Chart and metric values reconcile with the same typed result used by reports.
+- Unsupported claims produce an evidence limitation rather than an invented
+  citation.
+- Tool activity is observable without exposing private chain-of-thought.
+- The primary deterministic workflow remains usable when model and embedding
+  providers are disabled.
+
+Exit gate:
+
+> A user receives a cited, interactive decision response built from validated
+> retrieval and deterministic tool outputs.
+
+### Phase 10 — Dashboard agent playground
+
+Deliverables:
+
+- Add a control-plane agent-testing surface using the production conversation
+  API and shared structured renderer.
+- Let a user inspect cited artifacts, evidence completeness, processing time,
+  and concise tool activity.
+- Replace stale legacy-assistant messaging and clearly report disabled or
+  unavailable providers.
+- Keep mutations behind server-defined action identifiers and explicit user
+  confirmation.
+
+Verification:
+
+- Playground responses are scoped to the active workspace.
+- Every structured block has keyboard and narrow-viewport coverage.
+- Provider failure does not affect artifact management or deterministic tools.
+
+Exit gate:
+
+> The dashboard is a useful agent control plane and test workspace, not the
+> only place where CarbonSage intelligence can be consumed.
+
+### Phase 11 — Authenticated JavaScript embed
+
+Deliverables:
+
+- Add a framework-independent loader that mounts a CarbonSage-hosted iframe.
+- Add embed-client configuration with exact allowed origins, scopes, status,
+  creation time, and revocation.
+- Issue short-lived credentials containing workspace, subject, audience,
+  client, origin, scope, expiry, and token-id claims.
+- Pass credentials to the iframe in memory through an exact-origin
+  `postMessage` handshake, not a persistent URL parameter.
+- Keep frame denial for the dashboard and apply a client-specific
+  `frame-ancestors` policy only to the embed route.
+- Provide a vanilla JavaScript sample host and a small event contract for
+  readiness, resize, token refresh, artifact links, actions, and errors.
+
+Verification:
+
+- The embed works with third-party cookies blocked.
+- A missing, expired, revoked, wrongly scoped, or wrong-origin credential is
+  rejected.
+- No permanent API secret appears in browser code, URLs, logs, or Git.
+- The sample host receives the same response schema and renderer behavior as
+  the dashboard playground.
+
+Exit gate:
+
+> A reviewer can embed the authenticated CarbonSage agent into a plain
+> JavaScript application and receive a workspace-grounded interactive answer.
+
+### Phase 12 — One connector and interoperability proof
+
+Deliverables:
+
+- Add a read-only Google Drive selected-file import using the narrowest
+  practical authorization scope.
+- Import supported files through the existing bounded ingestion and artifact
+  pipeline with provider provenance.
+- Avoid folder-wide access, background synchronization, and indefinite raw-file
+  retention.
+- After typed tools and authorization stabilize, optionally expose a small
+  read-only MCP adapter for artifact listing, evidence search, citation
+  retrieval, calculations, and scenario comparison.
+- Evaluate CarbonSage as a Ceiba dogfooding workload only after Ceiba's
+  production boundary is reviewed; CarbonSage must remain independently
+  deployable.
+
+Verification:
+
+- Users can import only explicitly selected supported files.
+- Disconnect and provider failure do not remove already-normalized provenance.
+- The optional MCP surface calls the same application services and enforces the
+  same workspace and quota boundaries.
+
+Exit gate:
+
+> CarbonSage demonstrates one real external ingestion path and, if justified,
+> one reusable agent interoperability surface without duplicating domain logic.
+
+## Deferred product surface
+
+- Dropbox integration before Google Drive proves the connector contract.
+- Production identity, SSO, SCIM, organizations, and enterprise RBAC.
+- Billing, subscriptions, plans, and marketplace concerns.
+- Background connector synchronization and large-document worker queues.
+- Framework-specific React, Vue, and Angular SDKs beyond the shared loader.
+- Multi-agent orchestration without an evaluated need.
+- Additional Scope 3 categories before the freight and supplier slice is
+  complete.
 
 ## Explicit non-goals
 
@@ -518,6 +731,8 @@ These are experiments, not implied commitments.
 - OCR or scanned-document extraction.
 - General-purpose ESG chatbot.
 - Autonomous procurement decisions.
+- Decorative multi-agent orchestration.
+- Unevaluated semantic or vector-search claims.
 - Real-time carrier pricing.
 - Billing and subscriptions.
 - Enterprise RBAC, SSO, SCIM, or audit exports.
@@ -525,8 +740,9 @@ These are experiments, not implied commitments.
 
 ## Goal operating policy
 
-The Codex Goal should remain active across implementation turns, but each phase
-has its own auditable exit gate. Work should proceed one gate at a time.
+When the next Codex Goal is started, it should use the CarbonSage initial
+objective and remain active across implementation turns. Each phase has its own
+auditable exit gate, and work should proceed one gate at a time.
 
 Between iterations:
 
@@ -534,8 +750,8 @@ Between iterations:
 2. Choose the smallest change that moves its exit gate.
 3. Run the narrow relevant checks.
 4. Record material scope or architecture decisions in this roadmap.
-5. Do not mark the persistent objective complete until the public end-to-end
-   finish line passes.
+5. Do not mark the CarbonSage objective complete until the embedded public
+   end-to-end finish line passes and the original demo remains green.
 
 If a phase cannot be completed within the cost ceiling or repository boundary,
 stop with:
@@ -545,7 +761,7 @@ stop with:
 - the exact blocker;
 - the least-expensive decision that would unblock progress.
 
-## Portfolio-ready release checklist
+## Release checklist
 
 - [x] Public frontend is reachable.
 - [x] API and database health checks pass.

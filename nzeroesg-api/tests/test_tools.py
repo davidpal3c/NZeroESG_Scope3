@@ -54,7 +54,7 @@ def test_calculator_works_without_a_paid_provider():
     result = calculate_shipping_emissions(500, 1_000, "ship")
 
     assert result["emissions_kg"] == 4
-    assert result["source"] == "NZeroESG prototype factor schedule"
+    assert result["source"] == "CarbonSage prototype factor schedule"
     assert result["source_version"] == "prototype-2026.1"
 
 
