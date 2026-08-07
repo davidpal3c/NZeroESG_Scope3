@@ -61,7 +61,10 @@ evidence-grounded CarbonSage agent described in the roadmap.
 - Shipment CSV ingestion with bounded validation, row-level errors, normalized
   records, mode breakdowns, hotspots, and quality warnings.
 - Text and text-based PDF evidence ingestion with structured supplier records,
-  PostgreSQL full-text retrieval, and recoverable page/chunk citations.
+  recoverable page/chunk citations, and PostgreSQL full-text retrieval.
+- Explicit lexical, pgvector semantic, and deterministic hybrid retrieval
+  modes with workspace filtering, versioned embedding metadata, and a safe
+  lexical fallback when no embedding provider is configured.
 - Scenario comparisons, accessible chart alternatives, printable report
   previews, and authenticated CSV export.
 - A Vercel client, Render API, Neon PostgreSQL database, and credential-free CI
@@ -72,9 +75,8 @@ evidence-grounded CarbonSage agent described in the roadmap.
 CarbonSage will build on that baseline in a controlled order:
 
 1. A small workspace artifact catalog with CRUD and provenance.
-2. Hybrid retrieval combining PostgreSQL full-text search with pgvector-backed
-   semantic search. Evaluation will tune fusion and query routing, not decide
-   whether vector search is implemented.
+2. Measured lexical, semantic, and hybrid retrieval comparisons using the
+   checked-in evaluation corpus to tune fusion and query routing.
 3. Typed, workspace-scoped tools for evidence search, emissions calculations,
    scenario comparison, and reports.
 4. A versioned response protocol for text, metrics, tables, charts, citations,
@@ -189,6 +191,18 @@ OPENAI_MODEL=...
 
 OpenRouter is also supported. No provider credential is required for the
 deterministic workflow, CI, or the primary public demo.
+
+Semantic and hybrid retrieval can be enabled independently of the assistant:
+
+```dotenv
+EMBEDDING_PROVIDER=openai
+EMBEDDING_MODEL=text-embedding-3-small
+EMBEDDING_DIMENSIONS=1536
+```
+
+For OpenRouter, use `openrouter` as the provider and its provider-qualified
+embedding model identifier. Lexical retrieval remains available without these
+settings.
 
 ## Quality checks
 
