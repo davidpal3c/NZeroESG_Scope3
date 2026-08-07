@@ -592,6 +592,41 @@ Verification:
 - Evaluation tunes fusion weights and query routing while the pgvector-backed
   semantic capability remains available.
 
+Implementation evidence (active sprint):
+
+- Migration `004_pgvector_retrieval.sql` enables pgvector and stores
+  workspace-scoped 1,536-dimensional vectors with provider, model, dimension,
+  content-hash, and timestamp metadata.
+- The provider-neutral adapter supports configured OpenAI-compatible embedding
+  endpoints while deterministic fixtures keep CI credential-free.
+- Evidence upload indexes bounded chunks when configured. Semantic and hybrid
+  requests lazily backfill pre-existing workspace evidence after validating
+  chunk hashes.
+- `GET /evidence/search` exposes lexical, semantic, and hybrid modes. Exact
+  cosine search preserves the workspace predicate and deterministic
+  reciprocal-rank fusion records both source ranks.
+- Local Compose and both PostgreSQL CI jobs use the pinned pgvector
+  0.8.6/PostgreSQL 16 image.
+- The checked-in 25-case evaluation set covers exact terms, paraphrases,
+  structured context, dates, evidence limitations, and unsupported questions.
+  A seven-supplier synthetic corpus makes every expected evidence identifier
+  reproducible. The isolated database-backed capture runner and grader report
+  recall at k, mean reciprocal rank, citation coverage, answer support,
+  unsupported answers, latency, and explicitly supplied provider cost.
+- Local credential-free tests pass, and the full backend suite passes against
+  a disposable pgvector/PostgreSQL database. Dev CI evidence is still required
+  before this phase can be promoted.
+- The reproducible PostgreSQL lexical baseline records recall@5 `1.0`, mean
+  reciprocal rank `0.977273`, and citation coverage `1.0`; answer support
+  remains explicitly unmeasured until a grounded agent run supplies answers.
+
+Remaining exit-gate evidence:
+
+- Run the checked-in cases with the selected deployed embedding model and
+  capture semantic and hybrid reports alongside the lexical baseline.
+- Use those measured reports to confirm or tune fusion and routing before
+  claiming retrieval-quality improvement.
+
 Exit gate:
 
 > CarbonSage can defend its semantic and hybrid RAG claims with measured

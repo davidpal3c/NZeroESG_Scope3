@@ -40,7 +40,7 @@ flowchart TD
     D --> E[Normalize and hash chunks]
     E --> F[PostgreSQL full-text index]
     E --> G[Embedding provider adapter]
-    G --> H[PostgreSQL vector index]
+    G --> H[PostgreSQL pgvector storage and query]
     F --> I[Hybrid retrieval service]
     H --> I
     I --> J[Ranked excerpts with recoverable citations]
@@ -56,9 +56,17 @@ Credential-free tests use deterministic fixture embeddings to verify vector
 storage, workspace filtering, distance ordering, and hybrid fusion without
 calling an external embedding provider.
 
-Embedding records must include model identifier, dimensions, content hash, and
-creation time so an index can be rebuilt or compared without silently mixing
-incompatible vectors.
+The first storage contract uses 1,536-dimensional vectors. Embedding records
+include provider, model identifier, dimensions, content hash, and creation and
+update times so the corpus can be rebuilt or compared without silently mixing
+incompatible vectors. New evidence is embedded synchronously when a provider
+is configured; existing workspace evidence is lazily and retryably backfilled
+before its first semantic or hybrid query.
+
+Exact cosine search is intentional for the bounded initial corpus. It avoids
+approximate-recall loss after workspace filtering and gives the evaluation a
+stable baseline. HNSW should only be introduced after row counts and latency
+show a need and tenant-filtered recall is measured.
 
 ## Retrieval modes
 
@@ -66,17 +74,23 @@ The evaluation compares three explicit modes:
 
 1. **Lexical** — current PostgreSQL full-text search.
 2. **Semantic** — vector similarity over the same normalized chunks.
-3. **Hybrid** — deterministic fusion of lexical and semantic candidates.
+3. **Hybrid** — reciprocal-rank fusion of lexical and semantic candidates,
+   using `k = 60` for the first deterministic contract.
 
 Structured supplier filters and the workspace identifier are applied before or
 during retrieval, never left to the model. Candidate fusion should use a stable
-method such as reciprocal-rank fusion rather than model-generated ranking for
-the first implementation.
+reciprocal-rank fusion rather than model-generated ranking. The authenticated
+`GET /evidence/search` endpoint accepts `mode=lexical|semantic|hybrid` and
+returns the requested and actual mode, semantic availability, fallback
+warnings, per-mode ranks, and the original citation identity.
 
 ## Retrieval evaluation
 
-A checked-in evaluation set should contain approximately 25–40 representative
-questions spanning:
+The checked-in `nzeroesg-api/evaluation/retrieval_cases.json` contains 25
+representative questions, and `retrieval_corpus.json` contains the seven
+synthetic supplier records those questions reference. Together they make the
+comparison reproducible without using private or production evidence. The
+questions span:
 
 - exact certification names and policy phrases;
 - paraphrased supplier commitments;
@@ -85,8 +99,35 @@ questions spanning:
 - questions with related but unsupported language;
 - questions that should return insufficient evidence.
 
-Each case records expected artifact identifiers or relevant chunks. The gate
-compares:
+Each case records expected evidence identifiers and whether a supported answer
+should be possible. The database-backed capture runner creates an isolated,
+temporary workspace, ingests the corpus through the production evidence
+repository, runs one requested retrieval mode, and revokes the workspace when
+finished:
+
+```bash
+python -m scripts.run_retrieval_evaluation \
+  --mode lexical \
+  --output /tmp/carbonsage-lexical.json
+python -m scripts.evaluate_retrieval /tmp/carbonsage-lexical.json
+```
+
+`DATABASE_URL` is required. Semantic and hybrid captures additionally require
+an explicit embedding provider, model, and credential; they are never invoked
+by credential-free CI. `--provider-cost-usd` records the observed total charge
+when one is available from the provider. The capture runner records retrieval
+and citation candidates only. Answer fields must come from an actual grounded
+agent run, so a raw retrieval capture correctly receives no answer-support
+credit.
+
+The checked-in lexical baseline, captured against PostgreSQL 16 and pgvector
+0.8.6, achieved recall@5 of `1.0`, mean reciprocal rank of `0.977273`, and
+citation coverage of `1.0` on this synthetic corpus. Its answer-support score
+is deliberately `0.0` because no generated answers were part of that run. The
+report is stored at `evaluation/reports/lexical-baseline.json`; its local
+latency is a reference measurement, not a production service-level objective.
+
+The gate compares:
 
 - recall at k;
 - mean reciprocal rank or reciprocal-rank position;
