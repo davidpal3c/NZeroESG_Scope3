@@ -614,8 +614,9 @@ Implementation evidence (active sprint):
   recall at k, mean reciprocal rank, citation coverage, answer support,
   unsupported answers, latency, and explicitly supplied provider cost.
 - Local credential-free tests pass, and the full backend suite passes against
-  a disposable pgvector/PostgreSQL database. Dev CI evidence is still required
-  before this phase can be promoted.
+  a disposable pgvector/PostgreSQL database. Dev CI
+  [run 31209187231](https://github.com/davidpal3c/NZeroESG_Scope3/actions/runs/31209187231)
+  passed repository, backend, frontend, and browser jobs on 2026-08-07.
 - The reproducible PostgreSQL lexical baseline records recall@5 `1.0`, mean
   reciprocal rank `0.977273`, and citation coverage `1.0`; answer support
   remains explicitly unmeasured until a grounded agent run supplies answers.
