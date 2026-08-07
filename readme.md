@@ -128,7 +128,7 @@ The detailed decisions and delivery gates live in:
 | Neon PostgreSQL | Workspace data, evidence, full-text search, and evaluated vector retrieval |
 | LangChain | Optional orchestration adapter, not domain logic or source of truth |
 | Vercel | Public client deployment from `main` |
-| Render | FastAPI deployment using the existing service configuration |
+| Render | FastAPI deployment from the production `main` branch |
 | Docker and GitHub Actions | Reproducible local setup and automated checks |
 
 ## Run locally

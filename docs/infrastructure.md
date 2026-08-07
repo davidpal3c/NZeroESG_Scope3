@@ -67,11 +67,15 @@ The backend health check gates frontend startup in Compose.
 ## Target deployment
 
 The checked-in [`render.yaml`](../render.yaml) is the deployment handoff for
-the API. It intentionally uses the `dev` branch, waits for CI checks to pass,
+the API. It uses the production `main` branch and waits for CI checks to pass,
 generates the session secret in Render, and declares `DATABASE_URL` as a
 dashboard-supplied secret. Create or review the Blueprint in the Render
-Dashboard, enter the Neon connection string, and deploy the current `dev`
-branch; this repository does not contain a deploy hook or provider token.
+Dashboard, enter the Neon connection string, and deploy `main` only after a
+verified `dev` release is promoted; this repository does not contain a deploy
+hook or provider token.
+
+Both Vercel and Render use `main` as the production boundary. Feature branches
+merge into `dev` for CI and evaluation without deploying either public service.
 
 ### Frontend
 
