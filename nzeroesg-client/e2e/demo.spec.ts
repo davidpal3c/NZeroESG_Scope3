@@ -98,3 +98,32 @@ test("keeps two demo workspaces isolated", async ({ page, browser }) => {
   ).toBeVisible();
   await secondContext.close();
 });
+
+test("supports keyboard entry and a narrow viewport", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/login");
+
+  const enterButton = page.getByRole("button", {
+    name: "Enter demo workspace",
+  });
+  await enterButton.focus();
+  await expect(enterButton).toBeFocused();
+  await page.keyboard.press("Enter");
+
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page.getByText("Private workspace")).toBeVisible();
+
+  const viewport = await page.evaluate(() => ({
+    width: window.innerWidth,
+    documentWidth: document.documentElement.scrollWidth,
+  }));
+  expect(viewport.documentWidth).toBeLessThanOrEqual(viewport.width);
+
+  const shipmentInput = page.getByLabel("Shipment CSV");
+  await shipmentInput.focus();
+  await expect(shipmentInput).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(
+    page.getByRole("button", { name: "Upload and analyze" }),
+  ).toBeFocused();
+});
