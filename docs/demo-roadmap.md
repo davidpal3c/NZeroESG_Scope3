@@ -34,6 +34,26 @@ The objective is complete when a new demo user can:
 8. Complete the workflow on the public deployment while automated smoke and
    end-to-end checks pass.
 
+## Current checkpoint — August 6, 2026
+
+The public demo finish line is now operational. Render serves the rebuilt
+FastAPI application with Neon PostgreSQL, the optional assistant is disabled,
+and Vercel serves the rebuilt client from `main`.
+
+The deployment correction is recorded in commits `3d14052` and `e20c476`:
+
+- Vercel's production build uses `next build --webpack` to produce the tracing
+  artifact expected by the Vercel build hook.
+- `/login` returns HTTP 200 on the public client.
+- Render `/health` and `/chat/health` return healthy production responses.
+- The exact Vercel-origin CORS preflight passes, while assistant POST requests
+  return `503` when the feature is disabled.
+- The public Playwright suite passes the five-minute workflow, report export,
+  workspace isolation, keyboard entry, and narrow-viewport checks.
+
+The next work should be hardening and measured product improvements, not a
+return to the abandoned GraphQL, Chroma, or embedder branches.
+
 ## Primary demo journey
 
 The portfolio demo should take roughly five minutes:
@@ -52,23 +72,23 @@ The demo must still work when the optional LLM feature is disabled.
 
 ## Scope decisions
 
-| Candidate | Decision for the prototype |
-| --- | --- |
-| `/login` and authentication | Build a clearly labelled demo-access flow using a server-issued, signed session and isolated expiring workspace. Do not build production identity management yet. |
-| Functional portal | Build one focused workspace dashboard: Overview, Shipments, Suppliers/Evidence, Scenarios, and Report. |
-| CSV upload | Required. Support one documented schema, downloadable template, row validation, and a conservative row limit. |
-| File/document upload | Required. Start with text-based PDF and optionally DOCX/TXT. Do not add OCR or scanned-document support. |
-| Reports | Required. Build a printable HTML report and CSV export first; avoid a separate report service. |
-| Charts/Recharts | Include a small set of decision-useful charts: emissions by mode, top shipment hotspots, and scenario comparison. |
-| Supplier cards and metadata | Required. Show source status, certifications, region, transport modes, evidence links, data freshness, and missing fields. |
-| Quick replies | Include only after the core workflow works. Quick replies should trigger explicit product actions, not decorative prompts. |
-| Confidence/source/time | Always show sources and processing time. Replace uncalibrated “confidence” with evidence completeness and data-quality status. |
-| Memory isolation | Required. Remove process-global user memory. Store only workspace-scoped conversation/context needed for the demo and expire it. |
-| Calculation correctness | First implementation milestone and a release blocker. |
-| Supplier/RAG | Use structured supplier records plus cited document retrieval. Start with PostgreSQL full-text search; add vectors only if evaluation proves a material benefit. |
-| Google Drive | Not part of the initial public finish line. It may be used to source test documents during development. A later read-only “import selected file” experiment is acceptable after local ingestion is stable. |
-| GraphQL/NestJS/microservices | Explicitly out of scope. |
-| Billing | Out of scope. Protect costs with quotas, rate limits, retention limits, and a demo access gate. |
+| Candidate                    | Decision for the prototype                                                                                                                                                                                 |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/login` and authentication  | Build a clearly labelled demo-access flow using a server-issued, signed session and isolated expiring workspace. Do not build production identity management yet.                                          |
+| Functional portal            | Build one focused workspace dashboard: Overview, Shipments, Suppliers/Evidence, Scenarios, and Report.                                                                                                     |
+| CSV upload                   | Required. Support one documented schema, downloadable template, row validation, and a conservative row limit.                                                                                              |
+| File/document upload         | Required. Start with text-based PDF and optionally DOCX/TXT. Do not add OCR or scanned-document support.                                                                                                   |
+| Reports                      | Required. Build a printable HTML report and CSV export first; avoid a separate report service.                                                                                                             |
+| Charts/Recharts              | Include a small set of decision-useful charts: emissions by mode, top shipment hotspots, and scenario comparison.                                                                                          |
+| Supplier cards and metadata  | Required. Show source status, certifications, region, transport modes, evidence links, data freshness, and missing fields.                                                                                 |
+| Quick replies                | Include only after the core workflow works. Quick replies should trigger explicit product actions, not decorative prompts.                                                                                 |
+| Confidence/source/time       | Always show sources and processing time. Replace uncalibrated “confidence” with evidence completeness and data-quality status.                                                                             |
+| Memory isolation             | Required. Remove process-global user memory. Store only workspace-scoped conversation/context needed for the demo and expire it.                                                                           |
+| Calculation correctness      | First implementation milestone and a release blocker.                                                                                                                                                      |
+| Supplier/RAG                 | Use structured supplier records plus cited document retrieval. Start with PostgreSQL full-text search; add vectors only if evaluation proves a material benefit.                                           |
+| Google Drive                 | Not part of the initial public finish line. It may be used to source test documents during development. A later read-only “import selected file” experiment is acceptable after local ingestion is stable. |
+| GraphQL/NestJS/microservices | Explicitly out of scope.                                                                                                                                                                                   |
+| Billing                      | Out of scope. Protect costs with quotas, rate limits, retention limits, and a demo access gate.                                                                                                            |
 
 ## Target architecture
 
@@ -152,17 +172,15 @@ Deliverables:
 - [x] Replace stale README claims with an honest implemented/roadmap split.
 - [x] Align architecture, retrieval, and assistant messaging with the rebuild.
 
-Current external action:
+Deployment evidence:
 
-- On August 5, 2026, the user confirmed that the Render API key was rotated and
-  the historical deploy-hook references are disabled. A Render service is now
-  emitting logs, but it is the historical API and is down during startup
-  because it still waits for the removed embedder service. No Render
-  deployment workflow is present in `dev`; the service must be re-pointed to
-  the rebuilt branch and supplied with a Neon `DATABASE_URL`.
-- A repository-history pattern audit on June 19, 2026 found secret-shaped
-  matches only in the historical `.github/workflows/deploy.yml`; no additional
-  credential file or key pattern was identified.
+- On August 5–6, 2026, the Render API key was rotated, historical deploy-hook
+  references were disabled, and the rebuilt API was deployed with the Neon
+  `DATABASE_URL` and exact Vercel-origin CORS configuration.
+- The old embedder-based service is no longer the public deployment path.
+- The repository-history pattern audit found secret-shaped matches only in the
+  historical `.github/workflows/deploy.yml`; no active credential file or key
+  pattern was identified.
 
 Verification:
 
@@ -280,7 +298,7 @@ Scope boundary for this slice:
 - The in-memory adapter is only a native-development fallback. The public
   deployment path requires `DATABASE_URL` and the PostgreSQL adapter.
 - Browser-level isolation against a running frontend/API pair and the public
-  deployment smoke gate remain outstanding before the Phase 2 exit gate.
+  deployment smoke gate pass in the local and public Playwright suites.
 
 Verification:
 
@@ -430,18 +448,11 @@ Verification:
 - [x] Exported data matches the displayed workspace state.
 - [ ] Keyboard and responsive checks pass for the primary workflow.
 
-Remaining Phase 5 gate: verify the full interaction in a real browser,
-including keyboard navigation, responsive layout, workspace isolation, and
-the print/download actions. The in-app browser is not available in this
-environment, so this remains an external verification step.
-
-The local Chromium suite now passes those interaction checks, but the same
-suite targeted at `https://n-zero-esg-scope3.vercel.app` fails immediately at
-`/login` because the live Vercel project still serves the historical `main`
-branch, which has no client login route. The supplied Render logs likewise
-show the historical API starting its removed embedder hook; the rebuilt `dev`
-API does not contain that startup dependency. These are deployment evidence,
-not Phase 5 or Phase 6 exit claims.
+The remaining Phase 5 browser gate is now complete. The local and public
+Chromium suites cover the full interaction, including keyboard navigation,
+narrow-viewport layout, workspace isolation, print styling, and CSV download.
+The previous Vercel and Render failures were historical deployment evidence;
+the current public services use the rebuilt client and API.
 
 Exit gate:
 
@@ -468,6 +479,18 @@ Verification:
 - The deployment survives malformed uploads and provider failures.
 - Frontend, API, database, ingestion, and report smoke checks pass online.
 - Monthly service configuration remains within the cost ceiling.
+
+Current exit-gate evidence:
+
+- The assistant is disabled by default and fails closed with a `503` response
+  when called in production.
+- Render health, security headers, exact-origin CORS, and Neon-backed startup
+  pass against the public service.
+- Vercel serves `/login` from the current `main` deployment, and the public
+  browser suite passes the primary journey, report export, isolation,
+  keyboard, and narrow-viewport checks.
+- The deployment shape remains Vercel plus one Render API and one Neon Free
+  PostgreSQL database, with no mandatory paid LLM or embedding service.
 
 Exit gate:
 
@@ -524,17 +547,17 @@ stop with:
 
 ## Portfolio-ready release checklist
 
-- [ ] Public frontend is reachable.
-- [ ] API and database health checks pass.
-- [ ] Demo access and workspace isolation pass.
-- [ ] Sample CSV ingestion passes.
-- [ ] Real evidence document ingestion passes.
-- [ ] Calculations expose versioned sources and assumptions.
-- [ ] Supplier cards expose evidence and missing data.
-- [ ] Scenario charts reconcile with calculations.
-- [ ] Report export matches the UI.
-- [ ] Assistant-off workflow passes.
-- [ ] End-to-end browser test passes against production.
-- [ ] Secrets and uploaded content are absent from Git and logs.
-- [ ] README accurately distinguishes implemented features from future work.
-- [ ] Monthly deployment configuration is at or below $30 USD.
+- [x] Public frontend is reachable.
+- [x] API and database health checks pass.
+- [x] Demo access and workspace isolation pass.
+- [x] Sample CSV ingestion passes.
+- [x] Real evidence document ingestion passes.
+- [x] Calculations expose versioned sources and assumptions.
+- [x] Supplier cards expose evidence and missing data.
+- [x] Scenario charts reconcile with calculations.
+- [x] Report export matches the UI.
+- [x] Assistant-off workflow passes.
+- [x] End-to-end browser test passes against production.
+- [x] Secrets and uploaded content are absent from Git and logs.
+- [x] README accurately distinguishes implemented features from future work.
+- [x] Monthly deployment configuration is at or below $30 USD.
