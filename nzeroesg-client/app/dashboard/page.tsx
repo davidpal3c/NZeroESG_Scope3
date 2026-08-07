@@ -477,7 +477,7 @@ export default function UserPortalPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col lg:flex-row">
+    <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col overflow-x-clip lg:flex-row">
       <aside className="border-b border-border px-6 py-6 lg:min-h-screen lg:w-72 lg:border-b-0 lg:border-r lg:py-8">
         <div className="mb-10">
           <Link
@@ -519,7 +519,10 @@ export default function UserPortalPage() {
         </button>
       </aside>
 
-      <section id="overview" className="flex-1 px-6 py-8 lg:px-10 lg:py-12">
+      <section
+        id="overview"
+        className="min-w-0 flex-1 px-4 py-8 sm:px-6 lg:px-10 lg:py-12"
+      >
         <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-accent">
@@ -533,7 +536,7 @@ export default function UserPortalPage() {
               decision-ready scenario reports in one isolated workspace.
             </p>
           </div>
-          <code className="rounded-lg border border-border bg-muted px-3 py-2 text-xs text-primary">
+          <code className="max-w-full break-all rounded-lg border border-border bg-muted px-3 py-2 text-xs text-primary">
             {session.workspace_id}
           </code>
         </div>
@@ -606,13 +609,13 @@ export default function UserPortalPage() {
             onSubmit={uploadShipments}
             className="mt-6 flex flex-wrap items-end gap-3"
           >
-            <label className="flex min-w-64 flex-1 flex-col gap-2 text-sm font-semibold text-primary">
+            <label className="flex w-full min-w-0 flex-1 flex-col gap-2 text-sm font-semibold text-primary sm:min-w-64">
               Shipment CSV
               <input
                 type="file"
                 accept=".csv,text/csv"
                 onChange={selectShipmentFile}
-                className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-normal text-primary file:mr-3 file:rounded file:border-0 file:bg-secondary file:px-3 file:py-2 file:text-white"
+                className="w-full min-w-0 max-w-full rounded-lg border border-border bg-background px-3 py-2 text-sm font-normal text-primary file:mr-3 file:rounded file:border-0 file:bg-secondary file:px-3 file:py-2 file:text-white"
               />
             </label>
             <button
@@ -904,7 +907,7 @@ export default function UserPortalPage() {
                 type="file"
                 accept=".txt,.pdf,text/plain,application/pdf"
                 onChange={selectEvidenceFile}
-                className="rounded-lg border border-border bg-muted px-3 py-2 text-sm font-normal text-primary file:mr-3 file:rounded file:border-0 file:bg-secondary file:px-3 file:py-2 file:text-white"
+                className="w-full min-w-0 max-w-full rounded-lg border border-border bg-muted px-3 py-2 text-sm font-normal text-primary file:mr-3 file:rounded file:border-0 file:bg-secondary file:px-3 file:py-2 file:text-white"
               />
             </label>
             <div className="md:col-span-2">
@@ -995,7 +998,7 @@ export default function UserPortalPage() {
                   value={evidenceQuery}
                   onChange={(event) => setEvidenceQuery(event.target.value)}
                   placeholder="ISO 14001"
-                  className="min-w-64 flex-1 rounded-lg border border-border bg-background px-3 py-2 font-normal"
+                  className="w-full min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 font-normal sm:min-w-64"
                 />
                 <button
                   type="submit"
@@ -1065,12 +1068,12 @@ export default function UserPortalPage() {
             onSubmit={runScenario}
             className="mt-6 flex flex-wrap items-end gap-3"
           >
-            <label className="flex min-w-56 flex-1 flex-col gap-2 text-sm font-semibold text-primary">
+            <label className="flex w-full min-w-0 flex-1 flex-col gap-2 text-sm font-semibold text-primary sm:min-w-56">
               Alternative freight mode
               <select
                 value={scenarioMode}
                 onChange={(event) => setScenarioMode(event.target.value)}
-                className="rounded-lg border border-border bg-background px-3 py-2 font-normal capitalize"
+                className="w-full min-w-0 max-w-full rounded-lg border border-border bg-background px-3 py-2 font-normal capitalize"
               >
                 <option value="plane">Plane</option>
                 <option value="truck">Truck</option>
