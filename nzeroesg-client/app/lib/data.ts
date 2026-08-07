@@ -12,87 +12,68 @@ import {
 export const featuresData = [
   {
     id: 1,
-    title: "Offline-safe API",
+    title: "Traceable calculations",
     icon: Wrench,
     description:
-      "Health checks, validation, and tests run without LLM credentials or live provider calls.",
+      "Versioned factors, explicit assumptions, normalized inputs, and warnings keep every displayed result inspectable.",
   },
   {
     id: 2,
-    title: "Legacy factor calculator",
+    title: "Cited supplier evidence",
     icon: Calculator,
     description:
-      "A temporary deterministic fallback exposes normalized units, factors, provenance, and warnings.",
+      "Bounded document ingestion and PostgreSQL retrieval preserve supplier, file, page, and chunk locations.",
   },
   {
     id: 3,
-    title: "Lean architecture",
+    title: "Isolated workspaces",
     icon: Database,
     description:
-      "The rebuild removes speculative services and prepares for one FastAPI application backed by PostgreSQL.",
+      "Signed sessions, server-side quotas, retention, and workspace-scoped repositories protect every user-owned record.",
   },
 ];
 
 export const comingSoonData = [
   {
     id: 1,
-    title: "Calculation core",
+    title: "Artifact control plane",
     icon: Calculator,
     description:
-      "Versioned factors, explicit assumptions, regression tests, and stable result schemas.",
+      "Manage shipment datasets, evidence documents, and generated decision artifacts with provenance.",
   },
   {
     id: 2,
-    title: "Shipment CSV ingestion",
+    title: "Evaluated hybrid RAG",
     icon: FileInput,
     description:
-      "Validated uploads, normalized rows, baseline totals, hotspots, and quality warnings.",
+      "Compare full-text, pgvector semantic, and hybrid retrieval to tune ranking against representative questions.",
   },
   {
     id: 3,
-    title: "Supplier evidence",
+    title: "Typed agent tools",
     icon: FileSearch,
     description:
-      "Text-based documents, structured supplier facts, full-text retrieval, and recoverable citations.",
+      "Orchestrate evidence search, emissions calculations, scenarios, data quality, and reports through validated commands.",
   },
   {
     id: 4,
-    title: "Isolated demo workspaces",
+    title: "Structured conversations",
     icon: Users,
     description:
-      "Signed sessions, tenant-scoped records, quotas, and automatic expiry.",
+      "Return cited text, metrics, tables, charts, warnings, artifact links, and safe suggested actions.",
   },
   {
     id: 5,
-    title: "Scenarios and charts",
+    title: "JavaScript embed",
     icon: BarChart3,
     description:
-      "Compare alternatives using a small set of decision-useful visualizations.",
+      "Mount the authenticated agent in an existing application through an isolated iframe and small loader.",
   },
   {
     id: 6,
-    title: "Decision report",
+    title: "Selected-file import",
     icon: FileText,
     description:
-      "Export inputs, methodology, sources, results, deltas, and caveats.",
+      "Import one explicitly selected Google Drive file through the same bounded artifact pipeline.",
   },
 ];
-
-// export const featuresData = {
-//     "nzeroesg": {
-//         "name": "nZeroesG",
-//         "description": "A tool for analyzing and visualizing zeroes in datasets.",
-//         "version": "1.0.0",
-//         "author": "David Palacios",
-//         "license": "",
-//         "repository": ""
-//     },
-//     "nzeroesg-scope3": {
-//         "name": "nZeroesG Scope 3",
-//         "description": "A tool for analyzing and visualizing Scope 3 emissions data.",
-//         "version": "1.0.0",
-//         "author": "David Palacios",
-//         "license": "MIT",
-//         "repository": ""
-//     }
-// }

@@ -75,7 +75,7 @@ def fallback_emission_estimate(
 
 
 def resolve_distance(origin: str, destination: str) -> dict[str, float | str]:
-    geolocator = Nominatim(user_agent="nzeroesg-prototype")
+    geolocator = Nominatim(user_agent="carbonsage-prototype")
     origin_location = geolocator.geocode(origin, timeout=10)
     destination_location = geolocator.geocode(destination, timeout=10)
 

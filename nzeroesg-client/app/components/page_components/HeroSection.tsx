@@ -21,25 +21,26 @@ export default function HeroSection({ onTry }: HeroSectionProps) {
         transition={{ duration: 0.8, delay: 0.2 }}
       >
         <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-accent">
-          Scope 3 prototype rebuild
+          Embeddable ESG decision intelligence
         </p>
         <h1 className="mb-6 text-4xl font-extrabold leading-tight tracking-tight text-primary md:text-6xl">
-          Traceable freight decisions,{" "}
-          <span className="text-accent">grounded in evidence</span>
+          Ask better Scope 3 questions.{" "}
+          <span className="text-accent">See the evidence and the tools.</span>
         </h1>
         <p className="mx-auto max-w-2xl text-lg leading-8 text-primary">
-          NZeroESG is being rebuilt around deterministic calculations, shipment
-          data, supplier documents, and transparent sources—not an opaque
-          chatbot score.
+          CarbonSage brings hybrid retrieval, cited supplier evidence, trusted
+          emissions tools, and interactive decisions into the software where
+          work already happens.
         </p>
         <button
           onClick={onTry}
           className="mt-10 rounded-lg bg-accent px-6 py-3 font-semibold text-white shadow transition hover:bg-secondary"
         >
-          Open the legacy assistant
+          Open the agent preview
         </button>
         <p className="mt-3 text-xs text-muted-foreground">
-          Optional and disabled by default during the rebuild.
+          The current estimator is optional while the grounded agent runtime is
+          built.
         </p>
       </motion.div>
     </section>

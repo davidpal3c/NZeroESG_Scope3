@@ -1,4 +1,9 @@
-# NZeroESG Infrastructure
+# CarbonSage Infrastructure
+
+CarbonSage is the public product name. The existing `nzeroesg-client`,
+`nzeroesg-api`, Render service, Vercel project, environment-variable, database,
+and cookie identifiers remain unchanged so the verified deployment is not
+broken by the rebrand.
 
 ## Cost and service boundary
 
@@ -16,9 +21,10 @@ flowchart LR
 The assistant provider is optional. The primary shipment, evidence, scenario,
 and report workflow must work without it.
 
-No Redis, message broker, MongoDB, Chroma, dedicated embedding service,
-background worker, or paid object storage is required for the initial public
-demo.
+No Redis, message broker, MongoDB, former ChromaDB service, dedicated embedding
+service, background worker, or paid object storage is required for the public
+demo or the CarbonSage initial track. Semantic retrieval uses pgvector in the
+existing PostgreSQL deployment rather than a new vector service.
 
 ## Local baseline
 
@@ -72,7 +78,9 @@ branch; this repository does not contain a deploy hook or provider token.
 - Vercel free tier;
 - build from `nzeroesg-client`;
 - configure `NEXT_PUBLIC_BACKEND_URL` with the public FastAPI origin;
-- no server-side user data stored in the frontend deployment.
+- no server-side user data stored in the frontend deployment;
+- host the future control plane, agent playground, and isolated embed route in
+  the same Next.js application.
 
 ### Backend
 
@@ -80,14 +88,19 @@ branch; this repository does not contain a deploy hook or provider token.
 - expose the FastAPI service and health endpoint;
 - allow CORS only from the deployed frontend and documented local origins;
 - keep the optional assistant disabled unless a provider and quota policy are
-  explicitly configured.
+  explicitly configured;
+- keep artifact, retrieval, conversation, embed-auth, and typed-tool modules in
+  the same deployable service.
 
 ### Database
 
 - one small Neon PostgreSQL project using its Free plan for this bounded demo;
 - migrations are required for schema changes;
 - every user-owned record carries a workspace identifier;
-- demo workspaces and extracted evidence expire after 24 hours by default.
+- demo workspaces and extracted evidence expire after 24 hours by default;
+- provision pgvector through checked-in migrations and store versioned
+  embeddings in PostgreSQL; evaluation tunes retrieval behavior rather than
+  gating vector capability.
 
 Neon is a better fit than Render Postgres for this prototype: the current Neon
 Free plan is $0, provides PostgreSQL with scale-to-zero, and is intended for
@@ -132,17 +145,21 @@ CI must remain credential-free and run:
   primary demo journey and workspace isolation.
 
 The browser suite is a local/CI gate; it does not substitute for the public
-deployment smoke check. The current Vercel URL still serves the historical
-`main` branch, and the Render logs supplied on August 5, 2026 show the
-historical API starting with its removed embedder hook. Online verification
-remains outstanding until both providers point at the rebuilt `dev` branch.
+deployment smoke check.
 
-Public verification snapshot from August 5, 2026:
+Public verification snapshot from August 6, 2026:
 
-- `https://n-zero-esg-scope3.vercel.app/` responds with `200`.
-- `/login` responds with `404` because the public project is serving the
-  historical `main` branch, which has no `app/login/page.tsx`. The rebuilt
-  `dev` branch does contain that client route.
-- The public domain has not yet been pointed at the rebuilt client or given a
-  live API origin. The current Render log is not evidence against the rebuilt
-  API: it is the old service executing `rag.embed_if_empty.wait_for_embedder()`.
+- `https://n-zero-esg-scope3.vercel.app/` serves the rebuilt client from
+  `main`, and `/login` returns `200`.
+- `https://nzeroesg-api.onrender.com/health` serves the rebuilt FastAPI service
+  with Neon-backed production persistence.
+- The exact Vercel-origin CORS preflight passes.
+- The assistant health route is reachable and the disabled assistant fails
+  closed with `503` rather than affecting the deterministic workflow.
+- The public Playwright journey passes shipment ingestion, cited evidence,
+  scenarios, report export, workspace isolation, keyboard entry, and narrow
+  viewport checks.
+
+Future embed verification must add a second, vanilla JavaScript host origin,
+test with third-party cookies blocked, and confirm that only the embed route is
+frameable by its configured origin.

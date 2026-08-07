@@ -5,7 +5,7 @@ from config import settings
 
 def load_llm():
     if not settings.assistant_enabled:
-        raise RuntimeError("The optional assistant is disabled.")
+        raise RuntimeError("The CarbonSage agent preview is disabled.")
 
     if settings.llm_provider == "openai":
         if not settings.openai_api_key or not settings.openai_model:

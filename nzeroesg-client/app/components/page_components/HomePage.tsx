@@ -24,7 +24,7 @@ export default function HomePage() {
       <header className="fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-background/80 backdrop-blur-lg">
         <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
           <a href="#" className="text-xl font-bold tracking-tight text-primary">
-            🌱 NZeroESG
+            🌱 CarbonSage
           </a>
           <div className="flex items-center gap-5 text-sm font-semibold">
             {navigation.map((item) => (
@@ -87,10 +87,10 @@ export default function HomePage() {
           <div className="mx-auto max-w-6xl">
             <div className="mb-12 text-center">
               <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-accent">
-                Demo-readiness roadmap
+                Next release track
               </p>
               <h2 className="text-3xl font-bold text-primary">
-                A five-minute workflow with a clear finish line
+                From trusted data to embedded intelligence
               </h2>
             </div>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -116,8 +116,8 @@ export default function HomePage() {
       <ChatInterface initialOpen={isChatOpen} onOpenChange={setIsChatOpen} />
 
       <footer className="bg-gray-900 px-6 py-8 text-center text-sm text-gray-300">
-        © {new Date().getFullYear()} NZeroESG · Rebuilding Scope 3 decisions
-        around traceable evidence
+        © {new Date().getFullYear()} CarbonSage · Evidence-grounded Scope 3
+        intelligence, wherever decisions happen
       </footer>
     </>
   );
